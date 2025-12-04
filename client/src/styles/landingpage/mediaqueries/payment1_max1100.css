@@ -1,0 +1,7 @@
+.container{
+    column-gap: 4vw;
+}
+
+.info input {
+    margin: 5px;
+}

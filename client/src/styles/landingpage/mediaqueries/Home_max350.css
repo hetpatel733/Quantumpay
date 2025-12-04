@@ -1,0 +1,17 @@
+.lay3btn{
+    font-size: 14px;
+}
+
+.lay1head, .lay2head, .layout3 h2{
+    font-size: 25px;
+    font-weight: bolder;
+}
+
+.lay1features, .lay2para, .lay3li, .lay4title, .lay4description{
+    font-size: 15px;
+}
+
+.lay4img img{
+    height: 35px;
+    width: 35px;
+}

@@ -1,0 +1,212 @@
+/* Payment coin selection styles with Dark Mode */
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.dark .theme-toggle-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+
+.dark .theme-toggle-btn:hover {
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.4);
+}
+
+.payment-container {
+  min-height: 100vh;
+  /* Subtle gradient background for depth */
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  transition: background 0.3s ease;
+}
+
+.dark .payment-container {
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(20,184,166,0.08) 0%, rgba(17,24,39,0) 60%),
+              linear-gradient(180deg, #0b1220 0%, #111827 100%);
+}
+
+.payment-header {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.dark .payment-header {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-bottom-color: #374151;
+}
+
+.amount-display {
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(37, 99, 235, 0.15);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.15);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .amount-display {
+  background: linear-gradient(135deg, #0b3b3b 0%, #0f172a 100%);
+  border-top-color: rgba(20, 184, 166, 0.25);
+  border-bottom-color: rgba(20, 184, 166, 0.25);
+}
+
+.crypto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.25rem;
+}
+
+.crypto-card {
+  position: relative;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  text-align: center;
+  background-color: #ffffff;
+  min-height: 148px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+.dark .crypto-card {
+  background-color: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.crypto-card:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.08);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.dark .crypto-card:hover {
+  border-color: #14b8a6;
+  box-shadow: 0 10px 28px rgba(20, 184, 166, 0.18);
+}
+
+.crypto-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
+.dark .crypto-card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.35);
+}
+
+.crypto-card.selected {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.18);
+}
+
+.dark .crypto-card.selected {
+  border-color: #14b8a6;
+  background-color: #0f766e;
+  box-shadow: 0 10px 28px rgba(20, 184, 166, 0.22);
+}
+
+.crypto-image {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.crypto-card:hover .crypto-image {
+  transform: scale(1.1);
+}
+
+/* Network labels */
+.crypto-card .text-xs.text-gray-400 {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.6875rem;
+  transition: color 0.3s ease;
+}
+
+.dark .crypto-card .text-xs.text-gray-400 {
+  color: #9ca3af;
+}
+
+.crypto-card.selected .text-xs.text-gray-400 {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.dark .crypto-card.selected .text-xs.text-gray-400 {
+  color: #5eead4;
+}
+
+@media (max-width: 768px) {
+  .crypto-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .payment-container {
+    padding: 0.75rem;
+  }
+
+  .crypto-card {
+    min-height: 136px;
+    padding: 0.875rem;
+  }
+
+  .theme-toggle-btn {
+    width: 44px;
+    height: 44px;
+    top: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .crypto-grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .crypto-card {
+    min-height: 128px;
+  }
+
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    top: 12px;
+    right: 12px;
+  }
+}

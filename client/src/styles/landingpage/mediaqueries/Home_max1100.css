@@ -1,0 +1,9 @@
+.lay2img{
+    height: 60vw;
+    margin-left: -23vw;
+}
+
+.partners {
+    grid-template-columns: auto auto auto;
+    column-gap: 10px;
+}

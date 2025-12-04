@@ -1,0 +1,22 @@
+.info {
+    grid-template-columns:auto;
+    width: 100%;
+    row-gap: 15px;
+}
+
+.info p {
+    grid-column: auto;
+    text-align: center;
+}
+
+.email {
+    grid-column: auto;
+}
+
+.container{
+    grid-template-columns: auto auto;
+}
+
+.container p{
+    grid-column: 1 / span 2;
+}

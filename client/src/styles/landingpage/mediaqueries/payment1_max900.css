@@ -1,0 +1,21 @@
+form {
+    grid-template-columns: auto;
+    justify-content: center;
+}
+
+.container {
+    column-gap: 6vw;
+}
+
+form button{
+    position: relative;
+    margin: 50px auto 20px auto;
+}
+
+.bgcoloramnt{
+    margin: 30px auto 0 auto;
+}
+
+.bgcoloramnt p {
+    font-size: 20px;
+}

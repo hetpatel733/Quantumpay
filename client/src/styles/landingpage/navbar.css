@@ -1,0 +1,35 @@
+/* navbar.css - Only custom utilities that Tailwind doesn't provide */
+
+/* Remove list styling - specific utility */
+.listremove {
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Custom font for navbar - keep this if needed */
+.font-raleway {
+  font-family: 'Raleway', sans-serif;
+}
+
+/* Mobile menu animations - Tailwind doesn't provide these specific keyframes */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-menu-enter {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Active state - can be replaced with Tailwind but kept for now */
+.nav-active {
+  background-color: #97e5e9;
+  border-radius: 1rem;
+}

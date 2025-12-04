@@ -1,0 +1,74 @@
+.lay1head,
+.lay2head,
+.layout3 h2 {
+    font-size: 30px;
+    font-weight: bolder;
+}
+
+.pclay1title {
+    font-size: 20px;
+}
+
+.lay1features,
+.lay2para,
+.lay3li,
+.lay4title,
+.lay4description {
+    font-size: 17px;
+}
+
+.contentl2 {
+    padding-bottom: 50px;
+}
+
+.lay2arrow {
+    display: none;
+}
+
+.layout3 h2 {
+    text-align: center;
+}
+
+.lay3btn {
+    font-size: 17px;
+    width: 70%;
+    margin-left: 15%;
+}
+
+.lay3ul {
+    margin-top: 40px;
+    margin-bottom: 30px;
+}
+
+.lay4headparent {
+    margin: 100px auto 20px auto;
+}
+
+.lay4head {
+    font-size: 6vw;
+}
+
+.lay4left div.lay4item,
+.lay4right div.lay4item {
+    padding: 5px 0 5px 0;
+    margin: auto;
+}
+
+.lay4right {
+    padding: 0;
+}
+
+.layout5 {
+    padding-top: 80px;
+}
+
+.partners {
+    grid-template-columns: auto;
+    row-gap: 20px;
+    margin-top: 20px;
+}
+
+.issuepartner1,
+.issuepartner2 {
+    margin-bottom: 30px;
+}

@@ -1,0 +1,68 @@
+/* index.css - Custom utilities only (Tailwind handles base resets) */
+
+/* Custom utility classes that Tailwind doesn't provide */
+.transition-layout {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth {
+  transition: all 0.15s ease-out;
+}
+
+.shadow-dropdown {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Dark mode select options */
+select option {
+  background-color: white;
+  color: black;
+}
+
+select option:checked {
+  background: linear-gradient(#1ec1c7, #1ec1c7);
+  background-color: #1ec1c7;
+}
+
+.dark select option {
+  background-color: #1f2937;
+  color: white;
+}
+
+.dark select option:checked {
+  background: linear-gradient(#1ec1c7, #1ec1c7);
+  background-color: #1ec1c7;
+  color: white;
+}
+

@@ -1,0 +1,182 @@
+/* Final payment page styles with Dark Mode */
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.dark .theme-toggle-btn {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+
+.dark .theme-toggle-btn:hover {
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.4);
+}
+
+.payment-final {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  transition: background-color 0.3s ease;
+
+  .qr-code {
+    max-width: 256px;
+    width: 100%;
+    height: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .address-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    background-color: transparent;
+    color: #1f2937;
+    outline: none;
+    flex: 1;
+    transition: color 0.3s ease;
+  }
+
+  .copy-button {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+  }
+
+  .copy-button:hover {
+    background-color: #f3f4f6;
+  }
+
+  .status-pending {
+    background-color: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    transition: all 0.3s ease;
+  }
+
+  .status-completed {
+    background-color: #d1fae5;
+    border: 1px solid #10b981;
+    color: #065f46;
+    transition: all 0.3s ease;
+  }
+
+  .pulse-pending {
+    position: relative;
+    z-index: 0;
+  }
+
+  .pulse-pending::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 9999px;
+    background: #fbbf24;
+    opacity: 0.3;
+    animation: pulse-bg 1.5s infinite;
+    z-index: -1;
+  }
+
+  @keyframes pulse-bg {
+    0% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 0.6;
+    }
+
+    100% {
+      opacity: 0.3;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .address-input {
+      font-size: 0.75rem;
+    }
+  }
+}
+
+/* Dark Mode Styles */
+.dark .payment-final {
+  background-color: #111827;
+
+  .qr-code {
+    border-color: #374151;
+    background-color: #ffffff;
+    padding: 0.5rem;
+  }
+
+  .address-input {
+    color: #e5e7eb;
+  }
+
+  .copy-button:hover {
+    background-color: #374151;
+  }
+
+  .status-pending {
+    background-color: #78350f;
+    border-color: #f59e0b;
+    color: #fef3c7;
+  }
+
+  .status-completed {
+    background-color: #064e3b;
+    border-color: #10b981;
+    color: #d1fae5;
+  }
+
+  .pulse-pending::before {
+    background: #f59e0b;
+    opacity: 0.2;
+  }
+}
+
+/* Mobile responsiveness for theme toggle */
+@media (max-width: 768px) {
+  .theme-toggle-btn {
+    width: 44px;
+    height: 44px;
+    top: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    top: 12px;
+    right: 12px;
+  }
+}

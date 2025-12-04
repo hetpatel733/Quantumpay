@@ -1,0 +1,11 @@
+import { type ClassValue } from "clsx";
+export declare function cn(...inputs: (string | undefined | null | boolean)[]): string;
+export declare function formatCurrency(amount: number, currency?: string, options?: Intl.NumberFormatOptions): string;
+export declare function generateUniqueId(prefix?: string): string;
+export declare function truncateText(text: string, maxLength: number): string;
+export declare function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string;
+export declare function debounce<T extends (...args: any[]) => any>(func: T, wait: number, immediate?: boolean): (...args: Parameters<T>) => void;
+export declare function throttle<T extends (...args: any[]) => any>(func: T, limit: number, trailing?: boolean): (...args: Parameters<T>) => void;
+export declare function dedupeRequest<T>(key: string, requestFunction: () => Promise<T>): Promise<T>;
+export declare function batchRequests<T>(requests: (() => Promise<T>)[], batchSize?: number): Promise<void>;
+export declare function onlyWhenVisible<T extends (...args: any[]) => any>(callback: T): T;

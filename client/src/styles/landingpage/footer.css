@@ -1,0 +1,9 @@
+/* footer.css - Minimal utilities only */
+/* All Footer component styling now uses Tailwind classes */
+
+/* Keep only the listremove utility that's used in Footer */
+.listremove {
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+}
