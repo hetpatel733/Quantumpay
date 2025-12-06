@@ -19,5 +19,6 @@
             "src": "/(.*)",
             "dest": "server/src/app.js"
         }
-    ]
+    ],
+    "buildCommand": "npm install --prefix server && npm install --prefix client && npm run build --prefix frontend"
 }
