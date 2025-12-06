@@ -67,7 +67,8 @@ const paymentConfigRoutes = require('./routes/paymentConfigRoutes');
 //      MIDDLEWARE CONFIGURATION
 // ----------------------------------
 // CORS configuration
-origin: [
+const corsOptions = {
+    origin: [
         'http://localhost:3000', // React dev server
         'http://localhost:9000',
         '13.228.225.19',
@@ -86,6 +87,10 @@ origin: [
         /https:\/\/quantum-.*\.vercel\.app$/, // All Vercel preview deployments
         /https:\/\/.*-sudhirkumar6009s-projects\.vercel\.app$/ // All project preview URLs
     ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable pre-flight requests for all routes
@@ -162,16 +167,25 @@ app.use('/api/*', (req, res) => {
     });
 });
 
-// Catch-all handler: Forwards all other requests to the React app
-app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../../client/dist", "index.html"));
+// Health check endpoint
+app.get("/health", (req, res) => {
+    res.json({ status: "ok" });
 });
 
 // ----------------------------------
-//          START SERVER
+//          EXPORT FOR VERCEL
 // ----------------------------------
-app.listen(port, () => {
-    console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
-    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
-});
+// Export for serverless function
+module.exports = app;
+
+// ----------------------------------
+//          START SERVER (Local Dev)
+// ----------------------------------
+// Only listen if not running on Vercel
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
+        console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
+    });
+}
