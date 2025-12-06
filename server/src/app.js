@@ -76,6 +76,10 @@ origin: [
         'https://quantumpay-onrender.onrender.com',
         'https://quantum-hazel-iota.vercel.app',
         'https://quantum-hazel-iota.vercel.app/',
+    'https://quantumpay-server.vercel.app/',
+    'https://quantumpay-server.vercel.app',
+    'https://quantumpay-client.vercel.app/',
+    'https://quantumpay-client.vercel.app',
         'https://quantum-nrg8.vercel.app', // Server URL
         'https://quantum-nrg8.vercel.app/',
         'https://quantum-1lzp4zsjj-sudhirkumar6009s-projects.vercel.app', // Client preview URL
