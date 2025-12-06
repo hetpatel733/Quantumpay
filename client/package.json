@@ -25,6 +25,7 @@
     "react-router-hash-link": "^2.4.3",
     "recharts": "^2.15.2",
     "redux": "^5.0.1",
+    "rollup": "^4.53.3",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-elevation": "^2.0.0",
@@ -33,7 +34,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build --sourcemap",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "vercel-build": "vite build --sourcemap"
   },
   "eslintConfig": {
     "extends": [
