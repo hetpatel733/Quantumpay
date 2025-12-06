@@ -67,20 +67,21 @@ const paymentConfigRoutes = require('./routes/paymentConfigRoutes');
 //      MIDDLEWARE CONFIGURATION
 // ----------------------------------
 // CORS configuration
-const corsOptions = {
-    origin: [
+origin: [
         'http://localhost:3000', // React dev server
         'http://localhost:9000',
         '13.228.225.19',
         '18.142.128.26',
         '54.254.162.138',
-        'https://quantumpay-onrender.onrender.com'
+        'https://quantumpay-onrender.onrender.com',
+        'https://quantum-hazel-iota.vercel.app',
+        'https://quantum-hazel-iota.vercel.app/',
+        'https://quantum-nrg8.vercel.app', // Server URL
+        'https://quantum-nrg8.vercel.app/',
+        'https://quantum-1lzp4zsjj-sudhirkumar6009s-projects.vercel.app', // Client preview URL
+        /https:\/\/quantum-.*\.vercel\.app$/, // All Vercel preview deployments
+        /https:\/\/.*-sudhirkumar6009s-projects\.vercel\.app$/ // All project preview URLs
     ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    optionsSuccessStatus: 200
-};
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable pre-flight requests for all routes
