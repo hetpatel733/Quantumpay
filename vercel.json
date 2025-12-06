@@ -1,17 +1,35 @@
 {
     "version": 2,
+    "buildCommand": "cd client && npm install && npm run build",
     "builds": [
         {
-            "src": "server/src/App.jsx",
+            "src": "server/src/app.js",
             "use": "@vercel/node"
+        },
+        {
+            "src": "client/package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "client/dist"
+            }
         }
     ],
     "routes": [
         {
-            "src": "/(.*)",
+            "src": "/api/(.*)",
             "dest": "server/src/app.js"
+        },
+        {
+            "src": "/health",
+            "dest": "server/src/app.js"
+        },
+        {
+            "src": "/(.*\\.(js|css|jpg|jpeg|png|gif|svg|ico|json|woff|woff2|ttf|eot|webp|mp4|webm|ogg|mp3|wav|flac|aac))",
+            "dest": "/client/dist/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "/client/dist/index.html"
         }
-    ],
-    "buildCommand": "npm install --prefix server && npm install --prefix client && npm run build --prefix frontend"
-}
+    ]
 }
