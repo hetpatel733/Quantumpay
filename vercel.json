@@ -1,15 +1,20 @@
 {
     "version": 2,
-    "buildCommand": "npm run build",
-    "devCommand": "npm run dev",
-    "outputDirectory": ".",
     "builds": [
         {
-            "src": "server/package.json",
+            "src": "server/src/app.js",
             "use": "@vercel/node"
         }
     ],
     "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "server/src/app.js"
+        },
+        {
+            "src": "/health",
+            "dest": "server/src/app.js"
+        },
         {
             "src": "/(.*)",
             "dest": "server/src/app.js"
