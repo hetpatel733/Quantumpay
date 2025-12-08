@@ -17,6 +17,6 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js -e js,html",
-    "build": "cd ../client && npm install && npm run build && cd ../server && npm install"
+    "build": "npm install"
   }
 }
