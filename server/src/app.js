@@ -72,7 +72,7 @@ const corsOptions = {
         'http://localhost:3000', // React dev server
         'http://localhost:9000',
         'https://quantumpay-server.vercel.app',
-        'https://quantumpay-client.vercel.app',
+        'https://quantumpayfinance.vercel.app/',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
