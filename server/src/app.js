@@ -37,10 +37,10 @@ app.get("/api/debug/payments", async (req, res) => {
     try {
         const { Payment } = require('./models/Payment');
         const mongoose = require('mongoose');
-        
+
         const totalPayments = await Payment.countDocuments({});
         const samplePayments = await Payment.find({}).limit(5).select('payId businessEmail status createdAt');
-        
+
         res.json({
             totalPayments,
             samplePayments,
@@ -71,25 +71,16 @@ const corsOptions = {
     origin: [
         'http://localhost:3000', // React dev server
         'http://localhost:9000',
-        '13.228.225.19',
-        '18.142.128.26',
-        '54.254.162.138',
         'https://quantumpay-onrender.onrender.com',
-        'https://quantum-hazel-iota.vercel.app',
-        'https://quantum-hazel-iota.vercel.app/',
-    'https://quantumpay-server.vercel.app/',
-    'https://quantumpay-server.vercel.app',
-    'https://quantumpay-client.vercel.app/',
-    'https://quantumpay-client.vercel.app',
-        'https://quantum-nrg8.vercel.app', // Server URL
-        'https://quantum-nrg8.vercel.app/',
-        'https://quantum-1lzp4zsjj-sudhirkumar6009s-projects.vercel.app', // Client preview URL
-        /https:\/\/quantum-.*\.vercel\.app$/, // All Vercel preview deployments
-        /https:\/\/.*-sudhirkumar6009s-projects\.vercel\.app$/ // All project preview URLs
+        // 'https://quantumpay-server.vercel.app/',
+        'https://quantumpay-server.vercel.app',
+        // 'https://quantumpay-client.vercel.app/',
+        'https://quantumpay-client.vercel.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -167,21 +158,13 @@ app.use('/api/*', (req, res) => {
     });
 });
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-    res.json({ status: "ok" });
+// Catch-all handler: Forwards all other requests to the React app
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../../client/dist", "index.html"));
 });
 
-// ----------------------------------
-//          EXPORT FOR VERCEL
-// ----------------------------------
-// Export for serverless function
 module.exports = app;
 
-// ----------------------------------
-//          START SERVER (Local Dev)
-// ----------------------------------
-// Only listen if not running on Vercel
 if (!process.env.VERCEL) {
     app.listen(port, () => {
         console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
