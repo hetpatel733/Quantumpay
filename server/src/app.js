@@ -87,9 +87,6 @@ app.use(express.json()); // To parse JSON bodies
 app.use(express.urlencoded({ extended: false })); // To parse URL-encoded bodies
 app.use(cookieParser()); // To parse cookies
 
-// Serve static files for the React app
-app.use(express.static(path.join(__dirname, "../../client/dist")));
-
 // ----------------------------------
 //         CORE & API ROUTES
 // ----------------------------------
