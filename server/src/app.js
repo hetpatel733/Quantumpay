@@ -71,10 +71,7 @@ const corsOptions = {
     origin: [
         'http://localhost:3000', // React dev server
         'http://localhost:9000',
-        'https://quantumpay-onrender.onrender.com',
-        // 'https://quantumpay-server.vercel.app/',
         'https://quantumpay-server.vercel.app',
-        // 'https://quantumpay-client.vercel.app/',
         'https://quantumpay-client.vercel.app',
     ],
     credentials: true,
@@ -156,11 +153,6 @@ app.use('/api/*', (req, res) => {
         success: false,
         message: "API endpoint not found"
     });
-});
-
-// Catch-all handler: Forwards all other requests to the React app
-app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../../client/dist", "index.html"));
 });
 
 module.exports = app;
