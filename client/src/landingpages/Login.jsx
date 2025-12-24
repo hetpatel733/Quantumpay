@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import AppButton from '../components/ui/AppButton'
 import { AuthContext } from '../contexts/AuthContext'
-import { authAPI } from '../api/authAPI'
+import { authAPI } from '../utils/api'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -35,18 +35,23 @@ const Login = () => {
     setError(null)
     
     try {
+      console.log('📤 Sending login request for:', formData.email);
       const response = await authAPI.login({
         email: formData.email,
         password: formData.password
       })
 
+      console.log('📥 Login response:', response);
+
       if (response.success) {
         // Store token and user data
         if (response.token) {
           localStorage.setItem('authToken', response.token)
+          console.log('✅ Token stored');
         }
         if (response.user) {
           localStorage.setItem('userData', JSON.stringify(response.user))
+          console.log('✅ User data stored');
         }
         
         // Call context handler to update auth state
@@ -54,6 +59,7 @@ const Login = () => {
           handleLoginSuccess(response.user, response.token)
         }
         
+        console.log('✅ Redirecting to dashboard');
         // Navigate to dashboard
         navigate('/dashboard')
       } else {
@@ -194,21 +200,13 @@ const Login = () => {
                     </div>
                   </div>
 
-                  {/* Remember Me & Forgot Password */}
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-5 h-5 rounded border-2 border-secondary-300 dark:border-gray-600 text-primary focus:ring-primary"
-                      />
-                      <span className="text-text-secondary dark:text-gray-400">Remember me</span>
-                    </label>
+                  {/* Forgot Password only */}
+                  <div className="flex items-center justify-end">
                     <Link to="/forgot-password" className="text-primary dark:text-teal-400 hover:text-primary-700 dark:hover:text-teal-300 font-semibold">
                       Forgot Password?
                     </Link>
                   </div>
+                  {/* Removed Remember Me checkbox */}
 
                   {/* Submit Button */}
                   <AppButton
@@ -233,23 +231,17 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* Social Login */}
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { icon: 'bi-google', name: 'Google' },
-                    { icon: 'bi-github', name: 'GitHub' },
-                    { icon: 'bi-apple', name: 'Apple' }
-                  ].map((provider) => (
-                    <motion.button
-                      key={provider.name}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex items-center justify-center py-3 rounded-xl border-2 border-secondary-200 dark:border-gray-600 hover:border-primary dark:hover:border-teal-400 transition-colors"
-                    >
-                      <i className={`bi ${provider.icon} text-2xl text-text-primary dark:text-white`}></i>
-                    </motion.button>
-                  ))}
+                {/* Social Login - Only Google */}
+                <div className="grid grid-cols-1 gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center py-3 rounded-xl border-2 border-secondary-200 dark:border-gray-600 hover:border-primary dark:hover:border-teal-400 transition-colors"
+                  >
+                    <i className="bi bi-google text-2xl text-text-primary dark:text-white"></i>
+                  </motion.button>
                 </div>
+                {/* Removed GitHub and Apple buttons */}
 
                 {/* Sign Up Link */}
                 <p className="text-center mt-8 text-text-secondary dark:text-gray-400">

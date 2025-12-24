@@ -3,11 +3,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from 'components/AppIcon';
 import Image from 'components/AppImage';
+import { uploadImageToImageKit, fileToBase64 } from 'utils/imagekit';
+import { useToast } from 'contexts/ToastContext';
 
 const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
   const modalRef = useRef(null);
+  const { showToast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState({});
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null); // Store the actual file
   
   const [formData, setFormData] = useState({
     name: '',
@@ -71,43 +76,71 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('📋 Form submission started');
-    console.log('📋 Current form data:', formData);
     
-    if (validateForm()) {
+    if (!validateForm()) {
+      console.log('❌ Form validation failed:', errors);
+      return;
+    }
+
+    // Don't allow submission while image is uploading
+    if (uploadingImage) {
+      showToast('Please wait for image upload to complete', 'warning');
+      return;
+    }
+
+    try {
+      let finalImageUrl = '';
+
+      // Upload image to ImageKit if a new file was selected
+      if (selectedFile) {
+        console.log('📤 Uploading new image to ImageKit...');
+        setUploadingImage(true);
+        
+        const uploadResult = await uploadImageToImageKit(selectedFile, 'QuantumPay/products');
+        
+        if (uploadResult.success) {
+          finalImageUrl = uploadResult.url;
+          console.log('✅ Image uploaded to ImageKit:', uploadResult.url);
+        } else {
+          console.error('⚠️ ImageKit upload failed:', uploadResult.error);
+          
+          // Show error and ask user to confirm
+          showToast(`Failed to upload image: ${uploadResult.error}`, 'error');
+          
+          // For now, continue without image - user can re-upload later
+          finalImageUrl = '';
+        }
+        
+        setUploadingImage(false);
+      } else if (formData.image && formData.image.startsWith('http')) {
+        // Existing ImageKit URL from editing
+        finalImageUrl = formData.image;
+      }
+
+      // Prepare data for submission
       const formattedData = {
         productName: formData.name.trim(),
         description: formData.description.trim(),
         amountUSD: parseFloat(formData.price),
-        image: formData.image,
+        image: finalImageUrl,
         isActive: formData.status === 'active'
       };
       
-      console.log('📋 Formatted data being submitted:', formattedData);
+      console.log('📋 Submitting data:', formattedData);
       
-      // Validate required fields one more time
-      if (!formattedData.productName) {
-        alert('Product name is required');
-        return;
-      }
+      // Call the onSave callback
+      onSave(formattedData);
       
-      if (isNaN(formattedData.amountUSD) || formattedData.amountUSD <= 0) {
-        alert('Valid price is required');
-        return;
-      }
+      // Reset selected file
+      setSelectedFile(null);
       
-      console.log('📋 Calling onSave function...');
-      
-      try {
-        onSave(formattedData);
-      } catch (error) {
-        console.error('❌ Error in onSave:', error);
-        alert('Error saving item: ' + error.message);
-      }
-    } else {
-      console.log('❌ Form validation failed:', errors);
+    } catch (error) {
+      console.error('❌ Error in handleSubmit:', error);
+      showToast('Error saving item: ' + error.message, 'error');
+      setUploadingImage(false);
     }
   };
 
@@ -129,14 +162,32 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        handleInputChange('image', event.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image size must be less than 10MB', 'error');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please upload a valid image file (JPG, PNG, GIF, WebP)', 'error');
+      return;
+    }
+    
+    try {
+      // Store the file for later upload
+      setSelectedFile(file);
+      
+      // Show preview immediately using base64
+      const base64Preview = await fileToBase64(file);
+      handleInputChange('image', base64Preview);
+      
+      console.log('📷 Image selected, will upload on submit');
+    } catch (error) {
+      console.error('❌ Error creating preview:', error);
+      showToast('Failed to load image preview', 'error');
     }
   };
 
@@ -149,17 +200,33 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
     setIsDragging(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
     
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        handleInputChange('image', event.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('Please drop a valid image file', 'error');
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image size must be less than 10MB', 'error');
+      return;
+    }
+    
+    try {
+      // Store the file for later upload
+      setSelectedFile(file);
+      
+      // Show preview immediately
+      const base64Preview = await fileToBase64(file);
+      handleInputChange('image', base64Preview);
+      
+      console.log('📷 Image dropped, will upload on submit');
+    } catch (error) {
+      console.error('❌ Error creating preview:', error);
+      showToast('Failed to load image preview', 'error');
     }
   };
 
@@ -254,7 +321,10 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
                     />
                     <button
                       type="button"
-                      onClick={() => handleInputChange('image', '')}
+                      onClick={() => {
+                        handleInputChange('image', '');
+                        setSelectedFile(null);
+                      }}
                       className="
                         absolute top-2 right-2 p-1 rounded-full
                         bg-error text-white
@@ -263,6 +333,11 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
                     >
                       <Icon name="X" size={16} color="currentColor" />
                     </button>
+                    {selectedFile && (
+                      <div className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                        Will upload on submit
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="py-8">
@@ -272,7 +347,9 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
                       color="currentColor" 
                       className="mx-auto text-text-secondary dark:text-gray-400 mb-2"
                     />
-                    <p className="text-text-secondary dark:text-gray-400 mb-2">Drag and drop an image here, or click to browse</p>
+                    <p className="text-text-secondary dark:text-gray-400 mb-2">
+                      Drag and drop an image here, or click to browse
+                    </p>
                     <input
                       type="file"
                       accept="image/*"
@@ -415,32 +492,38 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
           <div className="flex items-center justify-end space-x-3 pt-6 mt-6 border-t border-border dark:border-gray-700">
             <button
               type="button"
-              onClick={() => {
-                console.log('❌ Cancel button clicked');
-                onClose();
-              }}
+              onClick={onClose}
+              disabled={uploadingImage}
               className="
                 px-4 py-2 border border-border dark:border-gray-700 rounded-lg
                 text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
                 hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
               Cancel
             </button>
             <button 
               type="submit"
-              onClick={(e) => {
-                console.log('💾 Submit button clicked');
-                handleSubmit(e);
-              }}
+              disabled={uploadingImage}
               className="
                 px-4 py-2 bg-primary dark:bg-teal-500 text-white rounded-lg
                 hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth
                 flex items-center space-x-2
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              <Icon name="Save" size={16} color="currentColor" />
-              <span>{item ? 'Update Item' : 'Create Product'}</span>
+              {uploadingImage ? (
+                <>
+                  <Icon name="Loader2" size={16} color="currentColor" className="animate-spin" />
+                  <span>Uploading image...</span>
+                </>
+              ) : (
+                <>
+                  <Icon name="Save" size={16} color="currentColor" />
+                  <span>{item ? 'Update Item' : 'Create Product'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>

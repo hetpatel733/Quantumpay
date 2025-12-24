@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Icon from 'components/AppIcon';
 import { apiKeysAPI } from 'utils/api';
+import { useToast } from 'contexts/ToastContext';
 
-const ApiManagement = () => {
+const ApiManagement = ({ userData }) => {
+  const { showToast } = useToast();
   const [apiKeys, setApiKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,9 +26,14 @@ const ApiManagement = () => {
   // Fetch API keys from server
   useEffect(() => {
     const fetchApiKeys = async () => {
+      if (!userData?.id) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const response = await apiKeysAPI.getAll();
+        const response = await apiKeysAPI.getAll(userData.id);
         
         if (response.success) {
           // Ensure apiKeys data has the right structure
@@ -87,7 +94,7 @@ const ApiManagement = () => {
     };
 
     fetchApiKeys();
-  }, []);
+  }, [userData?.id]);
 
   const permissions = [
     { id: 'read', label: 'Read', description: 'View payment data and transactions' },
@@ -97,14 +104,20 @@ const ApiManagement = () => {
   ];
 
   const handleCreateApiKey = async () => {
+    if (!userData?.id) {
+      showToast('User ID not found', 'error');
+      return;
+    }
+
     try {
       const response = await apiKeysAPI.create({
+        userId: userData.id,
         label: newApiKey.name,
-        permissions: newApiKey.permissions
+        permissions: newApiKey.permissions,
+        type: 'live'
       });
       
       if (response.success) {
-        // Normalize the new API key structure
         const normalizedApiKey = {
           id: response.apiKey._id || response.apiKey.id,
           name: response.apiKey.label || response.apiKey.name,
@@ -120,12 +133,13 @@ const ApiManagement = () => {
         setApiKeys(prev => [...prev, normalizedApiKey]);
         setNewApiKey({ name: '', permissions: ['read'] });
         setShowCreateModal(false);
+        showToast('API key created successfully!', 'success');
       } else {
-        alert('Failed to create API key: ' + response.message);
+        showToast('Failed to create API key: ' + response.message, 'error');
       }
     } catch (error) {
       console.error('Error creating API key:', error);
-      alert('Failed to create API key');
+      showToast('Failed to create API key', 'error');
     }
   };
 
@@ -140,48 +154,44 @@ const ApiManagement = () => {
   };
 
   const handleDeleteApiKey = async (keyId) => {
-    if (!confirm('Are you sure you want to delete this API key?')) return;
+    // Note: confirm will be replaced with ConfirmModal in a future update
+    if (!window.confirm('Are you sure you want to delete this API key?')) return;
     
     try {
       const response = await apiKeysAPI.delete(keyId);
       if (response.success) {
         setApiKeys(prev => prev.filter(key => key.id !== keyId));
+        showToast('API key deleted successfully', 'success');
       } else {
-        alert('Failed to delete API key: ' + response.message);
+        showToast('Failed to delete API key: ' + response.message, 'error');
       }
     } catch (error) {
       console.error('Error deleting API key:', error);
-      alert('Failed to delete API key');
+      showToast('Failed to delete API key', 'error');
     }
   };
 
   const handleToggleApiKey = async (keyId) => {
     try {
-      const key = apiKeys.find(k => k.id === keyId);
-      const response = await apiKeysAPI.update(keyId, {
-        isActive: !key.isActive
-      });
+      const response = await apiKeysAPI.toggle(keyId);
       
       if (response.success) {
         setApiKeys(prev => prev.map(key =>
           key.id === keyId ? { ...key, isActive: !key.isActive } : key
         ));
-        
-        // Show feedback message
-        const newStatus = !key.isActive ? 'enabled' : 'disabled';
-        alert(`API key ${newStatus} successfully`);
+        showToast('API key status updated', 'success');
       } else {
-        alert('Failed to toggle API key status: ' + response.message);
+        showToast('Failed to toggle API key status: ' + response.message, 'error');
       }
     } catch (error) {
       console.error('Error toggling API key:', error);
-      alert('Failed to toggle API key status');
+      showToast('Failed to toggle API key status', 'error');
     }
   };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    showToast('Copied to clipboard!', 'success');
   };
 
   const formatDate = (dateString) => {
@@ -495,12 +505,12 @@ const ApiManagement = () => {
       {showCreateModal && (
         <div className="fixed inset-0 z-300 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowCreateModal(false)} />
-          <div className="relative bg-surface rounded-lg shadow-dropdown w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="relative bg-surface dark:bg-gray-800 rounded-lg shadow-dropdown border border-border dark:border-gray-700 w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-border dark:border-gray-700">
               <h3 className="text-lg font-semibold text-text-primary dark:text-white">Create New API Key</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-text-secondary hover:text-text-primary dark:text-white"
+                className="text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white transition-smooth"
               >
                 <Icon name="X" size={20} color="currentColor" />
               </button>
@@ -517,7 +527,7 @@ const ApiManagement = () => {
                   onChange={(e) => setNewApiKey(prev => ({ ...prev, name: e.target.value }))}
                   className="
                     w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+                    focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent
                     text-text-primary dark:text-white bg-background dark:bg-gray-900
                   "
                   placeholder="e.g., Production API Key"
@@ -525,18 +535,20 @@ const ApiManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
+                <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">
                   Permissions
                 </label>
                 <div className="space-y-2">
                   {permissions.map((permission) => (
                     <div key={permission.id} className="flex items-start space-x-3">
                       <button
+                        type="button"
                         onClick={() => handlePermissionToggle(permission.id)}
                         className={`
-                          mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center
+                          mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center transition-smooth
                           ${newApiKey.permissions.includes(permission.id)
-                            ? 'bg-primary border-primary' :'border-border'
+                            ? 'bg-primary dark:bg-teal-500 border-primary dark:border-teal-500' 
+                            : 'border-border dark:border-gray-600 hover:border-primary dark:hover:border-teal-500'
                           }
                         `}
                       >
@@ -544,7 +556,7 @@ const ApiManagement = () => {
                           <Icon name="Check" size={12} color="white" />
                         )}
                       </button>
-                      <div>
+                      <div className="flex-1">
                         <div className="text-sm font-medium text-text-primary dark:text-white">{permission.label}</div>
                         <div className="text-xs text-text-secondary dark:text-gray-400">{permission.description}</div>
                       </div>
@@ -554,13 +566,13 @@ const ApiManagement = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end space-x-3 p-6 border-t border-border">
+            <div className="flex items-center justify-end space-x-3 p-6 border-t border-border dark:border-gray-700">
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="
                   px-4 py-2 border border-border dark:border-gray-700 rounded-lg
-                  text-text-secondary hover:text-text-primary
-                  hover:bg-secondary-100 dark:hover:bg-gray-700 dark:bg-gray-700 transition-smooth
+                  text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
+                  hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth
                 "
               >
                 Cancel

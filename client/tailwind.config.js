@@ -101,11 +101,16 @@ module.exports = {
       },
       animation: {
         'pulse-subtle': 'pulse-subtle 2s infinite',
+        'slideIn': 'slideIn 0.3s ease-out',
       },
       keyframes: {
         'pulse-subtle': {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.8' },
+        },
+        slideIn: {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
         },
       },
     },

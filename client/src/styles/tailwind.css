@@ -66,10 +66,21 @@
     --color-border-light: #F1F5F9; /* Light border color - slate-100 */
   }
   
+  html {
+    overflow-x: hidden;
+  }
+  
   body {
     font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
     color: var(--color-text-primary);
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
+  * {
+    box-sizing: border-box;
   }
   
   .font-mono {

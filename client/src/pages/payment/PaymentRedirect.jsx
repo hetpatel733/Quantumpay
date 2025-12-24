@@ -22,11 +22,11 @@ const PaymentRedirect = () => {
 
   // Show loading state while redirecting
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <div className="flex flex-col items-center space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600">Processing payment request...</p>
-        <p className="text-sm text-gray-500">Redirecting to payment options</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-teal-500"></div>
+        <p className="text-gray-600 dark:text-gray-300">Processing payment request...</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Redirecting to payment options</p>
       </div>
     </div>
   );

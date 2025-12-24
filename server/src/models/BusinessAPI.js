@@ -1,17 +1,15 @@
 const mongoose = require('mongoose');
 
 const businessAPISchema = new mongoose.Schema({
-    businessEmail: {
-        type: String,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
         required: true,
-        trim: true,
-        lowercase: true,
         ref: 'User'
     },
     label: {
         type: String,
-        required: true,
-        trim: true
+        trim: true,
+        default: 'API Key'
     },
     key: {
         type: String,
@@ -24,14 +22,19 @@ const businessAPISchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-    permissions: [{
+    type: {
         type: String,
-        enum: ['read', 'write', 'refund', 'webhook'],
-        default: 'read'
-    }],
+        required: true,
+        enum: ['live', 'test'],
+        default: 'live'
+    },
     isActive: {
         type: Boolean,
         default: true
+    },
+    permissions: {
+        type: [String],
+        default: ['read']
     },
     usageCount: {
         type: Number,
@@ -41,27 +44,13 @@ const businessAPISchema = new mongoose.Schema({
         type: Date,
         default: null
     }
-}, { 
-    timestamps: true 
+}, {
+    timestamps: true
 });
 
-// Add indexes for performance and security
-businessAPISchema.index({ businessEmail: 1 });
+// Indexes
+businessAPISchema.index({ userId: 1, key: 1 }, { unique: true });
 businessAPISchema.index({ key: 1 }, { unique: true });
-businessAPISchema.index({ isActive: 1 });
-
-// Add method to increment usage
-businessAPISchema.methods.incrementUsage = function() {
-    this.usageCount = (this.usageCount || 0) + 1;
-    this.lastUsed = new Date();
-    return this.save();
-};
-
-// Add method to toggle active status
-businessAPISchema.methods.toggleStatus = function() {
-    this.isActive = !this.isActive;
-    return this.save();
-};
 
 const BusinessAPI = mongoose.model('BusinessAPI', businessAPISchema);
 

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from 'components/AppIcon';
 import { paymentsAPI } from 'utils/api';
+import { useToast } from 'contexts/ToastContext';
 import "../../styles/payment/finalpayment.css";
 
 const FinalPayment = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const payid = params.get('payid');
 
@@ -15,11 +17,17 @@ const FinalPayment = () => {
   const [error, setError] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const [isPolling, setIsPolling] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [isExpired, setIsExpired] = useState(false);
+
+  const { showToast } = useToast();
 
   // Add refs to track intervals and prevent memory leaks
   const statusIntervalRef = useRef(null);
   const pollingIntervalRef = useRef(null);
+  const timerIntervalRef = useRef(null);
 
   // Initialize dark mode on mount
   useEffect(() => {
@@ -59,6 +67,60 @@ const FinalPayment = () => {
     return defaultNetworks[cryptoType] || 'Blockchain Network';
   };
 
+  // Calculate time remaining based on payment creation time
+  const calculateTimeRemaining = (createdAt) => {
+    if (!createdAt) return null;
+    
+    const createdTime = new Date(createdAt).getTime();
+    const currentTime = Date.now();
+    const expiryTime = createdTime + (10 * 60 * 1000); // 10 minutes in milliseconds
+    const remaining = expiryTime - currentTime;
+    
+    if (remaining <= 0) {
+      setIsExpired(true);
+      return 0;
+    }
+    
+    return remaining;
+  };
+
+  // Format time remaining as MM:SS
+  const formatTimeRemaining = (ms) => {
+    if (ms === null || ms <= 0) return '00:00';
+    
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Start countdown timer
+  const startCountdownTimer = () => {
+    if (timerIntervalRef.current) return;
+    
+    timerIntervalRef.current = setInterval(() => {
+      if (paymentData?.createdAt) {
+        const remaining = calculateTimeRemaining(paymentData.createdAt);
+        setTimeRemaining(remaining);
+        
+        if (remaining <= 0) {
+          stopCountdownTimer();
+        }
+      }
+    }, 1000);
+  };
+
+  // Stop countdown timer
+  const stopCountdownTimer = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  };
+
+  // ...existing code...
+
   useEffect(() => {
     if (!payid) {
       setError('Payment ID is required');
@@ -78,9 +140,11 @@ const FinalPayment = () => {
       if (document.visibilityState === 'visible') {
         if (paymentStatus === 'pending') {
           startStatusPolling();
+          startCountdownTimer();
         }
       } else {
         stopStatusPolling();
+        stopCountdownTimer();
       }
     };
 
@@ -88,6 +152,7 @@ const FinalPayment = () => {
 
     return () => {
       stopStatusPolling();
+      stopCountdownTimer();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [payid]);
@@ -96,8 +161,20 @@ const FinalPayment = () => {
   useEffect(() => {
     if (paymentStatus === 'completed' || paymentStatus === 'failed') {
       stopStatusPolling();
+      stopCountdownTimer();
     }
   }, [paymentStatus]);
+
+  // Start timer when payment data is loaded
+  useEffect(() => {
+    if (paymentData?.createdAt && paymentStatus === 'pending') {
+      const remaining = calculateTimeRemaining(paymentData.createdAt);
+      setTimeRemaining(remaining);
+      startCountdownTimer();
+    }
+    
+    return () => stopCountdownTimer();
+  }, [paymentData, paymentStatus]);
 
   const startStatusPolling = () => {
     if (statusIntervalRef.current) return; // Already polling
@@ -135,6 +212,12 @@ const FinalPayment = () => {
       if (data.success && data.payment) {
         setPaymentData(data.payment);
         setPaymentStatus(data.payment.status || 'pending');
+        
+        // Calculate initial time remaining
+        if (data.payment.createdAt && data.payment.status === 'pending') {
+          const remaining = calculateTimeRemaining(data.payment.createdAt);
+          setTimeRemaining(remaining);
+        }
         
         // Check if associated order is deactivated
         if (data.payment.orderIsActive === false) {
@@ -237,8 +320,13 @@ const FinalPayment = () => {
         console.log('📊 Payment status changed:', paymentStatus, '->', data.status);
         setPaymentStatus(data.status);
         
-        // Stop polling if payment is completed or failed
+        // If terminal status, refresh full payment details so failureReason is available
         if (data.status === 'completed' || data.status === 'failed') {
+          try {
+            await fetchPaymentDetails(); // refresh paymentData (includes failureReason)
+          } catch (e) {
+            console.warn('⚠️ Failed to refresh payment details after status change', e);
+          }
           stopStatusPolling();
         }
       }
@@ -252,10 +340,56 @@ const FinalPayment = () => {
     const address = paymentData?.walletAddress || paymentData?.address;
     if (address && address !== paymentData?.businessEmail) {
       navigator.clipboard.writeText(address);
-      alert('Wallet address copied to clipboard!');
+      showToast('Wallet address copied to clipboard!', 'success');
     } else {
-      alert('No valid wallet address to copy');
+      showToast('No valid wallet address to copy', 'error');
     }
+  };
+
+  const handleRetryPayment = async () => {
+    if (!paymentData) return;
+    
+    try {
+      setIsRetrying(true);
+      console.log('🔄 Retrying payment for:', paymentData.payId);
+      
+      const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/payment/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          oldPayId: paymentData.payId,
+          customerName: paymentData.customerName,
+          customerEmail: paymentData.customerEmail,
+          cryptoType: paymentData.cryptoType,
+          network: paymentData.network,
+          productId: paymentData.productId
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.newPayId) {
+        console.log('✅ New payment created:', data.newPayId);
+        navigate(`/payment/final-payment?payid=${data.newPayId}`, { replace: true });
+        window.location.reload();
+      } else {
+        showToast(data.message || 'Failed to retry payment', 'error');
+      }
+    } catch (err) {
+      console.error('❌ Retry payment error:', err);
+      showToast('Failed to retry payment. Please try again.', 'error');
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const getTimerColor = () => {
+    if (timeRemaining === null) return 'text-gray-500';
+    const minutes = Math.floor(timeRemaining / 60000);
+    if (minutes <= 2) return 'text-red-500 dark:text-red-400';
+    if (minutes <= 5) return 'text-yellow-500 dark:text-yellow-400';
+    return 'text-green-500 dark:text-green-400';
   };
 
   const refreshPage = () => {
@@ -275,7 +409,7 @@ const FinalPayment = () => {
     );
   }
 
-  if (error || !paymentData) {
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center p-8">
@@ -295,222 +429,354 @@ const FinalPayment = () => {
     );
   }
 
+  // --- FIX: Guard for undefined/null payment ---
+  if (!paymentData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center dark:bg-gray-900 p-6">
+        <div className="bg-surface dark:bg-gray-800 rounded-lg p-6 text-center">
+          <Icon name="AlertCircle" size={36} />
+          <p className="mt-4 text-error">Payment details not found.</p>
+          <div className="mt-4">
+            <button onClick={() => navigate('/')} className="px-4 py-2 bg-primary text-white rounded-lg">Go Home</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isCompleted = paymentStatus === 'completed';
+  const isFailed = paymentStatus === 'failed';
+
   return (
-    <div className="payment-final">
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleTheme}
-        className="theme-toggle-btn"
-        aria-label="Toggle theme"
-      >
-        {isDarkMode ? (
-          <Icon name="Sun" size={20} />
-        ) : (
-          <Icon name="Moon" size={20} />
-        )}
-      </button>
-
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-        <div className="max-w-4xl mx-auto flex items-center">
-          <img src="/images/Logo.webp" alt="QuantumPay" className="h-10" />
-        </div>
-      </div>
-
-      {/* Amount Display with Network Info */}
-      <div className="bg-blue-50 dark:bg-gray-800 py-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center space-x-2 bg-blue-600 dark:bg-teal-600 text-white px-6 py-3 rounded-lg">
-            <span className="text-lg">Amount:</span>
-            <span className="text-2xl font-bold">
-              {paymentData.amountCrypto || paymentData.amount}
-            </span>
-            <span className="text-lg">
-              {paymentData.cryptoType || paymentData.type}
+    <div className="final-payment-page min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 transition-colors duration-300">
+      <div className="max-w-3xl mx-auto bg-surface dark:bg-gray-800 rounded-lg shadow-md p-6 border border-border dark:border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <img src="/images/Logo.webp" alt="QuantumPay" className="h-10" />
+            <h1 className="text-xl font-semibold text-text-primary dark:text-white">Payment</h1>
+          </div>
+          <div>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              isCompleted 
+                ? 'bg-success-100 dark:bg-green-900/30 text-success dark:text-green-400' 
+                : isFailed
+                ? 'bg-error-100 dark:bg-red-900/30 text-error dark:text-red-400'
+                : 'bg-warning-100 dark:bg-yellow-900/30 text-warning dark:text-yellow-400'
+            }`}>
+              {isCompleted ? 'Completed' : isFailed ? 'Failed' : (paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1))}
             </span>
           </div>
-          {paymentData.amountUSD && (
-            <div className="mt-2 text-gray-600 dark:text-gray-300">
-              ≈ ${paymentData.amountUSD} USD
-            </div>
-          )}
-          {(paymentData.network) && (
-            <div className="mt-1 text-blue-700 dark:text-teal-400 text-sm">
-              Network: {getNetworkName(paymentData.cryptoType || paymentData.type, paymentData.network)}
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto p-6">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
-          {/* Payment ID */}
-          <div className="mb-6">
-            <p className="text-gray-600 dark:text-gray-400 mb-2">Payment ID:</p>
-            <p className="font-mono text-lg font-medium text-gray-900 dark:text-gray-100">{payid}</p>
-          </div>
-
-          {/* Order ID (if available) */}
-          {(paymentData.order_id || paymentData.orderId) && (
-            <div className="mb-6">
-              <p className="text-gray-600 dark:text-gray-400 mb-2">Order ID:</p>
-              <p className="font-mono text-md text-gray-900 dark:text-gray-100">
-                {paymentData.order_id || paymentData.orderId}
+        {/* Failed Payment UI */}
+        {isFailed ? (
+          <div className="space-y-6">
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-error-100 dark:bg-red-900/30 rounded-full mb-4">
+                <Icon name="XCircle" size={32} className="text-error dark:text-red-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-white mb-2">Payment Failed</h2>
+              <p className="text-text-secondary dark:text-gray-400">
+                {paymentData.failureReason || 'The payment could not be processed.'}
               </p>
             </div>
-          )}
 
-          {/* Enhanced Customer Info with Network */}
-          {(paymentData.customerName || paymentData.customerEmail) && (
-            <div className="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-              <p className="text-gray-600 dark:text-gray-400 mb-2">Payment Details:</p>
-              {paymentData.customerName && (
-                <p className="text-gray-900 dark:text-gray-100">
-                  <strong>Customer:</strong> {paymentData.customerName}
-                </p>
-              )}
-              {paymentData.customerEmail && (
-                <p className="text-gray-900 dark:text-gray-100">
-                  <strong>Email:</strong> {paymentData.customerEmail}
-                </p>
-              )}
-              {paymentData.network && (
-                <p className="text-gray-900 dark:text-gray-100">
-                  <strong>Network:</strong> {getNetworkName(paymentData.cryptoType || paymentData.type, paymentData.network)}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Payment Status */}
-          <div className="mb-6">
-            {paymentStatus === 'completed' ? (
-              <div className="status-completed p-4 rounded-lg">
-                <div className="flex items-center justify-center space-x-2">
-                  <Icon name="CheckCircle" size={24} />
-                  <span className="text-lg font-medium">Payment Successful!</span>
+            <div className="bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg p-6">
+              <h3 className="text-sm font-medium text-text-secondary dark:text-gray-400 mb-4">Payment Details</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Amount</span>
+                  <span className="font-semibold text-text-primary dark:text-white">
+                    ${(paymentData.amountUSD || paymentData.amount || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Cryptocurrency</span>
+                  <span className="font-mono text-text-primary dark:text-white">
+                    {(paymentData.amountCrypto || 0)} {paymentData.cryptoSymbol || paymentData.cryptoType}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Network</span>
+                  <span className="text-text-primary dark:text-white">{paymentData.network}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Payment ID</span>
+                  <span className="font-mono text-xs text-text-secondary dark:text-gray-400">{paymentData.payId}</span>
                 </div>
               </div>
-            ) : (
-              <div className="status-pending p-4 rounded-lg">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Icon name="Clock" size={20} />
-                  <span className="font-medium">Waiting for Payment</span>
-                  {isPolling && (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current ml-2"></div>
-                  )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleRetryPayment}
+                disabled={isRetrying}
+                className="px-6 py-3 bg-primary dark:bg-teal-500 text-white rounded-lg font-medium hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRetrying ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Retrying...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="RefreshCw" size={18} />
+                    <span>Retry Payment</span>
+                  </>
+                )}
+              </button>
+              <a 
+                href="/contact" 
+                className="px-6 py-3 border border-border dark:border-gray-600 text-text-primary dark:text-white rounded-lg font-medium hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth text-center flex items-center justify-center space-x-2"
+              >
+                <Icon name="MessageCircle" size={18} />
+                <span>Contact Support</span>
+              </a>
+            </div>
+
+            <div className="text-center text-xs text-text-secondary dark:text-gray-500 mt-6">
+              <Icon name="Info" size={14} className="inline mr-1" />
+              Need help? Our support team is available 24/7
+            </div>
+          </div>
+        ) : isCompleted ? (
+          // --- Completed: show product/order summary & support ---
+          <div className="space-y-6">
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 dark:bg-green-900/30 rounded-full mb-4">
+                <Icon name="CheckCircle" size={32} className="text-success dark:text-green-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-white mb-2">Payment Confirmed!</h2>
+              <p className="text-text-secondary dark:text-gray-400">Thank you — your payment has been processed successfully.</p>
+            </div>
+
+            <div className="bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg p-6">
+              <h3 className="text-sm font-medium text-text-secondary dark:text-gray-400 mb-4">Product Details</h3>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-lg text-text-primary dark:text-white mb-1">
+                    {paymentData.productName || paymentData.product?.productName}
+                  </div>
+                  <div className="text-sm text-text-secondary dark:text-gray-400">
+                    {paymentData.product?.description || ''}
+                  </div>
                 </div>
-                <p className="text-sm">
-                  Payment status is being monitored automatically.
-                </p>
-                <button
-                  onClick={refreshPage}
-                  disabled={loading}
-                  className="mt-2 text-blue-600 dark:text-teal-400 hover:underline disabled:opacity-50"
-                >
-                  {loading ? 'Refreshing...' : 'Refresh Now'}
-                </button>
+              </div>
+              
+              <div className="border-t border-border dark:border-gray-700 pt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Amount Paid (USD)</span>
+                  <span className="font-semibold text-text-primary dark:text-white">
+                    ${(paymentData.amountUSD || paymentData.amount || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Crypto Amount</span>
+                  <span className="font-mono text-text-primary dark:text-white">
+                    {(paymentData.amountCrypto || 0)} {paymentData.cryptoSymbol || paymentData.cryptoType}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Network</span>
+                  <span className="text-text-primary dark:text-white">{paymentData.network}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary dark:text-gray-400">Payment ID</span>
+                  <span className="font-mono text-xs text-text-secondary dark:text-gray-400">{paymentData.payId}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a 
+                href="/contact" 
+                className="px-6 py-3 bg-primary dark:bg-teal-500 text-white rounded-lg font-medium hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth text-center flex items-center justify-center space-x-2"
+              >
+                <Icon name="MessageCircle" size={18} />
+                <span>Contact Support</span>
+              </a>
+              <button 
+                onClick={() => window.print()} 
+                className="px-6 py-3 border border-border dark:border-gray-600 text-text-primary dark:text-white rounded-lg font-medium hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth flex items-center justify-center space-x-2"
+              >
+                <Icon name="Printer" size={18} />
+                <span>Print Receipt</span>
+              </button>
+            </div>
+
+            <div className="text-center text-xs text-text-secondary dark:text-gray-500 mt-6">
+              <Icon name="Info" size={14} className="inline mr-1" />
+              Keep this receipt for your records
+            </div>
+          </div>
+        ) : (
+          // --- Pending: show QR and address + details ---
+          <div className="space-y-6">
+            {/* Timer Alert */}
+            {!isExpired && timeRemaining !== null && (
+              <div className={`
+                flex items-center justify-center space-x-3 p-4 rounded-lg border-2
+                ${timeRemaining <= 120000 
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800' 
+                  : timeRemaining <= 300000
+                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-800'
+                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-800'
+                }
+              `}>
+                <Icon 
+                  name="Clock" 
+                  size={24} 
+                  className={getTimerColor()}
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Time remaining to complete payment
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Payment will expire after 10 minutes
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-3xl font-bold font-mono ${getTimerColor()}`}>
+                    {formatTimeRemaining(timeRemaining)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">minutes</p>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* QR Code */}
-          {qrCodeUrl && (
-            <div className="mb-6">
-              <p className="text-gray-600 dark:text-gray-400 mb-3">Scan to Pay:</p>
-              <div className="qr-code mx-auto">
-                <img
-                  src={qrCodeUrl}
-                  alt="Payment QR Code"
-                  className="w-full h-full"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Enhanced Address Section with Network Info */}
-          {(paymentData.walletAddress || paymentData.address) && 
-           paymentData.walletAddress !== paymentData.businessEmail && (
-            <div className="mb-6">
-              <p className="text-gray-600 dark:text-gray-400 mb-2">Send Payment To:</p>
-              <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-                <input
-                  type="text"
-                  value={paymentData.walletAddress || paymentData.address}
-                  readOnly
-                  className="address-input"
-                />
-                <button
-                  onClick={copyAddress}
-                  className="copy-button"
-                  title="Copy address"
-                >
-                  <Icon name="Copy" size={16} className="text-gray-600 dark:text-gray-300" />
-                </button>
-              </div>
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                <p>Network: {getNetworkName(paymentData.cryptoType || paymentData.type, paymentData.network)}</p>
-                {paymentData.network && paymentData.network !== 'Bitcoin' && (
-                  <p className="text-yellow-600 dark:text-yellow-400">
-                    ⚠️ Make sure to send on the correct network to avoid loss of funds
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Show warning if no valid wallet address */}
-          {(!paymentData.walletAddress || paymentData.walletAddress === paymentData.businessEmail) && (
-            <div className="mb-6">
-              <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                <div className="flex items-center space-x-2 text-red-700 dark:text-red-300">
-                  <Icon name="AlertCircle" size={20} />
-                  <div>
-                    <p className="font-medium">Payment Cannot Be Processed</p>
-                    <p className="text-sm">
-                      The merchant hasn't configured a valid wallet address for {paymentData.cryptoType || paymentData.type}. 
-                      Please contact the merchant to complete the payment setup.
+            {/* Expired Warning */}
+            {isExpired && (
+              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800 rounded-lg p-6">
+                <div className="flex items-start space-x-3">
+                  <Icon name="AlertTriangle" size={24} className="text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-red-900 dark:text-red-200 mb-2">Payment Time Expired</h3>
+                    <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                      This payment request has expired. Please create a new payment or contact support if you've already sent the payment.
                     </p>
+                    <button
+                      onClick={handleRetryPayment}
+                      disabled={isRetrying}
+                      className="px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-lg font-medium hover:bg-red-700 dark:hover:bg-red-600 transition-smooth flex items-center space-x-2 disabled:opacity-50"
+                    >
+                      {isRetrying ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Creating New Payment...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="RefreshCw" size={16} />
+                          <span>Create New Payment</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Enhanced Payment Instructions with Network Warnings */}
-          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2 text-left">
-            {(paymentData.walletAddress && paymentData.walletAddress !== paymentData.businessEmail) ? (
-              <>
-                <p className="font-medium text-gray-800 dark:text-gray-200">Payment Instructions:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Send exactly <strong>{paymentData.amountCrypto || paymentData.amount} {paymentData.cryptoType || paymentData.type}</strong> to the address above</li>
-                  <li><strong>Important:</strong> Send on the <strong>{paymentData.network || 'correct'}</strong> network only</li>
-                  <li>Wait for network confirmation (this may take a few minutes)</li>
-                  <li>This page will automatically update when payment is confirmed</li>
-                  <li><strong>Do not</strong> send from an exchange - use a personal wallet</li>
-                </ul>
-                
-                {/* Network-specific warnings */}
-                {paymentData.network === 'Bitcoin' && (
-                  <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded p-3 mt-3">
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                      <strong>Bitcoin Network:</strong> Transactions may take 10-60 minutes to confirm depending on network congestion
-                    </p>
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-text-primary dark:text-white mb-2">Complete Your Payment</h2>
+              <p className="text-text-secondary dark:text-gray-400">Send the exact amount to the address below</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* QR Code */}
+              <div className="flex flex-col items-center justify-center bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg p-6">
+                <div className="bg-white p-4 rounded-lg mb-3">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(paymentData.walletAddress || paymentData.address || '')}&size=200x200`}
+                    alt="QR code"
+                    className="w-48 h-48"
+                  />
+                </div>
+                <div className="text-sm text-text-secondary dark:text-gray-400">Scan to pay with your wallet</div>
+              </div>
+
+              {/* Payment Details */}
+              <div className="space-y-4">
+                <div className="bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-border dark:border-gray-700">
+                    <span className="text-sm text-text-secondary dark:text-gray-400">Amount (USD)</span>
+                    <span className="text-xl font-bold text-text-primary dark:text-white">
+                      ${(paymentData.amountUSD || paymentData.amount || 0).toFixed(2)}
+                    </span>
                   </div>
-                )}
-                
-                {(paymentData.network === 'Ethereum') && (
-                  <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded p-3 mt-3">
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      <strong>Ethereum Network:</strong> Ensure you have enough ETH for gas fees.
-                    </p>
+                  
+                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-border dark:border-gray-700">
+                    <span className="text-sm text-text-secondary dark:text-gray-400">Send Exactly</span>
+                    <span className="font-mono font-semibold text-primary dark:text-teal-400">
+                      {(paymentData.amountCrypto || 0)} {paymentData.cryptoSymbol || paymentData.cryptoType}
+                    </span>
                   </div>
-                )}
-              </>
-            ) : null}
+                  
+                  <div className="mb-3">
+                    <div className="text-sm text-text-secondary dark:text-gray-400 mb-1">Network</div>
+                    <div className="font-medium text-text-primary dark:text-white">{paymentData.network}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm text-text-secondary dark:text-gray-400 mb-2">Wallet Address</div>
+                    <div className="flex items-center space-x-2">
+                      <code className="flex-1 text-xs font-mono bg-secondary-50 dark:bg-gray-800 border border-border dark:border-gray-600 rounded px-3 py-2 text-text-primary dark:text-white break-all">
+                        {paymentData.walletAddress || paymentData.address}
+                      </code>
+                      <button 
+                        onClick={() => copy(paymentData.walletAddress || paymentData.address)} 
+                        className="p-2 bg-primary dark:bg-teal-500 text-white rounded hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth flex-shrink-0"
+                        title="Copy address"
+                      >
+                        <Icon name="Copy" size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-warning-50 dark:bg-yellow-900/20 border border-warning-200 dark:border-yellow-800/50 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <Icon name="AlertTriangle" size={16} className="text-warning dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-warning-700 dark:text-yellow-300">
+                      <p className="font-medium mb-1">Important:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Send only {paymentData.cryptoSymbol || paymentData.cryptoType} on {paymentData.network} network</li>
+                        <li>Send the exact amount shown above</li>
+                        <li>Payment will be confirmed by the merchant</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-xs text-text-secondary dark:text-gray-500">
+                  <span className="font-medium">Reference ID:</span> <span className="font-mono">{paymentData.payId}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4 border-t border-border dark:border-gray-700">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-primary dark:bg-teal-500 text-white rounded-lg font-medium hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth flex items-center justify-center space-x-2"
+              >
+                <Icon name="CheckCircle" size={18} />
+                <span>I Have Sent Payment</span>
+              </button>
+              <a 
+                href="/contact" 
+                className="px-6 py-3 border border-border dark:border-gray-600 text-text-primary dark:text-white rounded-lg font-medium hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth text-center flex items-center justify-center space-x-2"
+              >
+                <Icon name="HelpCircle" size={18} />
+                <span>Need Help?</span>
+              </a>
+            </div>
+
+            <div className="text-center text-xs text-text-secondary dark:text-gray-500 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg p-3">
+              <Icon name="Clock" size={14} className="inline mr-1" />
+              This page will automatically update once your payment is confirmed
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

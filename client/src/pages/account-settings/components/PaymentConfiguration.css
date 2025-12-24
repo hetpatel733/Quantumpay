@@ -268,21 +268,14 @@
   padding: 20px 24px;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-bottom: 2px solid #e5e7eb;
+  border-radius: 13px;
   cursor: pointer;
   transition: all 0.3s ease;
-}
-
-.crypto-header:hover {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
 }
 
 .dark .crypto-header {
   background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
   border-bottom-color: #4b5563;
-}
-
-.dark .crypto-header:hover {
-  background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
 }
 
 .crypto-info {
@@ -293,10 +286,12 @@
 }
 
 .crypto-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  object-fit: contain;
+  margin-right: 12px;
+  /* background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); */
   padding: 2px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }

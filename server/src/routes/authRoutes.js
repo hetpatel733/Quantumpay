@@ -1,62 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const { login, validateToken, getUserData } = require('../services/login');
-const { signup } = require('../services/signup');
-const { authenticateUser } = require('../services/auth');
+const { signup, login, logout, validateToken, getUserData, updateProfile, changePassword } = require('../services/auth');
 
-// Login endpoint
-router.post('/login', async (req, res) => {
-  login(req, res);
-});
+// Signup
+router.post('/signup', signup);
 
-// Signup endpoint
-router.post('/signup', async (req, res) => {
-  signup(req, res);
-});
+// Login
+router.post('/login', login);
 
-// Token validation endpoint
-router.get('/validate', async (req, res) => {
-  validateToken(req, res);
-});
+// Logout
+router.post('/logout', logout);
 
-// Logout endpoint
-router.post('/logout', async (req, res) => {
-  console.log("🔍 REQUEST RECEIVED: /api/auth/logout endpoint hit");
-  
-  // Clear all authentication cookies
-  res.clearCookie('token', { 
-    httpOnly: true, 
-    sameSite: 'none', 
-    secure: false,
-    path: '/'
-  });
-  
-  res.clearCookie('auth_token', { 
-    httpOnly: false, 
-    sameSite: 'none', 
-    secure: false,
-    path: '/'
-  });
-  
-  res.clearCookie('email', { 
-    sameSite: 'none', 
-    secure: false,
-    path: '/'
-  });
+// Validate token
+router.get('/validate', validateToken);
 
-  console.log("📤 RESPONSE SENT: Logout successful - Status: 200");
-  res.status(200).json({ 
-    success: true,
-    message: "Logged out successfully" 
-  });
-});
+// Get user data
+router.get('/userdata', getUserData);
 
-// Get user data endpoint
-router.get('/userdata', async (req, res) => {
-  console.log("🔍 REQUEST RECEIVED: /api/auth/userdata endpoint hit");
-  console.log("Query params:", req.query);
-  console.log("Headers:", req.headers);
-  getUserData(req, res);
-});
+// Update user profile
+router.put('/profile/:id', updateProfile);
+
+// Change password
+router.put('/password/:id', changePassword);
 
 module.exports = router;

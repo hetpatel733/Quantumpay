@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import AppButton from '../components/ui/AppButton'
-import { authAPI } from '../api/authAPI'
+import { authAPI } from '../utils/api'
 
 const Signup = () => {
   const navigate = useNavigate()
@@ -67,6 +67,7 @@ const Signup = () => {
         })
       }
 
+      console.log('📤 Sending signup request:', signupData);
       const response = await authAPI.signup(signupData)
 
       if (response.success) {
@@ -406,23 +407,17 @@ const Signup = () => {
                   </div>
                 </div>
 
-                {/* Social Signup */}
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { icon: 'bi-google', name: 'Google' },
-                    { icon: 'bi-github', name: 'GitHub' },
-                    { icon: 'bi-apple', name: 'Apple' }
-                  ].map((provider) => (
-                    <motion.button
-                      key={provider.name}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex items-center justify-center py-3 rounded-xl border-2 border-secondary-200 dark:border-gray-600 hover:border-primary dark:hover:border-teal-400 transition-colors"
-                    >
-                      <i className={`bi ${provider.icon} text-2xl text-text-primary dark:text-white`}></i>
-                    </motion.button>
-                  ))}
+                {/* Social Signup - Only Google */}
+                <div className="grid grid-cols-1 gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center justify-center py-3 rounded-xl border-2 border-secondary-200 dark:border-gray-600 hover:border-primary dark:hover:border-teal-400 transition-colors"
+                  >
+                    <i className="bi bi-google text-2xl text-text-primary dark:text-white"></i>
+                  </motion.button>
                 </div>
+                {/* Removed GitHub and Apple buttons */}
 
                 {/* Login Link */}
                 <p className="text-center mt-8 text-text-secondary dark:text-gray-400">

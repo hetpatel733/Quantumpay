@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Icon from 'components/AppIcon';
-import { usersAPI } from 'utils/api';
+import { authAPI } from 'utils/api';
 import { useAuth } from 'contexts/AuthContext';
 
 const SecuritySettings = () => {
@@ -115,7 +115,7 @@ const SecuritySettings = () => {
     try {
       console.log('🔄 Starting password change for user:', authData.id);
       
-      const response = await usersAPI.changePassword(authData.id, {
+      const response = await authAPI.changePassword(authData.id, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });

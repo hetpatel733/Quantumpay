@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from 'components/AppIcon';
 import { paymentsAPI } from 'utils/api';
+import { useToast } from 'contexts/ToastContext';
 import PaymentLinkModal from './components/PaymentLinkModal';
 
 // A mock modal component for demonstration purposes
@@ -18,8 +19,9 @@ const MockModal = ({ title, onClose, children }) => (
 );
 
 
-const PaymentsManagement = () => {
+const PaymentsManagement = ({ userData }) => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
     // --- STATE MANAGEMENT ---
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -224,7 +226,7 @@ const PaymentsManagement = () => {
     };
 
     const handleCreatePaymentLink = () => setIsPaymentLinkModalOpen(true);
-    const handleBulkExport = () => alert(`Exporting ${selectedPayments.length} payments...`);
+    const handleBulkExport = () => showToast(`Exporting ${selectedPayments.length} payments...`, 'info');
     
     const handlePaymentLinkSuccess = (link) => {
         console.log('Payment link created:', link);
@@ -418,6 +420,7 @@ const PaymentsManagement = () => {
                 isOpen={isPaymentLinkModalOpen}
                 onClose={() => setIsPaymentLinkModalOpen(false)}
                 onSuccess={handlePaymentLinkSuccess}
+                userData={userData}
             />
         </div>
     );

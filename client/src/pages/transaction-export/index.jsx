@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import Icon from 'components/AppIcon';
+import { useToast } from 'contexts/ToastContext';
+import { exportAPI } from 'utils/api';
 
 import ExportConfiguration from './components/ExportConfiguration';
 import ExportPreview from './components/ExportPreview';
 import ExportHistory from './components/ExportHistory';
 
 const TransactionExport = () => {
+  const { showToast } = useToast();
   const [exportConfig, setExportConfig] = useState({
     dateRange: 'last30days',
     customStartDate: '',
@@ -14,7 +17,15 @@ const TransactionExport = () => {
     cryptocurrencies: ['all'],
     amountRange: { min: '', max: '' },
     format: 'csv',
-    columns: ['transactionId', 'amount', 'cryptocurrency', 'status', 'date'],
+    // Default columns - reasonable starting set
+    columns: [
+      'transactionId',
+      'date',
+      'amount',
+      'cryptocurrency',
+      'status',
+      'customer'
+    ],
     includeHeaders: true,
     emailDelivery: false,
     emailAddress: ''
@@ -23,24 +34,77 @@ const TransactionExport = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [activeTab, setActiveTab] = useState('configure');
+  const [refreshHistory, setRefreshHistory] = useState(0); // Trigger history refresh
 
   const handleExport = async () => {
     setIsExporting(true);
     setExportProgress(0);
 
-    // Simulate export progress
+    // Simulate initial progress
     const progressInterval = setInterval(() => {
       setExportProgress(prev => {
-        if (prev >= 100) {
+        if (prev >= 90) {
           clearInterval(progressInterval);
-          setIsExporting(false);
-          // Trigger download or show completion message
-          alert('Export completed successfully!');
-          return 100;
+          return 90;
         }
         return prev + Math.random() * 15;
       });
-    }, 500);
+    }, 300);
+
+    try {
+      // Generate export name
+      const exportName = `Transaction Report - ${new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })}`;
+
+      // Prepare export config for API
+      const apiConfig = {
+        name: exportName,
+        format: exportConfig.format,
+        filters: {
+          dateRange: exportConfig.dateRange,
+          customStartDate: exportConfig.customStartDate || undefined,
+          customEndDate: exportConfig.customEndDate || undefined,
+          status: exportConfig.status,
+          cryptocurrencies: exportConfig.cryptocurrencies,
+          amountMin: exportConfig.amountRange.min ? parseFloat(exportConfig.amountRange.min) : undefined,
+          amountMax: exportConfig.amountRange.max ? parseFloat(exportConfig.amountRange.max) : undefined
+        },
+        columns: exportConfig.columns,
+        includeHeaders: exportConfig.includeHeaders,
+        emailDelivery: exportConfig.emailDelivery,
+        emailAddress: exportConfig.emailDelivery ? exportConfig.emailAddress : undefined
+      };
+
+      console.log('📤 Creating export with config:', apiConfig);
+
+      const response = await exportAPI.create(apiConfig);
+
+      clearInterval(progressInterval);
+
+      if (response.success) {
+        setExportProgress(100);
+        showToast('Export job created! Processing in background...', 'success');
+        
+        // Switch to history tab to show the new export
+        setTimeout(() => {
+          setIsExporting(false);
+          setExportProgress(0);
+          setActiveTab('history');
+          setRefreshHistory(prev => prev + 1); // Trigger history refresh
+        }, 1000);
+      } else {
+        throw new Error(response.message || 'Failed to create export');
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('❌ Export error:', error);
+      showToast('Failed to create export: ' + error.message, 'error');
+      setIsExporting(false);
+      setExportProgress(0);
+    }
   };
 
   const tabs = [
@@ -69,7 +133,7 @@ const TransactionExport = () => {
             {activeTab === 'configure' && (
               <button
                 onClick={handleExport}
-                disabled={isExporting}
+                disabled={isExporting || exportConfig.columns.length === 0}
                 className="
                   flex items-center space-x-2 px-6 py-3
                   bg-primary dark:bg-teal-500 text-white rounded-lg
@@ -102,12 +166,14 @@ const TransactionExport = () => {
             </div>
             <div className="w-full bg-secondary-200 dark:bg-gray-700 rounded-full h-2">
               <div 
-                className="bg-primary dark:bg-teal-500 h-2 rounded-full transition-layout"
+                className="bg-primary dark:bg-teal-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${exportProgress}%` }}
               />
             </div>
             <p className="text-xs text-text-secondary dark:text-gray-400 mt-2">
-              Estimated time remaining: {Math.max(0, Math.round((100 - exportProgress) / 10))} seconds
+              {exportProgress < 90 
+                ? 'Preparing your export...' 
+                : 'Uploading file...'}
             </p>
           </div>
         )}
@@ -123,7 +189,8 @@ const TransactionExport = () => {
                   className={`
                     flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-smooth
                     ${activeTab === tab.id
-                      ? 'border-primary dark:border-teal-500 text-primary dark:text-teal-400' :'border-transparent text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white hover:border-secondary-300 dark:hover:border-gray-600'
+                      ? 'border-primary dark:border-teal-500 text-primary dark:text-teal-400' 
+                      : 'border-transparent text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white hover:border-secondary-300 dark:hover:border-gray-600'
                     }
                   `}
                 >
@@ -149,7 +216,7 @@ const TransactionExport = () => {
           )}
           
           {activeTab === 'history' && (
-            <ExportHistory />
+            <ExportHistory refreshTrigger={refreshHistory} />
           )}
         </div>
       </div>

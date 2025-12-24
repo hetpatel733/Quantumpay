@@ -25,6 +25,41 @@ export const ThemeProvider = ({ children }) => {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const styleId = 'autofill-theme-fix';
+    let styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+
+    const background = isDarkMode ? '#0f172a' : '#f8fafc';
+    const textColor = isDarkMode ? '#f8fafc' : '#0f172a';
+
+    styleEl.textContent = `
+      input:-webkit-autofill,
+      textarea:-webkit-autofill,
+      select:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      textarea:-webkit-autofill:hover,
+      select:-webkit-autofill:hover,
+      input:-webkit-autofill:focus,
+      textarea:-webkit-autofill:focus,
+      select:-webkit-autofill:focus,
+      input:-webkit-autofill:active,
+      textarea:-webkit-autofill:active,
+      select:-webkit-autofill:active,
+      input:-internal-autofill-selected,
+      textarea:-internal-autofill-selected,
+      select:-internal-autofill-selected {
+        box-shadow: 0 0 0px 1000px ${background} inset !important;
+        -webkit-text-fill-color: ${textColor} !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+    `;
+  }, [isDarkMode]);
+
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
   };

@@ -6,7 +6,6 @@ import Icon from 'components/AppIcon';
 import ProfileInformation from './components/ProfileInformation';
 import SecuritySettings from './components/SecuritySettings';
 import PaymentConfiguration from './components/PaymentConfiguration';
-import NotificationSettings from './components/NotificationSettings';
 import ApiManagement from './components/ApiManagement';
 
 const AccountSettings = ({ userData, refreshUserData }) => {
@@ -35,12 +34,6 @@ const AccountSettings = ({ userData, refreshUserData }) => {
       description: 'Cryptocurrency settings and wallet addresses'
     },
     {
-      id: 'notifications',
-      label: 'Notifications',
-      icon: 'Bell',
-      description: 'Email alerts and webhook preferences'
-    },
-    {
       id: 'api',
       label: 'API Management',
       icon: 'Code',
@@ -57,8 +50,6 @@ const AccountSettings = ({ userData, refreshUserData }) => {
         return <SecuritySettings userData={userData} />;
       case 'payment':
         return <PaymentConfiguration userData={userData} />;
-      case 'notifications':
-        return <NotificationSettings userData={userData} />;
       case 'api':
         return <ApiManagement userData={userData} />;
       default:
@@ -82,8 +73,8 @@ const AccountSettings = ({ userData, refreshUserData }) => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Desktop Tabs Sidebar */}
-          <div className="hidden lg:block w-80 flex-shrink-0">
+          {/* Desktop Tabs Sidebar - Sticky */}
+          <div className="hidden lg:block w-80 flex-shrink-0" style={{ position: 'sticky', top: '80px', height: 'fit-content' }}>
             <div className="bg-surface dark:bg-gray-800 rounded-lg border border-border dark:border-gray-700 p-4">
               <h2 className="text-lg font-semibold text-text-primary dark:text-white mb-4">Settings</h2>
               <nav className="space-y-2">

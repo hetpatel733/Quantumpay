@@ -39,13 +39,13 @@ const Navbar = () => {
 
   return (
     <header 
-      className={`fixed top-0 w-full z-50 font-raleway transition-all duration-300 ${
+      className={`fixed top-0 w-full z-50 font-raleway transition-all duration-300 overflow-hidden ${
         scrolled 
           ? 'bg-[#b5f4f6]/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg border-b-2 border-secondary-300 dark:border-gray-700' 
           : 'bg-[#b5f4f6] dark:bg-gray-900 border-b-2 border-secondary-300 dark:border-gray-700'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 py-2">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link to="/" onClick={closeMenu} className="no-underline group">
@@ -90,24 +90,24 @@ const Navbar = () => {
           </nav>
 
           {/* Mobile menu button */}
-          <div className="lg:hidden flex items-center space-x-3">
+          <div className="lg:hidden flex items-center space-x-1 sm:space-x-2 md:space-x-3">
             <ThemeToggle />
             <button
               onClick={toggleMenu}
-              className="flex flex-col justify-center items-center w-10 h-10 space-y-1.5 border-none bg-transparent focus:outline-none z-50 relative"
+              className="flex flex-col justify-center items-center w-8 h-8 sm:w-10 sm:h-10 space-y-1.5 border-none bg-transparent focus:outline-none z-50 relative"
               aria-label="Toggle menu"
             >
               <motion.span
                 animate={isMenuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
-                className="w-7 h-0.5 bg-black dark:bg-white transition-all duration-300"
+                className="w-5 sm:w-7 h-0.5 bg-black dark:bg-white transition-all duration-300"
               />
               <motion.span
                 animate={isMenuOpen ? { opacity: 0 } : { opacity: 1 }}
-                className="w-7 h-0.5 bg-black dark:bg-white transition-all duration-300"
+                className="w-5 sm:w-7 h-0.5 bg-black dark:bg-white transition-all duration-300"
               />
               <motion.span
                 animate={isMenuOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-                className="w-7 h-0.5 bg-black dark:bg-white transition-all duration-300"
+                className="w-5 sm:w-7 h-0.5 bg-black dark:bg-white transition-all duration-300"
               />
             </button>
           </div>

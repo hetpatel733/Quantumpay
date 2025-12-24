@@ -8,7 +8,7 @@ const ThemeToggle = () => {
   return (
     <motion.button
       onClick={toggleTheme}
-      className="relative w-16 h-16 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-200 dark:border-gray-700 overflow-hidden group"
+      className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-200 dark:border-gray-700 overflow-hidden group"
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       aria-label="Toggle theme"
@@ -25,7 +25,7 @@ const ThemeToggle = () => {
         className="absolute"
       >
         <svg
-          className="w-7 h-7 text-yellow-500"
+          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-yellow-500"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -49,7 +49,7 @@ const ThemeToggle = () => {
         className="absolute"
       >
         <svg
-          className="w-7 h-7 text-blue-400"
+          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-blue-400"
           fill="currentColor"
           viewBox="0 0 20 20"
         >

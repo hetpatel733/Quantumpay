@@ -32,7 +32,7 @@ const Footer = () => {
   ]
 
   return (
-    <footer className="bg-[#20263B] dark:bg-gray-950 text-white py-12 px-6 transition-colors duration-300">
+    <footer className="bg-[#20263B] dark:bg-gray-950 text-white py-12 px-4 sm:px-6 transition-colors duration-300 w-full overflow-hidden">
       {/* Footer Navigation Grid */}
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">

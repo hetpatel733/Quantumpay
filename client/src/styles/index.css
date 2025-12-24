@@ -1,5 +1,22 @@
 /* index.css - Custom utilities only (Tailwind handles base resets) */
 
+/* Fix horizontal overflow on mobile devices */
+html, body, #root, .App {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 /* Custom utility classes that Tailwind doesn't provide */
 .transition-layout {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -64,5 +81,53 @@ select option:checked {
   background: linear-gradient(#1ec1c7, #1ec1c7);
   background-color: #1ec1c7;
   color: white;
+}
+
+/* Animation styles */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Modal Scale Animation */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* Toast Animation */
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slideOut {
+  animation: slideOut 0.3s ease-in forwards;
 }
 

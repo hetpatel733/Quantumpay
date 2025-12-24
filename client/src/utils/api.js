@@ -6,6 +6,27 @@ const getAuthToken = () => {
          document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
 };
 
+// Helper to get userId from localStorage
+const getUserId = () => {
+  try {
+    const completeUserData = localStorage.getItem('completeUserData');
+    const userData = localStorage.getItem('userData');
+    
+    if (completeUserData) {
+      const parsed = JSON.parse(completeUserData);
+      return parsed.id || parsed._id;
+    }
+    
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      return parsed.id || parsed._id;
+    }
+  } catch (e) {
+    console.error('Failed to get userId from localStorage:', e);
+  }
+  return null;
+};
+
 import { apiCache } from './apiCache';
 import { debounce } from '../components/lib/utils';
 
@@ -82,12 +103,22 @@ export const apiRequest = async (endpoint, options = {}) => {
         return { success: true, isEmpty: true, data: [] };
       }
       
-      // Try to parse error response body
+      // Handle 413 Payload Too Large
+      if (response.status === 413) {
+        return {
+          success: false,
+          message: 'Request payload too large. Please use smaller images or compress them before uploading.',
+          errorCode: 'PAYLOAD_TOO_LARGE'
+        };
+      }
+      
+      // Try to parse error response body (only read once)
       let errorData;
       try {
-        errorData = await response.json();
+        const responseText = await response.text();
+        errorData = responseText ? JSON.parse(responseText) : { message: `HTTP ${response.status}` };
       } catch (e) {
-        errorData = { message: await response.text() };
+        errorData = { message: `HTTP error! status: ${response.status}` };
       }
       
       if (response.status === 403) {
@@ -116,6 +147,28 @@ export const apiRequest = async (endpoint, options = {}) => {
         apiCache.delete('orders-list');
         apiCache.delete('dashboard-overview');
       }
+
+      // --- NEW: invalidate portfolio cache when portfolio endpoints change ---
+      if (endpoint.includes('/portfolio') || endpoint.includes('/api/portfolio')) {
+        try {
+          apiCache.delete(apiCache.generateKey('/api/portfolio', options.cacheParams || {}));
+          apiCache.delete(apiCache.generateKey('/api/portfolio/stats', {}));
+          apiCache.delete('portfolio-list');
+          apiCache.delete('orders-list');
+          console.log('🧹 Cache invalidated for portfolio endpoints:', endpoint);
+        } catch (e) {
+          console.warn('Cache invalidation error for portfolio:', e);
+        }
+
+        // Dispatch global event so UI can refresh without reload
+        try {
+          window.dispatchEvent(new CustomEvent('portfolio:updated', { detail: { endpoint, method: config.method } }));
+          console.log('📣 Dispatched portfolio:updated event');
+        } catch (e) {
+          console.warn('Failed to dispatch portfolio:updated event', e);
+        }
+      }
+
       if (endpoint.includes('/notifications')) {
         apiCache.delete('notifications-list');
       }
@@ -127,6 +180,15 @@ export const apiRequest = async (endpoint, options = {}) => {
     return data;
   } catch (error) {
     console.error('❌ API request failed:', error);
+    
+    // Handle specific errors
+    if (error.message?.includes('413')) {
+      return {
+        success: false,
+        message: 'Request too large. Please use smaller images.',
+        errorCode: 'PAYLOAD_TOO_LARGE'
+      };
+    }
     
     // Improved error handling for payment config
     if (endpoint.includes('/payment-config') && options.emptyResultsOk) {
@@ -195,6 +257,22 @@ export const authAPI = {
       method: 'POST',
       body: userData
     });
+  },
+
+  // Update user profile
+  updateProfile: async (userId, profileData) => {
+    return await apiRequest(`/api/auth/profile/${userId}`, {
+      method: 'PUT',
+      body: profileData
+    });
+  },
+
+  // Change password
+  changePassword: async (userId, passwordData) => {
+    return await apiRequest(`/api/auth/password/${userId}`, {
+      method: 'PUT',
+      body: passwordData
+    });
   }
 };
 
@@ -211,6 +289,19 @@ export const paymentsAPI = {
       }
     });
 
+    // Add userId if not provided
+    if (!cleanParams.userId) {
+      cleanParams.userId = getUserId();
+    }
+
+    // Handle amount range filters - ensure they're numbers
+    if (cleanParams.amountMin !== undefined) {
+      cleanParams.amountMin = parseFloat(cleanParams.amountMin);
+    }
+    if (cleanParams.amountMax !== undefined) {
+      cleanParams.amountMax = parseFloat(cleanParams.amountMax);
+    }
+
     const queryString = new URLSearchParams(cleanParams).toString();
     
     return await apiRequest(`/api/payments${queryString ? `?${queryString}` : ''}`, {
@@ -223,11 +314,28 @@ export const paymentsAPI = {
     });
   },
 
-  // Get payment by ID
+  // Get payment by ID (payId or _id)
   getById: async (paymentId) => {
-    return await apiRequest(`/api/payments/${paymentId}`, {
-      method: 'GET'
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Get payment by ID error:', error);
+      throw error;
+    }
   },
 
   // Get payment details for payment processing
@@ -356,7 +464,7 @@ export const paymentsAPI = {
 
 // Orders API functions with better empty state handling
 export const ordersAPI = {
-  // Get all orders
+  // Get all orders (portfolio items)
   getAll: async (params = {}) => {
     const cleanParams = {};
     Object.keys(params).forEach(key => {
@@ -367,9 +475,14 @@ export const ordersAPI = {
       }
     });
 
+    // Add userId if not provided
+    if (!cleanParams.userId) {
+      cleanParams.userId = getUserId();
+    }
+
     const queryString = new URLSearchParams(cleanParams).toString();
     
-    return await apiRequest(`/api/orders${queryString ? `?${queryString}` : ''}`, {
+    const response = await apiRequest(`/api/portfolio${queryString ? `?${queryString}` : ''}`, {
       method: 'GET',
       emptyResultsOk: true,
       emptyData: [],
@@ -377,24 +490,54 @@ export const ordersAPI = {
       cacheTTL: 3,
       cacheParams: cleanParams
     });
+
+    // Map products to orders for compatibility
+    if (response.success && response.products) {
+      return {
+        ...response,
+        orders: response.products
+      };
+    }
+    
+    return response;
   },
 
   // Get order by ID
   getById: async (orderId) => {
-    return await apiRequest(`/api/orders/${orderId}`, {
+    const response = await apiRequest(`/api/portfolio/${orderId}`, {
       method: 'GET'
     });
+
+    // Map product to order for compatibility
+    if (response.success && response.product) {
+      return {
+        ...response,
+        order: response.product
+      };
+    }
+
+    return response;
   },
 
-  // Create new order
+  // Create new order (portfolio item)
   create: async (orderData) => {
-    return await apiRequest('/api/orders', {
+    const response = await apiRequest('/api/portfolio', {
       method: 'POST',
       body: orderData
     });
+
+    // Map product to order for compatibility
+    if (response.success && response.product) {
+      return {
+        ...response,
+        order: response.product
+      };
+    }
+
+    return response;
   },
 
-  // Update order
+  // Update order (portfolio item)
   update: async (orderId, updateData) => {
     console.log('🔄 Updating order via API:', orderId, updateData);
     
@@ -407,20 +550,65 @@ export const ordersAPI = {
       throw new Error('Invalid amount provided');
     }
     
-    return await apiRequest(`/api/orders/${orderId}`, {
+    const response = await apiRequest(`/api/portfolio/${orderId}`, {
       method: 'PUT',
       body: updateData
     });
+
+    // Map product to order for compatibility
+    if (response.success && response.product) {
+      return {
+        ...response,
+        order: response.product
+      };
+    }
+
+    return response;
   },
 
-  // Delete order
+  // Toggle order status
+  toggle: async (orderId) => {
+    const response = await apiRequest(`/api/portfolio/${orderId}/toggle`, {
+      method: 'PATCH'
+    });
+
+    // Map product to order for compatibility
+    if (response.success && response.product) {
+      return {
+        ...response,
+        order: response.product
+      };
+    }
+
+    return response;
+  },
+
+  // Delete order (portfolio item)
   delete: async (orderId) => {
     if (!orderId) {
       throw new Error('Order ID is required for deletion');
     }
     
-    return await apiRequest(`/api/orders/${orderId}`, {
+    return await apiRequest(`/api/portfolio/${orderId}`, {
       method: 'DELETE'
+    });
+  },
+
+  // Get portfolio statistics
+  getStats: async (userId) => {
+    const finalUserId = userId || getUserId();
+    
+    if (!finalUserId) {
+      console.error('❌ No userId available for portfolio stats');
+      return {
+        success: false,
+        message: 'User ID not found'
+      };
+    }
+
+    return await apiRequest(`/api/portfolio/stats?userId=${finalUserId}`, {
+      method: 'GET',
+      emptyResultsOk: true
     });
   }
 };
@@ -514,14 +702,25 @@ export const usersAPI = {
 // API Keys API functions with better empty state handling
 export const apiKeysAPI = {
   // Get all API keys
-  getAll: async () => {
+  getAll: async (userId) => {
     try {
-      console.log('🔄 Fetching API keys...');
+      const finalUserId = userId || getUserId();
       
-      return await apiRequest('/api/api-keys', {
+      if (!finalUserId) {
+        console.error('❌ No userId available for API keys');
+        return {
+          success: false,
+          message: 'User ID not found',
+          apiKeys: []
+        };
+      }
+
+      console.log('🔄 Fetching API keys for userId:', finalUserId);
+      
+      return await apiRequest(`/api/api-keys?userId=${finalUserId}`, {
         method: 'GET',
         emptyResultsOk: true,
-        emptyData: [] // Return empty array for new users
+        emptyData: []
       });
     } catch (error) {
       console.error('❌ API Keys fetch error:', error);
@@ -531,6 +730,23 @@ export const apiKeysAPI = {
         apiKeys: []
       };
     }
+  },
+
+  // Get API key statistics
+  getStats: async (userId) => {
+    const finalUserId = userId || getUserId();
+    
+    if (!finalUserId) {
+      return {
+        success: false,
+        message: 'User ID not found'
+      };
+    }
+
+    return await apiRequest(`/api/api-keys/stats?userId=${finalUserId}`, {
+      method: 'GET',
+      emptyResultsOk: true
+    });
   },
 
   // Create new API key
@@ -546,6 +762,13 @@ export const apiKeysAPI = {
     return await apiRequest(`/api/api-keys/${keyId}`, {
       method: 'PUT',
       body: updateData
+    });
+  },
+
+  // Toggle API key active status
+  toggle: async (keyId) => {
+    return await apiRequest(`/api/api-keys/${keyId}/toggle`, {
+      method: 'PATCH'
     });
   },
 
@@ -711,26 +934,29 @@ export const notificationsAPI = {
 export const dashboardAPI = {
   getOverview: async (period = '30', forceRefresh = false) => {
     try {
-      // Add period as a query parameter
-      return await apiRequest(`/api/dashboard/overview?period=${period}`, {
+      const userId = getUserId();
+
+      if (!userId) {
+        console.error('❌ No userId found in localStorage for dashboard overview');
+        throw new Error('User ID not found. Please log in again.');
+      }
+
+      console.log('📊 Fetching dashboard overview with userId:', userId);
+
+      return await apiRequest(`/api/dashboard/overview?period=${period}&userId=${userId}`, {
         enableCache: !forceRefresh,
-        cacheTTL: 3, // Cache for 3 minutes
+        cacheTTL: 3,
         emptyResultsOk: true,
+        cacheParams: { period, userId },
         emptyData: {
-          todayMetrics: {
+          periodMetrics: {
             totalSales: 0,
             transactionCount: 0,
-            // Updated volume structure
             volume: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, MATIC: 0, SOL: 0 },
-            currentMonthSummary: { totalPayments: 0, completed: 0, failed: 0, pending: 0 },
+            statusSummary: { totalPayments: 0, completed: 0, failed: 0, pending: 0 },
             averageTransactionValue: 0,
-            topCryptoCurrency: 'USDT'
-          },
-          monthlyMetrics: {
-            totalSales: 0,
-            transactionCount: 0,
-            // Updated volume structure
-            volume: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, MATIC: 0, SOL: 0 }
+            topCryptoCurrency: 'USDT',
+            periodDays: parseInt(period)
           },
           orderStats: { total: 0, pending: 0, processing: 0, completed: 0, cancelled: 0 },
           dailyBreakdown: [],
@@ -741,18 +967,14 @@ export const dashboardAPI = {
       console.error('Dashboard overview API error:', error);
       return {
         success: true,
-        todayMetrics: {
+        periodMetrics: {
           totalSales: 0,
           transactionCount: 0,
           volume: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, MATIC: 0, SOL: 0 },
-          currentMonthSummary: { totalPayments: 0, completed: 0, failed: 0, pending: 0 },
+          statusSummary: { totalPayments: 0, completed: 0, failed: 0, pending: 0 },
           averageTransactionValue: 0,
-          topCryptoCurrency: 'USDT'
-        },
-        monthlyMetrics: {
-          totalSales: 0,
-          transactionCount: 0,
-          volume: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, MATIC: 0, SOL: 0 }
+          topCryptoCurrency: 'USDT',
+          periodDays: parseInt(period)
         },
         orderStats: { total: 0, pending: 0, processing: 0, completed: 0, cancelled: 0 },
         dailyBreakdown: [],
@@ -763,12 +985,21 @@ export const dashboardAPI = {
   
   getRecentActivity: async (limit = 5) => {
     try {
-      return await apiRequest(`/api/dashboard/recent-activity?limit=${limit}`, {
+      const userId = getUserId();
+
+      if (!userId) {
+        console.error('❌ No userId found in localStorage for recent activity');
+        throw new Error('User ID not found. Please log in again.');
+      }
+
+      console.log('📊 Fetching recent activity with userId:', userId);
+
+      return await apiRequest(`/api/dashboard/recent-activity?limit=${limit}&userId=${userId}`, {
         enableCache: true,
-        cacheTTL: 2, // Cache for 2 minutes
+        cacheTTL: 2,
         emptyResultsOk: true,
         emptyData: [],
-        cacheParams: { limit }
+        cacheParams: { limit, userId }
       });
     } catch (error) {
       console.error('Recent activity API error:', error);
@@ -782,12 +1013,21 @@ export const dashboardAPI = {
 
   getCryptoDistribution: async (period = '30days') => {
     try {
-      return await apiRequest(`/api/dashboard/crypto-distribution?period=${period}`, {
+      const userId = getUserId();
+
+      if (!userId) {
+        console.error('❌ No userId found in localStorage for crypto distribution');
+        throw new Error('User ID not found. Please log in again.');
+      }
+
+      console.log('📊 Fetching crypto distribution with userId:', userId);
+
+      return await apiRequest(`/api/dashboard/crypto-distribution?period=${period}&userId=${userId}`, {
         enableCache: true,
         cacheTTL: 5, // Cache for 5 minutes (changes less frequently)
         emptyResultsOk: true,
         emptyData: [],
-        cacheParams: { period }
+        cacheParams: { period, userId }
       });
     } catch (error) {
       console.error('Crypto distribution API error:', error);
@@ -813,19 +1053,32 @@ export const dashboardAPI = {
 
 // Enhanced Payment Config API with network support
 export const paymentConfigAPI = {
-  getConfig: async () => {
+  // Get payment configuration
+  getConfig: async (userId) => {
     try {
-      const response = await apiRequest('/api/payment-config', {
+      const finalUserId = userId || getUserId();
+      
+      if (!finalUserId) {
+        console.error('❌ No userId available for payment config');
+        return { 
+          success: true, 
+          config: { wallets: {} },
+          isEmpty: true,
+          message: 'User ID not found'
+        };
+      }
+
+      const response = await apiRequest(`/api/payment-config/${finalUserId}`, {
         enableCache: true,
-        cacheTTL: 10, // Cache for 10 minutes (configuration changes infrequently)
+        cacheTTL: 10,
       });
 
       if (!response || response.status === 404) {
         return { 
           success: true, 
-          configuration: null,
+          config: { wallets: {} },
           isEmpty: true,
-          message: 'No configuration found - showing default interface'
+          message: 'No configuration found'
         };
       }
 
@@ -834,53 +1087,55 @@ export const paymentConfigAPI = {
       console.error('Error fetching payment config:', error);
       return { 
         success: true, 
-        configuration: null,
+        config: { wallets: {} },
         isEmpty: true,
-        message: 'Loading default configuration interface'
+        message: 'Loading default configuration'
       };
     }
   },
 
-  updateConfig: async (cryptoType, network, configData) => {
+  // Update payment configuration
+  updateConfig: async (userId, configData) => {
     try {
-      const response = await apiRequest(`/api/payment-config/crypto/${cryptoType}/${network}`, {
+      const finalUserId = userId || getUserId();
+      
+      if (!finalUserId) {
+        return { success: false, message: 'User ID not found' };
+      }
+
+      const response = await apiRequest(`/api/payment-config/${finalUserId}`, {
         method: 'PUT',
         body: configData
       });
 
       return response;
     } catch (error) {
-      console.error('Error updating crypto config:', error);
+      console.error('Error updating payment config:', error);
       return { success: false, message: error.message };
     }
   },
 
-  // Toggle crypto enabled/disabled with network support
-  toggleCrypto: async (coinType, network, enabled) => {
+  // Update single wallet address
+  updateWallet: async (userId, currency, address) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payment-config/crypto/${coinType}/${network}/toggle`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({ enabled })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      const finalUserId = userId || getUserId();
+      
+      if (!finalUserId) {
+        return { success: false, message: 'User ID not found' };
       }
 
-      const data = await response.json();
-      return data;
+      const response = await apiRequest(`/api/payment-config/${finalUserId}/wallet`, {
+        method: 'PUT',
+        body: { currency, address }
+      });
+
+      return response;
     } catch (error) {
-      console.error('Error toggling crypto:', error);
+      console.error('Error updating wallet:', error);
       return { success: false, message: error.message };
     }
   },
-
+  
   // Update global conversion settings
   updateGlobalConversionSettings: async (conversionSettings) => {
     try {
@@ -934,6 +1189,66 @@ export const paymentConfigAPI = {
   }
 };
 
+// Transaction Export API
+export const exportAPI = {
+  // Create new export job
+  create: async (exportConfig) => {
+    const userId = getUserId();
+    if (!userId) {
+      return { success: false, message: 'User ID not found' };
+    }
+
+    return await apiRequest('/api/exports', {
+      method: 'POST',
+      body: {
+        userId,
+        ...exportConfig
+      }
+    });
+  },
+
+  // Get all exports for user
+  getAll: async (params = {}) => {
+    const userId = getUserId();
+    if (!userId) {
+      return { success: false, message: 'User ID not found', exports: [] };
+    }
+
+    const queryParams = new URLSearchParams({
+      userId,
+      limit: params.limit || 20,
+      skip: params.skip || 0
+    }).toString();
+
+    return await apiRequest(`/api/exports?${queryParams}`, {
+      method: 'GET',
+      emptyResultsOk: true,
+      emptyData: []
+    });
+  },
+
+  // Get single export by ID
+  getById: async (exportId) => {
+    return await apiRequest(`/api/exports/${exportId}`, {
+      method: 'GET'
+    });
+  },
+
+  // Delete export
+  delete: async (exportId) => {
+    return await apiRequest(`/api/exports/${exportId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Retry failed export
+  retry: async (exportId) => {
+    return await apiRequest(`/api/exports/${exportId}/retry`, {
+      method: 'POST'
+    });
+  }
+};
+
 // General API
 export const generalAPI = {
   contact: (contactData) => apiRequest('/api/contact', {
@@ -948,33 +1263,6 @@ export const generalAPI = {
   healthCheck: () => apiRequest('/health'),
 };
 
-// Notification Settings API
-export const notificationSettingsAPI = {
-  // Get notification settings
-  getSettings: async () => {
-    return await apiRequest('/api/notification-settings', {
-      method: 'GET',
-      enableCache: true,
-      cacheTTL: 10
-    });
-  },
-  
-  // Update notification settings
-  updateSettings: async (settings) => {
-    return await apiRequest('/api/notification-settings', {
-      method: 'PUT',
-      body: settings
-    });
-  },
-  
-  // Reset notification settings
-  resetSettings: async () => {
-    return await apiRequest('/api/notification-settings/reset', {
-      method: 'POST'
-    });
-  }
-};
-
 export default {
   auth: authAPI,
   users: usersAPI,
@@ -984,7 +1272,7 @@ export default {
   apiKeys: apiKeysAPI,
   paymentConfig: paymentConfigAPI,
   notifications: notificationsAPI,
-  notificationSettings: notificationSettingsAPI,
   dashboard: dashboardAPI,
   general: generalAPI,
+  exports: exportAPI // Add exports
 };

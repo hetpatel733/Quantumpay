@@ -14,54 +14,81 @@ const port = process.env.PORT || 8000;
 // Connect to the database
 require("./db/conn");
 
-// Import all models ONCE in specific order to prevent conflicts
-// Delete any duplicate lowercase model files first
+// Import all models ONCE in specific order
 try {
     require("./models/User");
-    require("./models/Payment");
-    require("./models/Order");
-    require("./models/BusinessAPI");
-    require("./models/Portfolio");
+    require("./models/LoginToken");
     require("./models/Notification");
     require("./models/DashboardDailyMetric");
+    require("./models/Product");
+    require("./models/Payment");
+    require("./models/CurrencyDetails");
     require("./models/PaymentConfiguration");
+    require("./models/BusinessAPI");
+    require("./models/TransactionExport");
     console.log('✅ All models loaded successfully');
+
+    // --- FIX: Drop old/unused indexes on startup ---
+    const mongoose = require('mongoose');
+    mongoose.connection.once('open', async () => {
+        try {
+            const Payment = mongoose.model('Payment');
+            const indexes = await Payment.collection.indexes();
+            console.log('📋 Current Payment indexes:', indexes.map(i => i.name));
+
+            // Drop old transactionId index if it exists
+            const hasOldIndex = indexes.some(i => i.name === 'transactionId_1');
+            if (hasOldIndex) {
+                await Payment.collection.dropIndex('transactionId_1');
+                console.log('🗑️ Dropped old transactionId_1 index');
+            }
+
+            // --- Initialize Payment Expiration Job ---
+            const { initializePaymentExpirationJob } = require('./jobs/paymentExpirationJob');
+            initializePaymentExpirationJob();
+
+            // --- NEW: Initialize Payment Verification Job ---
+            const { initializePaymentVerificationJob } = require('./jobs/paymentVerificationJob');
+            initializePaymentVerificationJob();
+
+        } catch (err) {
+            if (err.code === 27) {
+                console.log('ℹ️ Index transactionId_1 does not exist (already dropped)');
+                const { initializePaymentExpirationJob } = require('./jobs/paymentExpirationJob');
+                initializePaymentExpirationJob();
+                
+                // --- NEW: Initialize Payment Verification Job ---
+                const { initializePaymentVerificationJob } = require('./jobs/paymentVerificationJob');
+                initializePaymentVerificationJob();
+            } else {
+                console.warn('⚠️ Index cleanup warning:', err.message);
+                const { initializePaymentExpirationJob } = require('./jobs/paymentExpirationJob');
+                initializePaymentExpirationJob();
+                
+                // --- NEW: Initialize Payment Verification Job ---
+                const { initializePaymentVerificationJob } = require('./jobs/paymentVerificationJob');
+                initializePaymentVerificationJob();
+            }
+        }
+    });
+
 } catch (error) {
     console.error('❌ Error loading models:', error.message);
-    console.error('💡 Make sure to delete duplicate model files (order.js, businessAPI.js, payment.js)');
     process.exit(1);
 }
 
-// Add a debug endpoint to check payments
-app.get("/api/debug/payments", async (req, res) => {
-    try {
-        const { Payment } = require('./models/Payment');
-        const mongoose = require('mongoose');
-
-        const totalPayments = await Payment.countDocuments({});
-        const samplePayments = await Payment.find({}).limit(5).select('payId businessEmail status createdAt');
-
-        res.json({
-            totalPayments,
-            samplePayments,
-            collections: await mongoose.connection.db.listCollections().toArray()
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Import route modules
+// Import routes
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const apiKeyRoutes = require('./routes/apiKeyRoutes');
-const validatePaymentRoutes = require('./routes/validatePaymentRoutes');
-const generalRoutes = require('./routes/generalRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const paymentConfigRoutes = require('./routes/paymentConfigRoutes');
+const apiManagementRoutes = require('./routes/apiManagementRoutes');
+const portfolioManagementRoutes = require('./routes/portfolioManagementRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const currencyRoutes = require('./routes/currencyRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const imagekitRoutes = require('./routes/imagekitRoutes');
+const exportRoutes = require('./routes/exportRoutes'); // Add new routes
 
 // ----------------------------------
 //      MIDDLEWARE CONFIGURATION
@@ -71,11 +98,13 @@ const corsOptions = {
     origin: [
         'http://localhost:3000', // React dev server
         'http://localhost:9000',
-        'https://quantumpay-server.vercel.app',
-        'https://quantumpayfinance.vercel.app',
+        '13.228.225.19',
+        '18.142.128.26',
+        '54.254.162.138',
+        'https://quantumpay-onrender.onrender.com'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     optionsSuccessStatus: 200
 };
@@ -83,15 +112,19 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable pre-flight requests for all routes
 
-app.use(express.json()); // To parse JSON bodies
-app.use(express.urlencoded({ extended: false })); // To parse URL-encoded bodies
+// Increase payload size limit for JSON and URL-encoded data
+app.use(express.json({ limit: '50mb' })); // Increased from default 100kb
+app.use(express.urlencoded({ limit: '50mb', extended: false })); // Increased from default
 app.use(cookieParser()); // To parse cookies
+
+// Serve static files for the React app
+app.use(express.static(path.join(__dirname, "../../client/dist")));
 
 // ----------------------------------
 //         CORE & API ROUTES
 // ----------------------------------
 // Health check endpoint
-app.get("/", (req, res) => {
+app.get("/health", (req, res) => {
     res.status(200).json({
         success: true,
         message: "Server is healthy",
@@ -99,47 +132,40 @@ app.get("/", (req, res) => {
     });
 });
 
-// Root API route
-app.get("/api", (req, res) => {
-    res.send("Hello From QuantumPay Server - API is running!");
-});
-
-// API Route Groups
+// Auth routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/api-keys', apiKeyRoutes);
-app.use('/api/general', generalRoutes);
+
+// Contact routes
+app.use('/api/contact', contactRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
+
+// Payment configuration routes
 app.use('/api/payment-config', paymentConfigRoutes);
 
-// Payment processing routes for customers (NO AUTHENTICATION REQUIRED) - Must come BEFORE the catch-all
-app.use('/api/payment', validatePaymentRoutes);
+// API management routes
+app.use('/api/api-keys', apiManagementRoutes);
 
-// Legacy payment endpoint (for backward compatibility) (NO AUTHENTICATION REQUIRED)
-app.post("/api/payment/coinselect", (req, res) => {
-    const { CoinselectFunction } = require('./services/payment');
-    CoinselectFunction(req, res);
-});
+// Portfolio management routes
+app.use('/api/portfolio', portfolioManagementRoutes);
 
-// Add specific payment endpoints to ensure they work
-app.get('/api/payment/payment-details', async (req, res) => {
-    const { getPaymentDetails } = require('./services/payment');
-    getPaymentDetails(req, res);
-});
+// Payment routes
+app.use('/api/payment', paymentRoutes);
+app.use('/api/payments', paymentRoutes);
 
-app.get('/api/payment/check-status', async (req, res) => {
-    const { checkstatus } = require('./services/payment');
-    checkstatus(req, res);
-});
+// Currency conversion routes
+app.use('/api/currency', currencyRoutes);
 
-// Add missing paymentinfo endpoint for backward compatibility
-app.get('/api/paymentinfo', async (req, res) => {
-    const { paymentinfo } = require('./services/paymentinfo');
-    paymentinfo(req, res);
-});
+// Dashboard routes
+app.use('/api/dashboard', dashboardRoutes);
+
+// ImageKit routes
+app.use('/api/imagekit', imagekitRoutes);
+
+// Export routes
+app.use('/api/exports', exportRoutes);
+
 
 // ----------------------------------
 //         ERROR & CATCH-ALL
@@ -152,12 +178,16 @@ app.use('/api/*', (req, res) => {
     });
 });
 
-module.exports = app;
+// Catch-all handler: Forwards all other requests to the React app
+// app.get("*", (req, res) => {
+//     res.sendFile(path.join(__dirname, "../../client/dist", "index.html"));
+// });
 
-if (!process.env.VERCEL) {
-    app.listen(port, () => {
-        console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
-        console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
-    });
-}
+// ----------------------------------
+//          START SERVER
+// ----------------------------------
+app.listen(port, () => {
+    console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
+    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
+});

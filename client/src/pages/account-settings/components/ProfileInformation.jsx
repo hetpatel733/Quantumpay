@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Icon from 'components/AppIcon';
 import Image from 'components/AppImage';
-import { usersAPI } from 'utils/api';
-import { useAuth } from 'contexts/AuthContext';
+import { authAPI } from 'utils/api';
+import { uploadImageToImageKit, fileToBase64 } from 'utils/imagekit';
+import { useToast } from 'contexts/ToastContext';
 
 const ProfileInformation = ({ userData, refreshUserData }) => {
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null); // Store the actual file
   const [profileData, setProfileData] = useState({
     businessName: '',
     contactName: '',
@@ -20,7 +24,8 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
     profileImage: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face'
   });
 
-  const { userData: authData } = useAuth();
+  // Debug log
+  console.log('🎯 ProfileInformation received userData:', userData);
 
   useEffect(() => {
     if (userData && typeof userData === 'object') {
@@ -36,6 +41,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         businessDescription: userData.description || '',
         profileImage: userData.profileImage || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face'
       };
+      console.log('📝 Setting profile data:', updatedProfileData);
       setProfileData(updatedProfileData);
     }
   }, [userData]);
@@ -50,14 +56,63 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
     }));
   };
 
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Profile image must be less than 5MB', 'error');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please upload a valid image file', 'error');
+      return;
+    }
+    
+    try {
+      setSelectedFile(file);
+      const base64Preview = await fileToBase64(file);
+      setProfileData(prev => ({
+        ...prev,
+        profileImage: base64Preview
+      }));
+      console.log('📷 Profile image selected, will upload on save');
+    } catch (error) {
+      console.error('❌ Error creating preview:', error);
+      showToast('Failed to load image preview', 'error');
+    }
+  };
+
   const handleSave = async () => {
-    if (!authData?.id) {
-      alert('User ID not found. Please log in again.');
+    if (!userData?.id) {
+      showToast('User ID not found. Please log in again.', 'error');
       return;
     }
 
     setIsSaving(true);
+    
     try {
+      let finalProfileImageUrl = profileData.profileImage;
+
+      if (selectedFile) {
+        console.log('📤 Uploading profile image to ImageKit...');
+        setUploadingImage(true);
+        
+        const uploadResult = await uploadImageToImageKit(selectedFile, 'QuantumPay/profiles');
+        
+        if (uploadResult.success) {
+          finalProfileImageUrl = uploadResult.url;
+          console.log('✅ Profile image uploaded to ImageKit:', uploadResult.url);
+        } else {
+          console.error('⚠️ ImageKit upload failed:', uploadResult.error);
+          showToast(`Failed to upload profile image: ${uploadResult.error}. Saving other changes.`, 'warning');
+          finalProfileImageUrl = userData.profileImage || '';
+        }
+        
+        setUploadingImage(false);
+      }
+
       const updateData = {
         name: profileData.contactName,
         businessName: profileData.businessName,
@@ -66,25 +121,32 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         country: profileData.country,
         businessType: profileData.businessType,
         timeZone: profileData.timezone,
-        description: profileData.businessDescription
+        description: profileData.businessDescription,
+        profileImage: finalProfileImageUrl
       };
 
-      const response = await usersAPI.updateProfile(authData.id, updateData);
+      console.log('💾 Saving profile with userId:', userData.id);
+      const response = await authAPI.updateProfile(userData.id, updateData);
       
-      if (response.success) {
+      if (response?.success) {
         setIsEditing(false);
-        alert('Profile updated successfully!');
-        if (refreshUserData) {
-          await refreshUserData();
-        }
+        showToast('Profile updated successfully!', 'success');
+        
+        const updatedUserData = { ...userData, ...response.userData };
+        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        localStorage.setItem('completeUserData', JSON.stringify(updatedUserData));
+        
+        setSelectedFile(null);
+        window.location.reload();
       } else {
-        alert('Failed to update profile: ' + (response.message || 'Unknown error'));
+        showToast('Failed to update profile: ' + (response?.message || 'Unknown error'), 'error');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please check your connection and try again.');
+      showToast('Failed to update profile. Please check your connection and try again.', 'error');
     } finally {
       setIsSaving(false);
+      setUploadingImage(false);
     }
   };
 
@@ -106,20 +168,6 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
     }
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileData(prev => ({
-          ...prev,
-          profileImage: e.target.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -135,17 +183,20 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
             <>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 border border-border dark:border-gray-600 rounded-lg text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth"
+                disabled={isSaving || uploadingImage}
+                className="px-4 py-2 border border-border dark:border-gray-600 rounded-lg text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || uploadingImage}
                 className="px-4 py-2 bg-primary dark:bg-teal-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                {isSaving && <Icon name="Loader2" size={16} color="currentColor" className="animate-spin" />}
-                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+                {(isSaving || uploadingImage) && <Icon name="Loader2" size={16} color="currentColor" className="animate-spin" />}
+                <span>
+                  {uploadingImage ? 'Uploading...' : isSaving ? 'Saving...' : 'Save Changes'}
+                </span>
               </button>
             </>
           ) : (
@@ -174,6 +225,11 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
             )}
+            {selectedFile && (
+              <div className="absolute -bottom-8 left-0 text-xs text-blue-500 dark:text-blue-400 whitespace-nowrap">
+                Will upload on save
+              </div>
+            )}
           </div>
           <div>
             <h4 className="font-medium text-text-primary dark:text-white">
@@ -184,7 +240,10 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
             </p>
             {isEditing && (
               <p className="text-xs text-text-secondary dark:text-gray-500 mt-2">
-                Click the camera icon to upload a new photo. Recommended size: 400x400px
+                {uploadingImage 
+                  ? 'Uploading image...' 
+                  : 'Click the camera icon to upload a new photo. Recommended size: 400x400px'
+                }
               </p>
             )}
           </div>

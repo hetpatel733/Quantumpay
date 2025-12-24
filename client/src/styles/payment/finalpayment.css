@@ -119,6 +119,22 @@
     }
   }
 
+  /* Timer pulse animation */
+  @keyframes timer-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  .timer-critical {
+    animation: timer-pulse 1s ease-in-out infinite;
+  }
+
   @media (max-width: 480px) {
     .address-input {
       font-size: 0.75rem;

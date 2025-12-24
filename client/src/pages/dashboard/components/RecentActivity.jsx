@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from 'components/AppIcon';
 import { dashboardAPI } from 'utils/api';
+import { useToast } from 'contexts/ToastContext';
 
 const RecentActivity = ({ onPaymentStatusChange }) => {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { showToast } = useToast();
 
   // Fetch real recent activity data on initial load only
   useEffect(() => {

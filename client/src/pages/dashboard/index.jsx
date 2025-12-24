@@ -1,38 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import Icon from 'components/AppIcon';
 import { dashboardAPI } from 'utils/api';
 import { debounce } from 'components/lib/utils';
+import { useToast } from 'contexts/ToastContext';
 import PaymentLinkModal from '../payments-management/components/PaymentLinkModal';
 
 import RecentActivity from './components/RecentActivity';
 
-const Dashboard = () => {
+const Dashboard = ({ userData }) => {
+  const { showToast } = useToast();
   const [selectedPeriod, setSelectedPeriod] = useState('30');
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPaymentLinkModalOpen, setIsPaymentLinkModalOpen] = useState(false);
 
-  // Create metrics from real data - Remove Total Payments card
+  // Create metrics from real data - Now using periodMetrics with real-time pending
   const getMetrics = () => {
     if (!dashboardData) return [];
 
-    // Defensive: always provide a fallback structure
-    const todayMetrics = {
+    const periodMetrics = {
       ...{
-        currentMonthSummary: { pending: 0, failed: 0 },
-        totalSales: 0
+        statusSummary: { pending: 0, failed: 0, completed: 0 },
+        totalSales: 0,
+        periodDays: parseInt(selectedPeriod)
       },
-      ...dashboardData.todayMetrics
+      ...dashboardData.periodMetrics
     };
+
+    const periodText = periodMetrics.periodDays === 1 ? 'Today' : 
+                       `Last ${periodMetrics.periodDays} Days`;
 
     return [
       {
-        title: 'Pending Transactions',
-        value: todayMetrics.currentMonthSummary?.pending?.toString() || '0',
-        change: '+0',
+        title: 'Pending Transactions (Now)', // Changed to "Now" to indicate real-time
+        value: periodMetrics.statusSummary?.pending?.toString() || '0',
+        change: 'Live',
         changeType: 'neutral',
         icon: 'Clock',
         color: 'text-warning',
@@ -40,8 +45,8 @@ const Dashboard = () => {
         route: '/dashboard/payments-management?status=pending'
       },
       {
-        title: 'Completed Volume',
-        value: `$${(todayMetrics.totalSales || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        title: `Completed Volume (${periodText})`,
+        value: `$${(periodMetrics.totalSales || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
         change: '+0.0%',
         changeType: 'neutral',
         icon: 'CheckCircle',
@@ -50,8 +55,8 @@ const Dashboard = () => {
         route: '/dashboard/payments-management?status=completed'
       },
       {
-        title: 'Failed Payments',
-        value: todayMetrics.currentMonthSummary?.failed?.toString() || '0',
+        title: `Failed Payments (${periodText})`,
+        value: periodMetrics.statusSummary?.failed?.toString() || '0',
         change: '+0',
         changeType: 'neutral',
         icon: 'XCircle',
@@ -62,56 +67,55 @@ const Dashboard = () => {
     ];
   };
 
-  // Enhanced chart data formatter
+  // Enhanced chart data formatter - MODIFIED: Show total volume only
   const getChartData = () => {
     if (!dashboardData || !dashboardData.dailyBreakdown || dashboardData.dailyBreakdown.length === 0) {
       console.log('⚠️ No daily breakdown data for chart');
-      // Return placeholder data with updated crypto types
+      // Return placeholder data
       return Array(7).fill(0).map((_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (6-i));
         return {
           name: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          BTC: 0,
-          ETH: 0,
-          USDT: 0,
-          USDC: 0,
-          MATIC: 0,
-          SOL: 0
+          volume: 0
         };
       });
     }
 
     console.log('📊 Using daily breakdown data for chart:', dashboardData.dailyBreakdown.length, 'days');
     
-    // Use the daily breakdown data from the API with updated crypto types
+    // Use the daily breakdown data from the API
     return dashboardData.dailyBreakdown.map(day => ({
       name: day.name,
-      BTC: parseFloat(day.BTC || 0),
-      ETH: parseFloat(day.ETH || 0),
-      USDT: parseFloat(day.USDT || 0),
-      USDC: parseFloat(day.USDC || 0),
-      MATIC: parseFloat(day.MATIC || 0),
-      SOL: parseFloat(day.SOL || 0)
+      volume: parseFloat(day.volume || 0)
     }));
   };
 
   // Create crypto distribution from real data
   const getCryptoDistribution = () => {
-    if (!dashboardData || !dashboardData.cryptoDistribution) {
-      // Show placeholder for empty state with new crypto types
-      return [
-        { name: 'USDT', value: 20, color: '#26A17B' },
-        { name: 'USDC', value: 20, color: '#1FC7D4' },
-        { name: 'BTC', value: 20, color: '#F7931A' },
-        { name: 'ETH', value: 20, color: '#627EEA' },
-        { name: 'MATIC', value: 10, color: '#8247E5' },
-        { name: 'SOL', value: 10, color: '#9945FF' }
-      ];
+    if (!dashboardData || !dashboardData.cryptoDistribution || dashboardData.cryptoDistribution.length === 0) {
+      console.log('⚠️ No crypto distribution data available');
+      // Return empty array instead of placeholder when no data
+      return [];
     }
 
+    console.log('📊 Using crypto distribution data:', dashboardData.cryptoDistribution);
+    
     // Use real distribution data
     return dashboardData.cryptoDistribution.filter(item => item.value > 0);
+  };
+
+  // NEW: Calculate total volume for selected period
+  const getTotalVolume = () => {
+    if (!dashboardData || !dashboardData.dailyBreakdown) {
+      return 0;
+    }
+    
+    const total = dashboardData.dailyBreakdown.reduce((sum, day) => {
+      return sum + (parseFloat(day.volume) || 0);
+    }, 0);
+    
+    return total;
   };
 
   // Debounced data fetching to prevent rapid API calls
@@ -120,19 +124,18 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
-      console.log(`🔄 Fetching dashboard data ${forceRefresh ? '(force refresh)' : ''}`);
+      console.log(`🔄 Fetching dashboard data for ${selectedPeriod} days ${forceRefresh ? '(force refresh)' : ''}`);
       
-      // Fetch all dashboard data in parallel with caching
       const [overviewResponse, cryptoDistResponse] = await Promise.all([
-        dashboardAPI.getOverview(selectedPeriod, forceRefresh), // Pass selectedPeriod
+        dashboardAPI.getOverview(selectedPeriod, forceRefresh),
         dashboardAPI.getCryptoDistribution(selectedPeriod + 'days')
       ]);
       
       if (overviewResponse.success) {
-        console.log('📊 Dashboard data received:', {
-          pendingCount: overviewResponse.todayMetrics?.currentMonthSummary?.pending || 0,
-          completedVolume: overviewResponse.todayMetrics?.totalSales || 0,
-          failedCount: overviewResponse.todayMetrics?.currentMonthSummary?.failed || 0,
+        console.log(`📊 Dashboard data for ${selectedPeriod} days received:`, {
+          pendingCount: overviewResponse.periodMetrics?.statusSummary?.pending || 0,
+          completedVolume: overviewResponse.periodMetrics?.totalSales || 0,
+          failedCount: overviewResponse.periodMetrics?.statusSummary?.failed || 0,
           dailyData: overviewResponse.dailyBreakdown?.length || 0
         });
         
@@ -148,18 +151,14 @@ const Dashboard = () => {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data. ' + err.message);
       
-      // Set default empty data for graceful degradation with updated structure
+      // Set default empty data
       setDashboardData({
-        todayMetrics: {
+        periodMetrics: {
           totalSales: 0,
           transactionCount: 0,
           volume: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, MATIC: 0, SOL: 0 },
-          currentMonthSummary: { totalPayments: 0, completed: 0, failed: 0, pending: 0 }
-        },
-        monthlyMetrics: {
-          totalSales: 0,
-          transactionCount: 0,
-          volume: { USDT: 0, USDC: 0, BTC: 0, ETH: 0, MATIC: 0, SOL: 0 }
+          statusSummary: { totalPayments: 0, completed: 0, failed: 0, pending: 0 },
+          periodDays: parseInt(selectedPeriod)
         },
         orderStats: { total: 0, pending: 0, processing: 0, completed: 0, cancelled: 0 },
         cryptoDistribution: []
@@ -172,7 +171,7 @@ const Dashboard = () => {
   // Fetch dashboard data with force refresh capability
   useEffect(() => {
     debouncedFetchData(false); // Initial load, don't force refresh
-  }, [selectedPeriod]); // Only refetch when period changes
+  }, [selectedPeriod]); // Refetch when period changes
 
   // Only fetch data on initial load or when period changes
   // Users can manually refresh with the Refresh Data button
@@ -194,6 +193,7 @@ const Dashboard = () => {
   const metricCards = getMetrics();
   const chartData = getChartData();
   const cryptoDistribution = getCryptoDistribution();
+  const totalVolume = getTotalVolume(); // NEW: Get total volume
 
   const periodOptions = [
     { value: '7', label: '7 Days' },
@@ -245,16 +245,15 @@ const Dashboard = () => {
       )}
 
       {/* Payment Link Modal */}
-      {isPaymentLinkModalOpen && (
-        <PaymentLinkModal
-          isOpen={isPaymentLinkModalOpen}
-          onClose={() => setIsPaymentLinkModalOpen(false)}
-          onSuccess={(link) => {
-            navigator.clipboard.writeText(link);
-            alert(`Payment link generated and copied to clipboard!\n\n${link}`);
-          }}
-        />
-      )}
+      <PaymentLinkModal
+        isOpen={isPaymentLinkModalOpen}
+        onClose={() => setIsPaymentLinkModalOpen(false)}
+        onSuccess={(link) => {
+          navigator.clipboard.writeText(link);
+          showToast('Payment link generated and copied to clipboard!', 'success');
+        }}
+        userData={userData}
+      />
       
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -290,7 +289,7 @@ const Dashboard = () => {
             <span>Generate Payment Link</span>
           </button>
           <button
-            onClick={() => alert('Report export initiated. You will receive an email when ready.')}
+            onClick={() => showToast('Report export initiated. You will receive an email when ready.', 'info')}
             className="
               flex items-center justify-center space-x-2 px-4 py-2
               border border-border dark:border-gray-600 rounded-lg
@@ -304,7 +303,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Metrics Cards - Now showing 3 cards */}
+      {/* Metrics Cards - Now showing period-aware data */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {metricCards.map((card, index) => (
           <div
@@ -339,9 +338,20 @@ const Dashboard = () => {
         {/* Payment Trends Chart */}
         <div className="xl:col-span-2 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
-            <div>
-              <h2 className="text-xl font-semibold text-text-primary dark:text-white">Payment Trends</h2>
-              <p className="text-text-secondary dark:text-gray-400 text-sm">Cryptocurrency payment volume over time</p>
+            <div className="flex-1">
+              <div className="flex items-baseline space-x-3">
+                <h2 className="text-xl font-semibold text-text-primary dark:text-white">Payment Trends</h2>
+                {/* NEW: Total Volume Badge */}
+                <div className="flex items-center space-x-2 px-3 py-1 bg-primary-50 dark:bg-teal-900/30 rounded-full">
+                  <Icon name="TrendingUp" size={16} color="var(--color-primary)" className="dark:text-teal-400" />
+                  <span className="text-lg font-bold text-primary dark:text-teal-400">
+                    ${totalVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+              <p className="text-text-secondary dark:text-gray-400 text-sm mt-1">
+                Total payment volume over {selectedPeriod} days
+              </p>
             </div>
             <div className="flex space-x-2">
               {periodOptions.map((option) => (
@@ -363,15 +373,9 @@ const Dashboard = () => {
           </div>
           
           <div className="h-80">
-            {chartData.length > 0 && chartData.some(day => 
-              parseFloat(day.BTC) > 0 || 
-              parseFloat(day.ETH) > 0 || 
-              parseFloat(day.USDT) > 0 || 
-              parseFloat(day.USDC) > 0
-            ) ? (
+            {chartData.length > 0 && chartData.some(day => parseFloat(day.volume) > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis 
                     dataKey="name" 
                     stroke="var(--color-text-secondary)"
@@ -380,9 +384,10 @@ const Dashboard = () => {
                   <YAxis 
                     stroke="var(--color-text-secondary)"
                     fontSize={12}
+                    tickFormatter={(value) => `$${value.toLocaleString()}`}
                   />
                   <Tooltip 
-                    formatter={(value) => ['$' + parseFloat(value).toFixed(2), 'Volume']}
+                    formatter={(value) => ['$' + parseFloat(value).toFixed(2), 'Total Volume']}
                     contentStyle={{
                       backgroundColor: 'var(--color-surface)',
                       border: '1px solid var(--color-border)',
@@ -390,12 +395,12 @@ const Dashboard = () => {
                       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
                     }}
                   />
-                  <Bar dataKey="BTC" fill="#F7931A" name="Bitcoin" />
-                  <Bar dataKey="ETH" fill="#627EEA" name="Ethereum" />
-                  <Bar dataKey="USDT" fill="#26A17B" name="USDT" />
-                  <Bar dataKey="USDC" fill="#1FC7D4" name="USDC" />
-                  <Bar dataKey="MATIC" fill="#8247E5" name="MATIC" />
-                  <Bar dataKey="SOL" fill="#9945FF" name="SOL" />
+                  <Bar 
+                    dataKey="volume" 
+                    fill="#1ec1c7" 
+                    name="Total Volume"
+                    radius={[8, 8, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -417,48 +422,60 @@ const Dashboard = () => {
             <p className="text-text-secondary dark:text-gray-400 text-sm">Payment volume by cryptocurrency</p>
           </div>
           
-          <div className="h-64 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={cryptoDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {cryptoDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div className="space-y-3">
-            {cryptoDistribution.map((crypto, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: crypto.color }}
-                  />
-                  <span className="text-text-primary dark:text-white text-sm font-medium">{crypto.name}</span>
-                </div>
-                <span className="text-text-secondary dark:text-gray-400 text-sm">{crypto.value}%</span>
+          {cryptoDistribution.length > 0 ? (
+            <>
+              <div className="h-64 mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={cryptoDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {cryptoDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'var(--color-surface)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
+              
+              <div className="space-y-3">
+                {cryptoDistribution.map((crypto, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: crypto.color }}
+                      />
+                      <span className="text-text-primary dark:text-white text-sm font-medium">{crypto.name}</span>
+                    </div>
+                    <span className="text-text-secondary dark:text-gray-400 text-sm">{crypto.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Icon name="PieChart" size={48} color="var(--color-text-secondary)" className="mx-auto mb-4" />
+                <p className="text-text-secondary dark:text-gray-400">No distribution data yet</p>
+                <p className="text-text-secondary dark:text-gray-400 text-sm">Complete payments to see crypto breakdown</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

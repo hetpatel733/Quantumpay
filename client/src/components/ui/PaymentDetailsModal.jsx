@@ -111,21 +111,23 @@ const PaymentDetailsModal = ({
         "
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3">
-            <Icon name="FileText" size={24} color="currentColor" className="text-primary dark:text-teal-400" />
-            <div>
-              <h2 className="text-xl font-semibold text-text-primary text-gray-900 dark:text-gray-100">Payment Details</h2>
-              <p className="text-sm text-text-secondary text-gray-600 dark:text-gray-400">Transaction ID: {payment.id}</p>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+            <Icon name="FileText" size={24} color="currentColor" className="text-primary dark:text-teal-400 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base sm:text-xl font-semibold text-text-primary text-gray-900 dark:text-gray-100 truncate">Payment Details</h2>
+              <p className="text-xs sm:text-sm text-text-secondary text-gray-600 dark:text-gray-400 truncate">Transaction ID: {payment.id}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="
-              p-2 rounded-lg
+              ml-2 p-2 rounded-lg flex-shrink-0
               hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth
               text-text-secondary hover:text-text-primary text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100
+              w-10 h-10 flex items-center justify-center
             "
+            aria-label="Close modal"
           >
             <Icon name="X" size={20} color="currentColor" />
           </button>

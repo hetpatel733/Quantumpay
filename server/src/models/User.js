@@ -1,23 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    type: {
-        type: String,
-        required: true,
-        enum: ['business', 'customer', 'Business', 'Personal'], // Add both old and new formats
-        default: 'customer'
-    },
     name: {
         type: String,
         required: true,
         trim: true
-    },
-    businessName: {
-        type: String,
-        trim: true,
-        required: function() {
-            return this.type === 'business';
-        }
     },
     email: {
         type: String,
@@ -27,7 +14,7 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
     },
-    passwordHash: {
+    password: {
         type: String,
         required: true
     },
@@ -51,31 +38,51 @@ const userSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
-    timeZone: {
+    businessName: {
         type: String,
-        default: 'America/New_York'
+        trim: true,
+        default: ''
     },
     description: {
         type: String,
         trim: true,
         default: ''
     },
+    profileImage: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    profileImageFileId: {
+        type: String,
+        trim: true,
+        default: null
+    },
+    timeZone: {
+        type: String,
+        default: 'America/New_York'
+    },
     verified: {
         type: Boolean,
         default: false
     },
-    token: {
+    status: {
         type: String,
-        default: null
+        enum: ['active', 'suspended', 'pending', 'inactive'],
+        default: 'active'
+    },
+    role: {
+        type: String,
+        enum: ['business', 'customer', 'admin'],
+        default: 'customer'
     }
-}, { 
-    timestamps: true 
+}, {
+    timestamps: true
 });
 
-// Add indexes for performance
-userSchema.index({ email: 1 });
-userSchema.index({ type: 1 });
-userSchema.index({ businessName: 1 });
+// Indexes
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ createdAt: 1 });
 
 const User = mongoose.model('User', userSchema);
 

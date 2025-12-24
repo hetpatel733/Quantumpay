@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Icon from 'components/AppIcon';
 import { ordersAPI, apiKeysAPI } from 'utils/api';
+import { useToast } from 'contexts/ToastContext';
 
-const PaymentLinkModal = ({ isOpen, onClose, onSuccess }) => {
+const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
+  const { showToast } = useToast();
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [apiKeys, setApiKeys] = useState([]);
   const [selectedItem, setSelectedItem] = useState('');
@@ -19,24 +21,57 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess }) => {
     }
   }, [isOpen]);
 
+  // Re-fetch when portfolio changes globally (so new products appear immediately)
+  useEffect(() => {
+    const onPortfolioUpdated = (e) => {
+      console.log('📣 PaymentLinkModal detected portfolio:updated', e?.detail);
+      if (isOpen) fetchData();
+    };
+    window.addEventListener('portfolio:updated', onPortfolioUpdated);
+    return () => window.removeEventListener('portfolio:updated', onPortfolioUpdated);
+  }, [isOpen]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
       setError('');
       
-      console.log('🔄 Fetching portfolio items and API keys...');
-      
+      // --- FIX: Pass userId to both API calls ---
+      const userId = userData?.id;
+      if (!userId) {
+        setError('User ID not found. Please log in again.');
+        setPortfolioItems([]);
+        setApiKeys([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔄 Fetching portfolio items and API keys for user:', userId);
+
       // Fetch portfolio items and API keys
       const [ordersResponse, apiKeysResponse] = await Promise.all([
-        ordersAPI.getAll({ limit: 100 }),
-        apiKeysAPI.getAll()
+        ordersAPI.getAll({ userId, limit: 100 }),
+        apiKeysAPI.getAll(userId)
       ]);
 
       console.log('📦 Orders response:', ordersResponse);
       console.log('📦 API Keys response:', apiKeysResponse);
 
+      // --- Normalize products ---
       if (ordersResponse.success) {
-        const orders = ordersResponse.orders || [];
+        const orders = (ordersResponse.orders || []).map((o, idx) => ({
+          // ensure stable ids and productId fields
+          _id: o._id?.toString() || o.id || `order-${idx}`,
+          id: o._id?.toString() || o.id || `order-${idx}`,
+          productId: o.productId || o.orderId || o.id || `PRD_FALLBACK_${idx}`,
+          productName: o.productName || o.name || `Product ${idx + 1}`,
+          amountUSD: o.amountUSD || o.amount || 0,
+          isActive: typeof o.isActive === 'boolean' ? o.isActive : true,
+          description: o.description || '',
+          image: o.image || '',
+          // preserve original
+          __raw: o
+        }));
         setPortfolioItems(orders);
         console.log(`✅ Loaded ${orders.length} portfolio items`);
       } else {
@@ -44,23 +79,34 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess }) => {
         setPortfolioItems([]);
       }
 
+      // --- Normalize API keys ---
       if (apiKeysResponse.success) {
         const allKeys = apiKeysResponse.apiKeys || [];
-        const activeKeys = allKeys.filter(key => key.isActive);
-        setApiKeys(activeKeys);
-        
-        console.log(`✅ Found ${activeKeys.length} active API keys out of ${allKeys.length} total`);
-        
-        // Auto-select first active API key if available
+        const normalized = allKeys.map((k, idx) => ({
+          _id: k._id?.toString() || k.id || `apikey-${idx}`,
+          key: k.key || k.value || k.apiKey || k._id?.toString() || `key-${idx}`,
+          label: k.label || k.name || 'API Key',
+          isActive: !!k.isActive,
+          __raw: k
+        }));
+
+        const activeKeys = normalized.filter(k => k.isActive);
+        setApiKeys(normalized);
+
+        console.log(`✅ Found ${activeKeys.length} active API keys out of ${normalized.length} total`);
+
+        // Auto-select first active API key id if available
         if (activeKeys.length > 0) {
           setSelectedApiKey(activeKeys[0]._id);
-          console.log('🔑 Auto-selected API key:', activeKeys[0].key.substring(0, 10) + '...');
+          console.log('🔑 Auto-selected API key id:', activeKeys[0]._id, 'key:', activeKeys[0].key);
         } else {
           console.warn('⚠️ No active API keys found');
+          setSelectedApiKey('');
         }
       } else {
         console.warn('⚠️ Failed to fetch API keys:', apiKeysResponse.message);
         setApiKeys([]);
+        setSelectedApiKey('');
       }
     } catch (err) {
       console.error('❌ Error fetching data:', err);
@@ -76,36 +122,61 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    const selectedOrder = portfolioItems.find(item => item._id === selectedItem);
-    const selectedApi = apiKeys.find(key => key._id === selectedApiKey);
+    // Debugging info
+    console.log('🔎 generatePaymentLink inputs:', { selectedItem, selectedApiKey });
+    console.log('📦 portfolioItems sample:', portfolioItems && portfolioItems.length ? portfolioItems[0] : 'no-items');
+    console.log('🔑 apiKeys sample:', apiKeys && apiKeys.length ? apiKeys[0] : 'no-keys');
 
+    // Try to find the order by several possible id fields
+    const selectedOrder = portfolioItems.find(item =>
+      item._id === selectedItem ||
+      item.id === selectedItem ||
+      item.productId === selectedItem ||
+      (item._id && item._id.toString && item._id.toString() === selectedItem)
+    );
+
+    // Try to find the API key by _id or by key string (robust)
+    const selectedApi = apiKeys.find(key =>
+      key._id === selectedApiKey ||
+      key.key === selectedApiKey ||
+      (key._id && key._id.toString && key._id.toString() === selectedApiKey)
+    );
+
+    // If either is missing, give a more detailed error for troubleshooting
     if (!selectedOrder || !selectedApi) {
+      console.warn('⚠️ Invalid selection details:', {
+        selectedOrderFound: !!selectedOrder,
+        selectedApiFound: !!selectedApi,
+        portfolioItemIds: portfolioItems.map(p => ({ _id: p._id, id: p.id, productId: p.productId })),
+        apiKeyIds: apiKeys.map(k => ({ _id: k._id, key: k.key }))
+      });
+
       setError('Invalid selection. Please try again.');
       return;
     }
 
     // Check if order is active
     if (!selectedOrder.isActive) {
-      setError('Selected product/order is deactivated and cannot be used for payments. Please select an active product.');
+      setError('Selected product is deactivated. Please activate it first.');
       return;
     }
 
     // Check if API key is active
     if (!selectedApi.isActive) {
-      setError('Selected API key is currently paused. Please select an active API key or reactivate the paused one.');
+      setError('Selected API key is paused. Please activate it first.');
       return;
     }
 
-    // Always use baseUrl from env for payment link
-    const paymentLink = `${baseUrl}/payment/${selectedApi.key}/${selectedOrder.orderId}`;
+    // Use productId when available; fallback to _id
+    const productIdentifier = selectedOrder.productId || selectedOrder._id;
+    const paymentLink = `${baseUrl}/payment/${selectedApi.key}/${productIdentifier}`;
     setGeneratedLink(paymentLink);
     setError('');
   };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedLink);
-    // You could add a toast notification here
-    alert('Payment link copied to clipboard!');
+    showToast('Payment link copied to clipboard!', 'success');
   };
 
   const handleClose = () => {
@@ -151,9 +222,9 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess }) => {
                   onChange={(e) => setSelectedItem(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  <option value="">Choose a product...</option>
-                  {portfolioItems.map((item) => (
-                    <option key={item._id} value={item._id}>
+                  <option key="placeholder-product" value="">Choose a product...</option>
+                  {portfolioItems.map((item, idx) => (
+                    <option key={item._id || `product-${idx}`} value={item._id}>
                       {item.productName} - ${item.amountUSD}
                     </option>
                   ))}
@@ -175,10 +246,10 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess }) => {
                   onChange={(e) => setSelectedApiKey(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
-                  <option value="">Choose an API key...</option>
-                  {apiKeys.map((key) => (
-                    <option key={key._id} value={key._id}>
-                      {key.label} ({key.key.substring(0, 10)}...)
+                  <option key="placeholder-apikey" value="">Choose an API key...</option>
+                  {apiKeys.map((keyObj, idx) => (
+                    <option key={keyObj._id || `apikey-${idx}`} value={keyObj._id}>
+                      {keyObj.label} ({keyObj.key?.substring(0, 10) || keyObj._id.substring(0, 10)}...)
                     </option>
                   ))}
                 </select>

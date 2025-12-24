@@ -1,34 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import Icon from 'components/AppIcon';
-import { apiRequest } from 'utils/api';
+import { paymentConfigAPI } from 'utils/api';
+import { useAuth } from 'contexts/AuthContext';
 import './PaymentConfiguration.css';
 
-const PaymentConfiguration = () => {
-  const [config, setConfig] = useState(null);
-  const [supportedCryptos, setSupportedCryptos] = useState(null);
+const PaymentConfiguration = ({ userData }) => {
+  const { userData: authData } = useAuth();
+  const [config, setConfig] = useState({ wallets: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
-  const [expandedCrypto, setExpandedCrypto] = useState(null);
-  const [changes, setChanges] = useState({});
+  const [walletAddresses, setWalletAddresses] = useState({});
+  const [enabledCryptos, setEnabledCryptos] = useState({});
+
+  // Supported cryptocurrencies with multiple blockchain networks
+  const supportedCryptos = [
+    // Native Coins
+    { id: 'BTC', name: 'Bitcoin', symbol: 'BTC', network: 'Bitcoin', image: '/images/Coins/BTC.webp' },
+    { id: 'ETH', name: 'Ethereum', symbol: 'ETH', network: 'Ethereum', image: '/images/Coins/ETH.webp' },
+    { id: 'BNB', name: 'Binance Coin', symbol: 'BNB', network: 'BSC', image: '/images/Coins/bnb.webp' },
+    { id: 'SOL', name: 'Solana', symbol: 'SOL', network: 'Solana', image: '/images/Coins/SOL.webp' },
+    { id: 'POL', name: 'Polygon Token', symbol: 'POL', network: 'Polygon', image: '/images/Coins/MATIC.webp' },
+    
+    // USDT across multiple chains
+    { id: 'USDT_ETHEREUM', name: 'Tether', symbol: 'USDT', network: 'Ethereum', image: '/images/Coins/USDT.webp' },
+    { id: 'USDT_SOLANA', name: 'Tether', symbol: 'USDT', network: 'Solana', image: '/images/Coins/USDT.webp' },
+    { id: 'USDT_TRON', name: 'Tether', symbol: 'USDT', network: 'TRON', image: '/images/Coins/USDT.webp' },
+    { id: 'USDT_BSC', name: 'Tether', symbol: 'USDT', network: 'BSC', image: '/images/Coins/USDT.webp' },
+    { id: 'USDT_POLYGON', name: 'Tether', symbol: 'USDT', network: 'Polygon', image: '/images/Coins/USDT.webp' },
+    
+    // USDC across multiple chains
+    { id: 'USDC_ETHEREUM', name: 'USD Coin', symbol: 'USDC', network: 'Ethereum', image: '/images/Coins/USDC.png' },
+    { id: 'USDC_SOLANA', name: 'USD Coin', symbol: 'USDC', network: 'Solana', image: '/images/Coins/USDC.png' },
+    { id: 'USDC_TRON', name: 'USD Coin', symbol: 'USDC', network: 'TRON', image: '/images/Coins/USDC.png' },
+    { id: 'USDC_BSC', name: 'USD Coin', symbol: 'USDC', network: 'BSC', image: '/images/Coins/USDC.png' },
+    { id: 'USDC_POLYGON', name: 'USD Coin', symbol: 'USDC', network: 'Polygon', image: '/images/Coins/USDC.png' }
+  ];
 
   useEffect(() => {
-    fetchConfiguration();
-    fetchSupportedCryptos();
-  }, []);
+    if (authData?.id || userData?.id) {
+      fetchConfiguration();
+    }
+  }, [authData?.id, userData?.id]);
 
   const fetchConfiguration = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await apiRequest('/api/payment-config', {
-        method: 'GET'
-      });
+      const userId = authData?.id || userData?.id;
+      if (!userId) {
+        setError('User ID not found');
+        return;
+      }
+
+      const response = await paymentConfigAPI.getConfig(userId);
 
       if (response.success) {
-        setConfig(response.config);
+        setConfig(response.config || { wallets: {} });
+        const wallets = response.config?.wallets || {};
+        setWalletAddresses(wallets);
+        
+        // Set enabled state based on whether wallet has an address
+        const enabled = {};
+        Object.keys(wallets).forEach(currency => {
+          if (wallets[currency] && wallets[currency].trim()) {
+            enabled[currency] = true;
+          }
+        });
+        setEnabledCryptos(enabled);
+        
         console.log('✅ Payment configuration loaded');
       } else {
         setError(response.message || 'Failed to load configuration');
@@ -41,47 +83,23 @@ const PaymentConfiguration = () => {
     }
   };
 
-  const fetchSupportedCryptos = async () => {
-    try {
-      const response = await apiRequest('/api/payment-config/supported', {
-        method: 'GET'
-      });
-
-      if (response.success) {
-        setSupportedCryptos(response);
-        console.log('✅ Supported cryptos loaded');
-      }
-    } catch (err) {
-      console.error('❌ Error loading supported cryptos:', err);
-    }
+  const handleToggleCrypto = (currency) => {
+    setEnabledCryptos(prev => ({
+      ...prev,
+      [currency]: !prev[currency]
+    }));
+    // Keep wallet address in database for future showcase
   };
 
-  const handleCryptoToggle = (cryptoType, network, currentState) => {
-    const key = `${cryptoType}_${network}`;
-    const currentConfig = getCryptoConfig(cryptoType, network);
-    
-    setChanges(prev => ({
+  const handleWalletChange = (currency, value) => {
+    setWalletAddresses(prev => ({
       ...prev,
-      [key]: {
-        ...prev[key],
-        enabled: !currentState,
-        address: prev[key]?.address !== undefined ? prev[key].address : currentConfig.address
-      }
+      [currency]: value
     }));
   };
 
-  const handleAddressChange = (cryptoType, network, value) => {
-    const key = `${cryptoType}_${network}`;
-    const currentConfig = getCryptoConfig(cryptoType, network);
-    
-    setChanges(prev => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        address: value,
-        enabled: prev[key]?.enabled !== undefined ? prev[key].enabled : currentConfig.enabled
-      }
-    }));
+  const getEnabledCount = () => {
+    return Object.values(enabledCryptos).filter(Boolean).length;
   };
 
   const handleSaveChanges = async () => {
@@ -90,54 +108,43 @@ const PaymentConfiguration = () => {
       setError('');
       setSuccess('');
 
-      // Convert changes object to array format
-      const updates = Object.entries(changes).map(([key, value]) => {
-        const [cryptoType, network] = key.split('_');
-        
-        // Get current config to preserve existing values
-        const currentConfig = config?.cryptoConfigurations.find(
-          c => c.coinType === cryptoType && c.network === network
-        ) || {};
-        
-        return {
-          cryptoType,
-          network,
-          enabled: value.enabled !== undefined ? value.enabled : currentConfig.enabled,
-          address: value.address !== undefined ? value.address : currentConfig.address
-        };
+      // Validate that all enabled currencies have addresses
+      for (const [currency, isEnabled] of Object.entries(enabledCryptos)) {
+        if (isEnabled) {
+          const address = walletAddresses[currency]?.trim();
+          if (!address) {
+            const cryptoName = supportedCryptos.find(c => c.id === currency)?.symbol || currency;
+            setError(`Please provide a wallet address for ${cryptoName} before saving`);
+            setSaving(false);
+            return;
+          }
+        }
+      }
+
+      const userId = authData?.id || userData?.id;
+      if (!userId) {
+        setError('User ID not found');
+        return;
+      }
+
+      // Only save wallet addresses for enabled currencies
+      const walletsToSave = {};
+      Object.entries(walletAddresses).forEach(([currency, address]) => {
+        if (enabledCryptos[currency] && address && address.trim()) {
+          walletsToSave[currency] = address.trim();
+        }
       });
 
-      const response = await apiRequest('/api/payment-config/bulk-update', {
-        method: 'POST',
-        body: { updates }
+      const response = await paymentConfigAPI.updateConfig(userId, {
+        wallets: walletsToSave
       });
 
       if (response.success) {
-        // Update local config state immediately with the saved changes
-        setConfig(prevConfig => {
-          const updatedConfig = { ...prevConfig };
-          
-          // Apply all changes to the configuration
-          updates.forEach(update => {
-            const index = updatedConfig.cryptoConfigurations.findIndex(
-              c => c.coinType === update.cryptoType && c.network === update.network
-            );
-            
-            if (index !== -1) {
-              updatedConfig.cryptoConfigurations[index] = {
-                ...updatedConfig.cryptoConfigurations[index],
-                enabled: update.enabled,
-                address: update.address || ''
-              };
-            }
-          });
-          
-          return updatedConfig;
-        });
-
+        setConfig(response.config);
+        // Update local state to match saved data (remove disabled currencies)
+        setWalletAddresses(walletsToSave);
         setSuccess('✅ Configuration saved successfully!');
-        setChanges({}); // Clear all pending changes
-
+        
         // Clear success message after 3 seconds
         setTimeout(() => setSuccess(''), 3000);
       } else {
@@ -151,53 +158,26 @@ const PaymentConfiguration = () => {
     }
   };
 
-  const getCryptoConfig = (cryptoType, network) => {
-    const key = `${cryptoType}_${network}`;
-    
-    // Get the base config from server
-    const baseConfig = config?.cryptoConfigurations.find(
-      c => c.coinType === cryptoType && c.network === network
-    ) || { enabled: false, address: '' };
-    
-    // If there are pending changes, merge them
-    if (changes[key]) {
-      return {
-        ...baseConfig,
-        enabled: changes[key].enabled !== undefined ? changes[key].enabled : baseConfig.enabled,
-        address: changes[key].address !== undefined ? changes[key].address : baseConfig.address
-      };
+  const hasChanges = () => {
+    const originalWallets = config.wallets || {};
+
+    // Check wallet address differences
+    const walletKeys = new Set([...Object.keys(walletAddresses), ...Object.keys(originalWallets)]);
+    for (const key of walletKeys) {
+      const currentVal = (walletAddresses[key] || '').trim();
+      const originalVal = (originalWallets[key] || '').trim();
+      if (currentVal !== originalVal) return true;
     }
-    
-    return baseConfig;
-  };
 
-  const getEnabledCount = () => {
-    if (!config?.cryptoConfigurations) return 0;
-    
-    let count = 0;
-    config.cryptoConfigurations.forEach(crypto => {
-      const key = `${crypto.coinType}_${crypto.network}`;
-      
-      // Check if there's a pending change for this crypto
-      if (changes[key] && changes[key].enabled !== undefined) {
-        if (changes[key].enabled) count++;
-      } else if (crypto.enabled) {
-        count++;
-      }
-    });
-    
-    return count;
-  };
+    // Check enabled toggles vs initial state (initial = wallet existed)
+    const toggleKeys = new Set([...Object.keys(enabledCryptos), ...Object.keys(originalWallets)]);
+    for (const key of toggleKeys) {
+      const initialEnabled = Boolean((originalWallets[key] || '').toString().trim());
+      const currentEnabled = Boolean(enabledCryptos[key]);
+      if (initialEnabled !== currentEnabled) return true;
+    }
 
-  const groupByCrypto = () => {
-    const grouped = {};
-    config?.cryptoConfigurations.forEach(crypto => {
-      if (!grouped[crypto.coinType]) {
-        grouped[crypto.coinType] = [];
-      }
-      grouped[crypto.coinType].push(crypto);
-    });
-    return grouped;
+    return false;
   };
 
   if (loading) {
@@ -211,24 +191,21 @@ const PaymentConfiguration = () => {
     );
   }
 
-  const grouped = groupByCrypto();
-  const enabledCount = getEnabledCount();
-
   return (
     <div className="payment-config-container">
       {/* Header */}
       <div className="config-header">
         <div className="header-content">
           <h1 className="config-title">Payment Configurations</h1>
-          <p className="config-subtitle">Manage which cryptocurrencies and networks your business accepts</p>
+          <p className="config-subtitle">Manage wallet addresses for cryptocurrency payments</p>
         </div>
         <div className="header-stats">
           <div className="stat-box">
-            <div className="stat-value">{enabledCount}</div>
+            <div className="stat-value">{getEnabledCount()}</div>
             <div className="stat-label">Enabled</div>
           </div>
           <div className="stat-box">
-            <div className="stat-value">{config?.cryptoConfigurations.length || 0}</div>
+            <div className="stat-value">{supportedCryptos.length}</div>
             <div className="stat-label">Total</div>
           </div>
         </div>
@@ -239,9 +216,6 @@ const PaymentConfiguration = () => {
         <div className="alert alert-error">
           <Icon name="AlertCircle" size={20} />
           <span>{error}</span>
-          <button onClick={() => setError('')} className="close-btn">
-            <Icon name="X" size={16} />
-          </button>
         </div>
       )}
 
@@ -254,199 +228,98 @@ const PaymentConfiguration = () => {
       )}
 
       {/* Unsaved Changes Warning */}
-      {Object.keys(changes).length > 0 && (
+      {hasChanges() && (
         <div className="alert alert-warning">
           <Icon name="AlertTriangle" size={20} />
-          <span>You have {Object.keys(changes).length} unsaved change{Object.keys(changes).length !== 1 ? 's' : ''}. Click "Save Changes" to apply them.</span>
+          <span>You have unsaved changes. Click "Save Changes" to apply them.</span>
         </div>
       )}
 
-      {/* Crypto Configurations */}
-      <div className="cryptos-section">
-        {Object.entries(grouped).map(([cryptoType, cryptos]) => {
-          const cryptoInfo = supportedCryptos?.cryptos[cryptoType];
-          const isExpanded = expandedCrypto === cryptoType;
+      {/* Save Button at Top - Only show when there are changes */}
+      {hasChanges() && (
+        <div className="actions-footer" style={{ marginBottom: '1.5rem' }}>
+          <button
+            onClick={handleSaveChanges}
+            disabled={saving}
+            className="btn btn-primary"
+          >
+            {saving ? (
+              <>
+                <div className="btn-spinner"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Icon name="Save" size={18} />
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
+      {/* Wallet Addresses */}
+      <div className="cryptos-section">
+        {supportedCryptos.map(crypto => {
+          const isEnabled = enabledCryptos[crypto.id] || false;
+          
           return (
-            <div key={cryptoType} className="crypto-card">
-              {/* Crypto Header */}
-              <div
-                className="crypto-header"
-                onClick={() => setExpandedCrypto(isExpanded ? null : cryptoType)}
-              >
+            <div key={crypto.id} className="crypto-card">
+              <div className="crypto-header" onClick={() => isEnabled && handleToggleCrypto(crypto.id)} style={{ cursor: isEnabled ? 'pointer' : 'default' }}>
                 <div className="crypto-info">
-                  {cryptoInfo?.logo && (
-                    <img src={cryptoInfo.logo} alt={cryptoType} className="crypto-icon" />
-                  )}
+                  <img src={crypto.image} alt={crypto.symbol} className="crypto-icon" />
                   <div className="crypto-details">
-                    <h2 className="crypto-name">{cryptoInfo?.name || cryptoType}</h2>
-                    <p className="crypto-networks">
-                      {cryptos.length} network{cryptos.length !== 1 ? 's' : ''}
-                    </p>
+                    <h2 className="crypto-name">{crypto.name}</h2>
+                    <p className="crypto-networks">{crypto.network} Network</p>
                   </div>
                 </div>
-
                 <div className="header-actions">
-                  <div className="enabled-badge">
-                    {cryptos.filter(c => {
-                      const key = `${c.coinType}_${c.network}`;
-                      return changes[key]?.enabled !== undefined
-                        ? changes[key].enabled
-                        : c.enabled;
-                    }).length}/{cryptos.length}
-                  </div>
-                  <Icon
-                    name={isExpanded ? 'ChevronUp' : 'ChevronDown'}
-                    size={20}
-                    className="expand-icon"
-                  />
+                  <span className="crypto-symbol" style={{ marginRight: '1rem' }}>{crypto.symbol}</span>
+                  <label className="toggle-switch" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      onChange={() => handleToggleCrypto(crypto.id)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
                 </div>
               </div>
 
-              {/* Crypto Networks (Expanded) */}
-              {isExpanded && (
+              {isEnabled && (
                 <div className="crypto-networks-section">
-                  {cryptos.map(crypto => {
-                    const key = `${crypto.coinType}_${crypto.network}`;
-                    const currentConfig = getCryptoConfig(crypto.coinType, crypto.network);
-                    const isEnabled = changes[key]?.enabled !== undefined
-                      ? changes[key].enabled
-                      : crypto.enabled;
-                    const address = changes[key]?.address !== undefined
-                      ? changes[key].address
-                      : crypto.address;
-                    const hasChanges = changes[key] !== undefined;
-
-                    const networkInfo = supportedCryptos?.networks[crypto.network];
-
-                    return (
-                      <div key={key} className={`network-item ${hasChanges ? 'has-changes' : ''}`}>
-                        <div className="network-header">
-                          <div className="network-info">
-                            <h3 className="network-name">
-                              {crypto.network}
-                              {hasChanges && (
-                                <span className="unsaved-indicator">●</span>
-                              )}
-                            </h3>
-                            {networkInfo?.chainId && (
-                              <span className="chain-id">Chain ID: {networkInfo.chainId}</span>
-                            )}
-                          </div>
-
-                          <label className="toggle-switch">
-                            <input
-                              type="checkbox"
-                              checked={isEnabled}
-                              onChange={() =>
-                                handleCryptoToggle(
-                                  crypto.coinType,
-                                  crypto.network,
-                                  isEnabled
-                                )
-                              }
-                            />
-                            <span className="toggle-slider"></span>
-                          </label>
+                  <div className="network-item">
+                    <div className="address-input-group">
+                      <label className="label">
+                        Wallet Address
+                        <span className="required">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder={`Enter your ${crypto.symbol} wallet address`}
+                        value={walletAddresses[crypto.id] || ''}
+                        onChange={(e) => handleWalletChange(crypto.id, e.target.value)}
+                        className="address-input"
+                      />
+                      {walletAddresses[crypto.id] && walletAddresses[crypto.id].length >= 20 && (
+                        <div className="address-preview">
+                          <Icon name="CheckCircle" size={16} className="check-icon" />
+                          <span>{walletAddresses[crypto.id].substring(0, 10)}...{walletAddresses[crypto.id].substring(walletAddresses[crypto.id].length - 8)}</span>
                         </div>
-
-                        {/* Address Input */}
-                        {isEnabled && (
-                          <div className="address-input-group">
-                            <label className="label">
-                              Wallet Address
-                              <span className="required">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              placeholder={`Enter your ${crypto.coinType} wallet address on ${crypto.network}`}
-                              value={address}
-                              onChange={(e) =>
-                                handleAddressChange(
-                                  crypto.coinType,
-                                  crypto.network,
-                                  e.target.value
-                                )
-                              }
-                              className="address-input"
-                            />
-                            {address && address.length >= 20 && (
-                              <div className="address-preview">
-                                <Icon name="CheckCircle" size={16} className="check-icon" />
-                                <span>{address.substring(0, 10)}...{address.substring(address.length - 8)}</span>
-                              </div>
-                            )}
-                            {address && address.length < 20 && (
-                              <div className="address-error">
-                                <Icon name="AlertCircle" size={16} className="error-icon" />
-                                <span>Address appears to be invalid</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Network Details */}
-                        {isEnabled && (
-                          <div className="network-details">
-                            {networkInfo?.explorerUrl && (
-                              <div className="detail-item">
-                                <span className="detail-label">Block Explorer:</span>
-                                <a href={networkInfo.explorerUrl} target="_blank" rel="noopener noreferrer" className="detail-value">
-                                  {networkInfo.explorerUrl}
-                                  <Icon name="ExternalLink" size={14} />
-                                </a>
-                              </div>
-                            )}
-                            {networkInfo?.contractAddresses?.[crypto.coinType] && (
-                              <div className="detail-item">
-                                <span className="detail-label">Contract Address:</span>
-                                <code className="contract-address">
-                                  {networkInfo.contractAddresses[crypto.coinType]}
-                                </code>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      )}
+                      {walletAddresses[crypto.id] && walletAddresses[crypto.id].length > 0 && walletAddresses[crypto.id].length < 20 && (
+                        <div className="address-error">
+                          <Icon name="AlertCircle" size={16} className="error-icon" />
+                          <span>Address appears to be invalid</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           );
         })}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="actions-footer">
-        <button
-          onClick={() => {
-            setChanges({});
-            fetchConfiguration();
-          }}
-          className="btn btn-secondary"
-          disabled={Object.keys(changes).length === 0 || saving}
-        >
-          <Icon name="X" size={18} />
-          Cancel
-        </button>
-        <button
-          onClick={handleSaveChanges}
-          className="btn btn-primary"
-          disabled={Object.keys(changes).length === 0 || saving}
-        >
-          {saving ? (
-            <>
-              <div className="btn-spinner"></div>
-              Saving...
-            </>
-          ) : (
-            <>
-              <Icon name="Save" size={18} />
-              Save Changes
-            </>
-          )}
-        </button>
       </div>
 
       {/* Info Box */}
@@ -455,8 +328,8 @@ const PaymentConfiguration = () => {
         <div className="info-content">
           <h4>How it works</h4>
           <p>
-            Enable the cryptocurrencies and networks you want to accept. Provide your wallet address for each enabled currency.
-            Customers can then select from your enabled payment methods during checkout.
+            Configure your cryptocurrency wallet addresses to receive payments. 
+            Customers will be able to send payments to these addresses when they select the corresponding cryptocurrency.
           </p>
         </div>
       </div>

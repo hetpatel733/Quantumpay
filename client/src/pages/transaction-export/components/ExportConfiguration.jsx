@@ -2,7 +2,6 @@ import React from 'react';
 import Icon from 'components/AppIcon';
 
 const ExportConfiguration = ({ config, onConfigChange }) => {
-  // Add missing data arrays
   const dateRangeOptions = [
     { value: 'last7days', label: 'Last 7 Days' },
     { value: 'last30days', label: 'Last 30 Days' },
@@ -19,8 +18,8 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
   ];
 
   const cryptocurrencyOptions = [
-    { value: 'Bitcoin', label: 'Bitcoin (BTC)' },
-    { value: 'Ethereum', label: 'Ethereum (ETH)' },
+    { value: 'BTC', label: 'Bitcoin (BTC)' },
+    { value: 'ETH', label: 'Ethereum (ETH)' },
     { value: 'USDT', label: 'Tether (USDT)' },
     { value: 'USDC', label: 'USD Coin (USDC)' },
     { value: 'MATIC', label: 'Polygon (MATIC)' },
@@ -29,21 +28,28 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
 
   const formatOptions = [
     { value: 'csv', label: 'CSV', icon: 'FileText' },
-    { value: 'excel', label: 'Excel', icon: 'FileSpreadsheet' },
+    { value: 'json', label: 'JSON', icon: 'FileJson' },
     { value: 'pdf', label: 'PDF', icon: 'FileType' }
   ];
 
   const columnOptions = [
-    { value: 'transactionId', label: 'Transaction ID' },
-    { value: 'amount', label: 'Amount' },
-    { value: 'cryptocurrency', label: 'Cryptocurrency' },
-    { value: 'status', label: 'Status' },
-    { value: 'date', label: 'Date' },
-    { value: 'customer', label: 'Customer' },
-    { value: 'fees', label: 'Fees' }
+    { value: 'transactionId', label: 'Transaction ID', description: 'Unique payment identifier' },
+    { value: 'date', label: 'Date & Time', description: 'When payment was created' },
+    { value: 'amount', label: 'Amount (USD)', description: 'Payment amount in USD' },
+    { value: 'amountCrypto', label: 'Crypto Amount', description: 'Amount in cryptocurrency' },
+    { value: 'cryptocurrency', label: 'Cryptocurrency', description: 'Type of crypto (BTC, ETH, etc.)' },
+    { value: 'network', label: 'Network', description: 'Blockchain network used' },
+    { value: 'status', label: 'Status', description: 'Payment status (completed, pending, failed)' },
+    { value: 'customer', label: 'Customer Name', description: 'Customer\'s name' },
+    { value: 'customerEmail', label: 'Customer Email', description: 'Customer\'s email address' },
+    { value: 'walletAddress', label: 'Wallet Address', description: 'Receiving wallet address' },
+    { value: 'hash', label: 'Transaction Hash', description: 'Blockchain transaction hash' },
+    { value: 'exchangeRate', label: 'Exchange Rate', description: 'USD to crypto conversion rate' },
+    { value: 'fees', label: 'Fees', description: 'Transaction fees' },
+    { value: 'completedAt', label: 'Completion Date', description: 'When payment was completed' },
+    { value: 'failureReason', label: 'Failure Reason', description: 'Reason for failed payments' }
   ];
 
-  // Add missing handler functions
   const handleConfigChange = (key, value) => {
     onConfigChange(prev => ({
       ...prev,
@@ -53,9 +59,20 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
 
   const handleCryptocurrencyToggle = (crypto) => {
     const currentCryptos = config.cryptocurrencies || [];
-    const newCryptos = currentCryptos.includes(crypto)
-      ? currentCryptos.filter(c => c !== crypto)
-      : [...currentCryptos, crypto];
+    let newCryptos;
+    
+    if (currentCryptos.includes(crypto)) {
+      newCryptos = currentCryptos.filter(c => c !== crypto);
+    } else {
+      // Remove 'all' if selecting specific cryptos
+      newCryptos = currentCryptos.filter(c => c !== 'all');
+      newCryptos.push(crypto);
+    }
+    
+    // If no cryptos selected, default to 'all'
+    if (newCryptos.length === 0) {
+      newCryptos = ['all'];
+    }
     
     handleConfigChange('cryptocurrencies', newCryptos);
   };
@@ -67,6 +84,15 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
       : [...currentColumns, column];
     
     handleConfigChange('columns', newColumns);
+  };
+
+  const handleSelectAllColumns = () => {
+    const allColumnValues = columnOptions.map(col => col.value);
+    handleConfigChange('columns', allColumnValues);
+  };
+
+  const handleDeselectAllColumns = () => {
+    handleConfigChange('columns', []);
   };
 
   return (
@@ -88,17 +114,10 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
               <select
                 value={config.dateRange}
                 onChange={(e) => handleConfigChange('dateRange', e.target.value)}
-                className="
-                  w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                  bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                  transition-smooth
-                "
+                className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
               >
                 {dateRangeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                  <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </div>
@@ -106,35 +125,21 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
             {config.dateRange === 'custom' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">
-                    Start Date
-                  </label>
+                  <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">Start Date</label>
                   <input
                     type="date"
                     value={config.customStartDate}
                     onChange={(e) => handleConfigChange('customStartDate', e.target.value)}
-                    className="
-                      w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                      bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                      focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                      transition-smooth
-                    "
+                    className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">
-                    End Date
-                  </label>
+                  <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">End Date</label>
                   <input
                     type="date"
                     value={config.customEndDate}
                     onChange={(e) => handleConfigChange('customEndDate', e.target.value)}
-                    className="
-                      w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                      bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                      focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                      transition-smooth
-                    "
+                    className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
                   />
                 </div>
               </div>
@@ -148,21 +153,13 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
             <Icon name="Filter" size={20} color="currentColor" />
             <span>Transaction Status</span>
           </h3>
-          
           <select
             value={config.status}
             onChange={(e) => handleConfigChange('status', e.target.value)}
-            className="
-              w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-              bg-background dark:bg-gray-900 text-text-primary dark:text-white
-              focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-              transition-smooth
-            "
+            className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
           >
             {statusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+              <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
         </div>
@@ -173,18 +170,14 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
             <Icon name="Coins" size={20} color="currentColor" />
             <span>Cryptocurrencies</span>
           </h3>
-          
           <div className="space-y-2">
             {cryptocurrencyOptions.map(crypto => (
-              <label key={crypto.value} className="flex items-center space-x-3 cursor-pointer">
+              <label key={crypto.value} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-secondary-50 dark:hover:bg-gray-700 transition-smooth">
                 <input
                   type="checkbox"
                   checked={config.cryptocurrencies?.includes(crypto.value) || false}
                   onChange={() => handleCryptocurrencyToggle(crypto.value)}
-                  className="
-                    w-4 h-4 text-primary border-border rounded
-                    focus:ring-2 focus:ring-primary
-                  "
+                  className="w-4 h-4 text-primary dark:text-teal-500 border-border dark:border-gray-600 rounded focus:ring-2 focus:ring-primary dark:focus:ring-teal-500"
                 />
                 <span className="text-text-primary dark:text-white">{crypto.label}</span>
               </label>
@@ -198,53 +191,32 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
             <Icon name="DollarSign" size={20} color="currentColor" />
             <span>Amount Range</span>
           </h3>
-          
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">
-                Minimum Amount
-              </label>
+              <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">Min Amount</label>
               <input
                 type="number"
                 placeholder="0.00"
                 value={config.amountRange?.min || ''}
-                onChange={(e) => handleConfigChange('amountRange', {
-                  ...config.amountRange,
-                  min: e.target.value
-                })}
-                className="
-                  w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                  bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                  transition-smooth
-                "
+                onChange={(e) => handleConfigChange('amountRange', { ...config.amountRange, min: e.target.value })}
+                className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">
-                Maximum Amount
-              </label>
+              <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">Max Amount</label>
               <input
                 type="number"
                 placeholder="10000.00"
                 value={config.amountRange?.max || ''}
-                onChange={(e) => handleConfigChange('amountRange', {
-                  ...config.amountRange,
-                  max: e.target.value
-                })}
-                className="
-                  w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                  bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                  transition-smooth
-                "
+                onChange={(e) => handleConfigChange('amountRange', { ...config.amountRange, max: e.target.value })}
+                className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Column - Format & Options */}
+      {/* Right Column - Format & Columns */}
       <div className="space-y-6">
         {/* Export Format */}
         <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
@@ -252,7 +224,6 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
             <Icon name="FileType" size={20} color="currentColor" />
             <span>Export Format</span>
           </h3>
-          
           <div className="grid grid-cols-3 gap-3">
             {formatOptions.map(format => (
               <button
@@ -273,26 +244,56 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
           </div>
         </div>
 
-        {/* Column Selection */}
+        {/* Column Selection - Updated with better UI */}
         <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-text-primary dark:text-white mb-4 flex items-center space-x-2">
-            <Icon name="Columns" size={20} color="currentColor" />
-            <span>Include Columns</span>
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-text-primary dark:text-white flex items-center space-x-2">
+              <Icon name="Columns" size={20} color="currentColor" />
+              <span>Include Columns</span>
+            </h3>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleSelectAllColumns}
+                className="text-xs px-2 py-1 text-primary dark:text-teal-400 hover:bg-primary-50 dark:hover:bg-teal-900/20 rounded transition-smooth"
+              >
+                Select All
+              </button>
+              <span className="text-text-secondary dark:text-gray-500">|</span>
+              <button
+                onClick={handleDeselectAllColumns}
+                className="text-xs px-2 py-1 text-text-secondary dark:text-gray-400 hover:bg-secondary-100 dark:hover:bg-gray-700 rounded transition-smooth"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
           
-          <div className="space-y-2">
+          <p className="text-sm text-text-secondary dark:text-gray-400 mb-4">
+            Selected: {config.columns?.length || 0} of {columnOptions.length} columns
+          </p>
+          
+          <div className="space-y-1 max-h-80 overflow-y-auto pr-2">
             {columnOptions.map(column => (
-              <label key={column.value} className="flex items-center space-x-3 cursor-pointer">
+              <label 
+                key={column.value} 
+                className={`
+                  flex items-start space-x-3 cursor-pointer p-3 rounded-lg transition-smooth
+                  ${config.columns?.includes(column.value) 
+                    ? 'bg-primary-50 dark:bg-teal-900/20 border border-primary-200 dark:border-teal-800/50' 
+                    : 'hover:bg-secondary-50 dark:hover:bg-gray-700 border border-transparent'
+                  }
+                `}
+              >
                 <input
                   type="checkbox"
                   checked={config.columns?.includes(column.value) || false}
                   onChange={() => handleColumnToggle(column.value)}
-                  className="
-                    w-4 h-4 text-primary border-border rounded
-                    focus:ring-2 focus:ring-primary
-                  "
+                  className="w-4 h-4 mt-0.5 text-primary dark:text-teal-500 border-border dark:border-gray-600 rounded focus:ring-2 focus:ring-primary dark:focus:ring-teal-500"
                 />
-                <span className="text-text-primary dark:text-white">{column.label}</span>
+                <div className="flex-1">
+                  <span className="text-text-primary dark:text-white font-medium">{column.label}</span>
+                  <p className="text-xs text-text-secondary dark:text-gray-400 mt-0.5">{column.description}</p>
+                </div>
               </label>
             ))}
           </div>
@@ -311,12 +312,9 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
                 type="checkbox"
                 checked={config.includeHeaders}
                 onChange={(e) => handleConfigChange('includeHeaders', e.target.checked)}
-                className="
-                  w-4 h-4 text-primary border-border rounded
-                  focus:ring-2 focus:ring-primary
-                "
+                className="w-4 h-4 text-primary dark:text-teal-500 border-border dark:border-gray-600 rounded focus:ring-2 focus:ring-primary dark:focus:ring-teal-500"
               />
-              <span className="text-text-primary dark:text-white">Include column headers</span>
+              <span className="text-text-primary dark:text-white">Include column headers in export</span>
             </label>
 
             <label className="flex items-center space-x-3 cursor-pointer">
@@ -324,30 +322,20 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
                 type="checkbox"
                 checked={config.emailDelivery}
                 onChange={(e) => handleConfigChange('emailDelivery', e.target.checked)}
-                className="
-                  w-4 h-4 text-primary border-border rounded
-                  focus:ring-2 focus:ring-primary
-                "
+                className="w-4 h-4 text-primary dark:text-teal-500 border-border dark:border-gray-600 rounded focus:ring-2 focus:ring-primary dark:focus:ring-teal-500"
               />
-              <span className="text-text-primary dark:text-white">Email when ready</span>
+              <span className="text-text-primary dark:text-white">Email me when export is ready</span>
             </label>
 
             {config.emailDelivery && (
               <div>
-                <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">
-                  Email Address
-                </label>
+                <label className="block text-sm font-medium text-text-secondary dark:text-gray-400 mb-2">Email Address</label>
                 <input
                   type="email"
                   placeholder="your@email.com"
                   value={config.emailAddress}
                   onChange={(e) => handleConfigChange('emailAddress', e.target.value)}
-                  className="
-                    w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg
-                    bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                    focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                    transition-smooth
-                  "
+                  className="w-full px-3 py-2 border border-border dark:border-gray-700 rounded-lg bg-background dark:bg-gray-900 text-text-primary dark:text-white focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent transition-smooth"
                 />
               </div>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Icon from "../AppIcon";
-import { notificationsAPI } from "../../utils/api";
+import Image from "../AppImage";
+import { notificationsAPI, authAPI } from "../../utils/api";
 import { debounce } from "../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -89,7 +90,6 @@ const Header = ({ userData }) => {
       label: "Account Settings",
       icon: "Settings",
       action: () => {
-        // Navigate to account settings
         window.location.href = "/dashboard/account-settings";
       },
     },
@@ -97,7 +97,6 @@ const Header = ({ userData }) => {
       label: "Help & Support",
       icon: "HelpCircle",
       action: () => {
-        // Open help documentation
         window.location.href = "/contact";
       },
     },
@@ -105,40 +104,16 @@ const Header = ({ userData }) => {
       label: "Sign Out",
       icon: "LogOut",
       action: async () => {
-        // Handle logout
         try {
-          const response = await fetch(
-            `${server}/api/auth/logout`,
-            {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (response.ok) {
-            // Clear localStorage
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("userData");
-            localStorage.removeItem("completeUserData");
-
-            // Clear any other stored data
-            document.cookie =
-              "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            document.cookie =
-              "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            document.cookie =
-              "email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-            // Redirect to login page
-            window.location.href = "/login";
-          } else {
-            console.error("Logout failed");
-            // Force redirect anyway
-            window.location.href = "/login";
-          }
+          await authAPI.logout();
+          
+          // Clear all data
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("userData");
+          localStorage.removeItem("completeUserData");
+          
+          // Redirect to login
+          window.location.href = "/login";
         } catch (error) {
           console.error("Logout error:", error);
           // Force redirect anyway
@@ -222,6 +197,7 @@ const Header = ({ userData }) => {
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+  const profileImage = userData?.profileImage;
 
   const formatNotificationTime = (timestamp) => {
     const now = new Date();
@@ -379,7 +355,7 @@ const Header = ({ userData }) => {
           <button
             onClick={toggleTheme}
             className="
-              relative p-2 rounded-lg 
+              relative p-1.5 sm:p-2 rounded-lg 
               hover:bg-secondary-100 dark:hover:bg-gray-700
               transition-colors duration-200 
               text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
@@ -391,7 +367,7 @@ const Header = ({ userData }) => {
             {/* Sun Icon (Light Mode) */}
             {!isDarkMode && (
               <svg
-                className="w-5 h-5 text-yellow-500 transition-transform group-hover:rotate-45"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 transition-transform group-hover:rotate-45"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -406,7 +382,7 @@ const Header = ({ userData }) => {
             {/* Moon Icon (Dark Mode) */}
             {isDarkMode && (
               <svg
-                className="w-5 h-5 text-blue-400 transition-transform group-hover:-rotate-12"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 transition-transform group-hover:-rotate-12"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -419,9 +395,9 @@ const Header = ({ userData }) => {
           <div className="relative" ref={notificationRef}>
             <button
               onClick={toggleNotificationDropdown}
-              className="relative p-2 rounded-lg hover:bg-secondary-100 dark:hover:bg-gray-700 transition-colors duration-200 text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white"
+              className="relative p-2 rounded-lg hover:bg-secondary-100 dark:hover:bg-gray-700 transition-colors duration-200 text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white group"
             >
-              <Icon name="Bell" size={18} color="currentColor" />
+              <Icon name="Bell" size={18} color="currentColor" className="group-hover:text-text-primary dark:group-hover:text-white" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-error dark:bg-red-500 rounded-full flex items-center justify-center">
                   <span className="text-xs text-white font-medium">
@@ -570,21 +546,31 @@ const Header = ({ userData }) => {
             <button
               onClick={toggleProfileDropdown}
               className="
-                flex items-center space-x-2 lg:space-x-3 p-2 rounded-lg
+                flex items-center space-x-2 lg:space-x-2 px-2 py-1 lg:px-3 lg:py-2 rounded-lg
                 hover:bg-secondary-100 dark:hover:bg-gray-700 transition-colors duration-200
-                text-text-primary dark:text-white h-10
+                text-text-primary dark:text-white h-10 min-w-max
               "
             >
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-medium">
-                  {userInitials}
-                </span>
-              </div>
-              <div className="hidden lg:block text-left min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate mb-2 mt-3">
+              {profileImage ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                  <Image 
+                    src={profileImage} 
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 bg-primary dark:bg-teal-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm font-medium">
+                    {userInitials}
+                  </span>
+                </div>
+              )}
+              <div className="hidden lg:flex flex-col text-left min-w-0">
+                <p className="text-sm font-medium text-text-primary dark:text-white truncate leading-tight">
                   {displayName}
                 </p>
-                <p className="text-xs text-text-secondary truncate">
+                <p className="text-xs text-text-secondary dark:text-gray-400 truncate leading-tight">
                   {businessName}
                 </p>
               </div>
@@ -592,7 +578,7 @@ const Header = ({ userData }) => {
                 name="ChevronDown"
                 size={16}
                 color="currentColor"
-                className={`transition-transform duration-200 hidden lg:block ${
+                className={`transition-transform duration-200 hidden lg:block flex-shrink-0 text-text-secondary dark:text-gray-400 ${
                   isProfileOpen ? "rotate-180" : ""
                 }`}
               />

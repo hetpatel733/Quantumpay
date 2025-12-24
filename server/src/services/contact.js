@@ -1,29 +1,44 @@
 const { contactsave } = require("../models/contact");
 
-const contact = async (req, res, app) => {
+// Handle contact form submission
+async function handleContact(req, res) {
     try {
-        var { email, subject, comment } = req.body;
-        var contactdata = new contactsave({
-            email: email,
-            subject: subject,
-            comment: comment,
-        })
-        const contactconfirmed = await contactdata.save();
-        Success = true;
+        const { email, subject, comment } = req.body;
+
+        console.log('📧 Contact form submission:', { email, subject });
+
+        // Validate input
+        if (!email || !subject || !comment) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
+
+        // Save contact message
+        const contactMessage = new contactsave({
+            email,
+            subject,
+            comment
+        });
+
+        await contactMessage.save();
+        console.log('✅ Contact message saved:', email);
+
         return res.status(200).json({
             success: true,
-            message: "Your message has been sent successfully",
-
+            message: "Your message has been sent successfully. We'll get back to you soon!"
         });
+
     } catch (error) {
-        console.log(error);
-        return res.status(401).json({
+        console.error('❌ Contact form error:', error);
+        return res.status(500).json({
             success: false,
-            message: "Internal server error",
+            message: "Failed to send message. Please try again later."
         });
     }
 }
 
 module.exports = {
-    contact
+    handleContact
 };

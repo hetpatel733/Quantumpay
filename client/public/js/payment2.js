@@ -1,17 +1,53 @@
+// Simple toast notification for legacy pages
+function showLegacyToast(message, type = 'info') {
+    // Create toast container if it doesn't exist
+    let container = document.getElementById('legacy-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'legacy-toast-container';
+        container.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:320px;';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+    };
+    toast.style.cssText = `background:${colors[type] || colors.info};color:white;padding:12px 16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:14px;animation:slideIn 0.3s ease;`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
 function copyaddress() {
     var address = document.getElementById("address");
     address.select();
     address.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(address.value);
-    alert("Copied!!");
+    showLegacyToast("Address copied to clipboard!", "success");
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Add toast animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    `;
+    document.head.appendChild(style);
+
     const urlParams = new URLSearchParams(window.location.search);
     const payid = urlParams.get("payid");
 
     if (!payid) {
-        alert("Missing payid in URL.");
+        showLegacyToast("Missing payid in URL.", "error");
         return;
     }
 
@@ -107,23 +143,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Handle specific error codes for deactivated/paused states
                 if (data.errorCode === 'ORDER_DEACTIVATED') {
-                    alert("This product/service has been deactivated and is no longer available for payment.");
+                    showLegacyToast("This product/service has been deactivated and is no longer available for payment.", "error");
                     stopPolling();
                 } else if (data.errorCode === 'API_PAUSED') {
-                    alert("Payment processing is currently paused by the merchant. Please contact support.");
+                    showLegacyToast("Payment processing is currently paused by the merchant. Please contact support.", "warning");
                     stopPolling();
                 } else if (data.errorCode === 'ORDER_CANCELLED') {
-                    alert("This order has been cancelled and cannot be paid.");
+                    showLegacyToast("This order has been cancelled and cannot be paid.", "error");
                     stopPolling();
                 } else {
-                    alert(`Error: ${data.message}`);
+                    showLegacyToast(`Error: ${data.message}`, "error");
                 }
             }
         } catch (err) {
             console.error("⚠️ Network Error:", err);
             // Don't alert for network errors during polling
             if (!isPolling) {
-                alert("Network error while checking payment status.");
+                showLegacyToast("Network error while checking payment status.", "error");
             }
         }
     }

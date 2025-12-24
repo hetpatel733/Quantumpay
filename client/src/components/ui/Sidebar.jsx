@@ -107,10 +107,11 @@ const Sidebar = () => {
           onClick={toggleMobileSidebar}
           className="
             fixed top-4 left-4 z-300 lg:hidden
-            w-10 h-10 bg-surface border border-border rounded-lg
+            w-10 h-10 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg
             flex items-center justify-center
             shadow-dropdown transition-smooth
-            hover:bg-secondary-50
+            hover:bg-secondary-50 dark:hover:bg-gray-700
+            text-text-primary dark:text-white
           "
         >
           <Icon name="Menu" size={20} color="currentColor" />
@@ -214,6 +215,7 @@ const Sidebar = () => {
             className="
               w-full flex items-center justify-center space-x-2 
               px-3 py-2 rounded-lg border border-border dark:border-gray-700
+              bg-surface dark:bg-gray-800
               hover:bg-secondary-100 dark:hover:bg-gray-700 transition-smooth
               text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
             "

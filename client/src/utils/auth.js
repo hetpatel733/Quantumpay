@@ -8,29 +8,20 @@ export const isAuthenticated = () => {
 
 export const logout = async () => {
   try {
-    // Call server logout endpoint
     await fetch(`${API_BASE_URL}/api/auth/logout`, {
       method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      credentials: "include"
     });
   } catch (error) {
     console.error("Logout request failed:", error);
   }
   
-  // Clear client-side data regardless of server response
+  // Clear all auth data
   localStorage.removeItem("authToken");
   localStorage.removeItem("userData");
   localStorage.removeItem("completeUserData");
   
-  // Clear cookies
-  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  document.cookie = "email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  
-  // Redirect to home page
+  // Redirect to home
   window.location.href = "/";
 };
 
@@ -46,32 +37,10 @@ export const getAuthData = () => {
       };
     } catch (error) {
       console.error("Error parsing user data:", error);
-      logout(); // Clear invalid data
+      logout();
       return null;
     }
   }
   
   return null;
-};
-
-export const validateAuthToken = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/validate`, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      return data.success;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error("Token validation failed:", error);
-    return false;
-  }
 };
