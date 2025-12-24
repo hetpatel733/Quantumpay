@@ -5,7 +5,7 @@ async function handleContact(req, res) {
     try {
         const { email, subject, comment } = req.body;
 
-        console.log('📧 Contact form submission:', { email, subject });
+        //console.log('📧 Contact form submission:', { email, subject });
 
         // Validate input
         if (!email || !subject || !comment) {
@@ -23,7 +23,7 @@ async function handleContact(req, res) {
         });
 
         await contactMessage.save();
-        console.log('✅ Contact message saved:', email);
+        //console.log('✅ Contact message saved:', email);
 
         return res.status(200).json({
             success: true,

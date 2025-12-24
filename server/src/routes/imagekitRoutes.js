@@ -28,12 +28,12 @@ router.post('/upload', async (req, res) => {
             });
         }
 
-        console.log(`📤 Server uploading to ImageKit: ${fileName} to ${folder}`);
+        //console.log(`📤 Server uploading to ImageKit: ${fileName} to ${folder}`);
 
         const uploadResult = await uploadImage(file, fileName, folder);
 
         if (uploadResult.success) {
-            console.log(`✅ Image uploaded successfully: ${uploadResult.url}`);
+            //console.log(`✅ Image uploaded successfully: ${uploadResult.url}`);
             return res.status(200).json(uploadResult);
         } else {
             console.error(`❌ Upload failed: ${uploadResult.error}`);

@@ -36,7 +36,7 @@ async function validatePayment(req, res) {
     try {
         const { api, order_id } = req.query;
 
-        console.log(`🔍 Validating payment: API=${api?.substring(0, 10)}..., ProductID=${order_id}`);
+        //console.log(`🔍 Validating payment: API=${api?.substring(0, 10)}..., ProductID=${order_id}`);
 
         // Check required params
         if (!api || !order_id) {
@@ -141,7 +141,7 @@ async function validatePayment(req, res) {
         apiKey.lastUsed = new Date();
         await apiKey.save();
 
-        console.log(`✅ Payment validated: ${enabledCryptos.length} payment methods available`);
+        //console.log(`✅ Payment validated: ${enabledCryptos.length} payment methods available`);
 
         return res.status(200).json({
             success: true,
@@ -186,7 +186,7 @@ async function processCoinSelection(req, res) {
     try {
         const { fname, lname, email, type, network, api, order_id } = req.body;
 
-        console.log(`💰 Processing coin selection:`, { email, type, network, order_id });
+        //console.log(`💰 Processing coin selection:`, { email, type, network, order_id });
 
         // Validate required fields
         if (!fname || !lname || !email || !type || !api || !order_id) {
@@ -251,7 +251,7 @@ async function processCoinSelection(req, res) {
         const exchangeRate = await getExchangeRate(type);
         const amountCrypto = (uniqueAmountUSD / exchangeRate).toFixed(8);
 
-        console.log(`💵 Amount calculation: Base=$${product.amountUSD}, Offset=$${amountOffset.toFixed(3)}, Final=$${uniqueAmountUSD.toFixed(3)}`);
+        //console.log(`💵 Amount calculation: Base=$${product.amountUSD}, Offset=$${amountOffset.toFixed(3)}, Final=$${uniqueAmountUSD.toFixed(3)}`);
 
         // Create payment record
         const payment = new Payment({
@@ -273,7 +273,7 @@ async function processCoinSelection(req, res) {
 
         await payment.save();
 
-        console.log(`✅ Payment created: ${payId}`);
+        //console.log(`✅ Payment created: ${payId}`);
 
         return res.status(201).json({
             success: true,
@@ -311,7 +311,7 @@ async function getPaymentDetails(req, res) {
             });
         }
 
-        console.log(`📋 Fetching payment details: ${payid}`);
+        //console.log(`📋 Fetching payment details: ${payid}`);
 
         const payment = await Payment.findOne({ payId: payid });
         if (!payment) {
@@ -410,7 +410,7 @@ async function getAllPayments(req, res) {
             amountMax   // Add amount range support
         } = req.query;
 
-        console.log(`📋 Fetching payments for user: ${userId}`);
+        //console.log(`📋 Fetching payments for user: ${userId}`);
 
         // Build query
         const query = {};
@@ -477,7 +477,7 @@ async function getPaymentById(req, res) {
     try {
         const { paymentId } = req.params;
 
-        console.log('🔍 Fetching payment by ID:', paymentId);
+        //console.log('🔍 Fetching payment by ID:', paymentId);
 
         if (!paymentId) {
             return res.status(400).json({
@@ -497,7 +497,7 @@ async function getPaymentById(req, res) {
                 payment = await Payment.findById(paymentId);
             } catch (err) {
                 // ObjectId casting failed, continue
-                console.log('⚠️ ObjectId lookup failed, payment not found');
+                //console.log('⚠️ ObjectId lookup failed, payment not found');
             }
         }
 
@@ -554,7 +554,7 @@ async function retryPayment(req, res) {
     try {
         const { oldPayId, customerName, customerEmail, cryptoType, network, productId } = req.body;
 
-        console.log(`🔄 Retrying payment: ${oldPayId}`);
+        //console.log(`🔄 Retrying payment: ${oldPayId}`);
 
         // Basic presence of oldPayId checked below after fetching oldPayment
 
@@ -627,7 +627,7 @@ async function retryPayment(req, res) {
         const exchangeRate = await getExchangeRate(finalCryptoType);
         const amountCrypto = (uniqueAmountUSD / exchangeRate).toFixed(8);
 
-        console.log(`💵 Retry amount calculation: Base=$${product.amountUSD}, Offset=$${amountOffset.toFixed(3)}, Final=$${uniqueAmountUSD.toFixed(3)}`);
+        //console.log(`💵 Retry amount calculation: Base=$${product.amountUSD}, Offset=$${amountOffset.toFixed(3)}, Final=$${uniqueAmountUSD.toFixed(3)}`);
 
         // Create new payment record
         const newPayment = new Payment({
@@ -649,7 +649,7 @@ async function retryPayment(req, res) {
 
         await newPayment.save();
 
-        console.log(`✅ Retry payment created: ${newPayId} (from ${oldPayId})`);
+        //console.log(`✅ Retry payment created: ${newPayId} (from ${oldPayId})`);
 
         return res.status(201).json({
             success: true,

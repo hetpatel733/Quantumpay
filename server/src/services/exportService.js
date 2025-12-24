@@ -327,7 +327,7 @@ async function generatePDF(payments, columns, includeHeaders, exportName, filePa
             doc.end();
             
             writeStream.on('finish', () => {
-                console.log('✅ PDF generated successfully');
+                //console.log('✅ PDF generated successfully');
                 resolve();
             });
             
@@ -349,7 +349,7 @@ async function uploadToTmpFiles(filePath, fileName) {
         const form = new FormData();
         form.append('file', fs.createReadStream(filePath), fileName);
 
-        console.log(`📤 Uploading ${fileName} to tmpfiles.org...`);
+        //console.log(`📤 Uploading ${fileName} to tmpfiles.org...`);
 
         const response = await axios.post('https://tmpfiles.org/api/v1/upload', form, {
             headers: {
@@ -359,7 +359,7 @@ async function uploadToTmpFiles(filePath, fileName) {
             maxBodyLength: Infinity
         });
 
-        console.log('📦 tmpfiles.org response:', response.data);
+        //console.log('📦 tmpfiles.org response:', response.data);
 
         if (response.data && response.data.status === 'success' && response.data.data && response.data.data.url) {
             // Convert view URL to direct download URL
@@ -400,7 +400,7 @@ async function createExport(req, res) {
             });
         }
 
-        console.log(`📋 Creating export job for user: ${userId}`);
+        //console.log(`📋 Creating export job for user: ${userId}`);
 
         // Create export record
         const exportJob = new TransactionExport({
@@ -417,7 +417,7 @@ async function createExport(req, res) {
 
         await exportJob.save();
 
-        console.log(`✅ Export job created: ${exportJob._id}`);
+        //console.log(`✅ Export job created: ${exportJob._id}`);
 
         // Start processing in background
         processExport(exportJob._id);
@@ -455,7 +455,7 @@ async function processExport(exportId) {
             return;
         }
 
-        console.log(`⚙️ Processing export job: ${exportId}, format: ${exportJob.format}`);
+        //console.log(`⚙️ Processing export job: ${exportId}, format: ${exportJob.format}`);
 
         exportJob.status = 'processing';
         exportJob.startedAt = new Date();
@@ -490,7 +490,7 @@ async function processExport(exportId) {
         }
 
         const payments = await Payment.find(query).sort({ createdAt: -1 }).lean();
-        console.log(`📊 Found ${payments.length} payments to export`);
+        //console.log(`📊 Found ${payments.length} payments to export`);
 
         // Generate file based on format
         let fileExtension;
@@ -524,7 +524,7 @@ async function processExport(exportId) {
             ? `${(fileStats.size / (1024 * 1024)).toFixed(2)} MB`
             : `${(fileStats.size / 1024).toFixed(2)} KB`;
 
-        console.log(`📄 Generated ${fileExtension.toUpperCase()} file: ${fileName}.${fileExtension} (${fileSizeFormatted})`);
+        //console.log(`📄 Generated ${fileExtension.toUpperCase()} file: ${fileName}.${fileExtension} (${fileSizeFormatted})`);
 
         // Upload to tmpfiles.org
         const uploadResult = await uploadToTmpFiles(tempFilePath, `${fileName}.${fileExtension}`);
@@ -540,7 +540,7 @@ async function processExport(exportId) {
             exportJob.completedAt = new Date();
             await exportJob.save();
 
-            console.log(`✅ Export completed: ${exportId}, URL: ${uploadResult.url}`);
+            //console.log(`✅ Export completed: ${exportId}, URL: ${uploadResult.url}`);
         } else {
             throw new Error(`Upload failed: ${uploadResult.error}`);
         }
@@ -556,7 +556,7 @@ async function processExport(exportId) {
         if (tempFilePath && fs.existsSync(tempFilePath)) {
             try {
                 fs.unlinkSync(tempFilePath);
-                console.log(`🧹 Cleaned up temp file: ${tempFilePath}`);
+                //console.log(`🧹 Cleaned up temp file: ${tempFilePath}`);
             } catch (e) {
                 console.warn(`⚠️ Failed to cleanup temp file: ${e.message}`);
             }
@@ -576,7 +576,7 @@ async function getAllExports(req, res) {
             });
         }
 
-        console.log(`📋 Fetching exports for user: ${userId}`);
+        //console.log(`📋 Fetching exports for user: ${userId}`);
 
         // Check and update expired exports
         const now = new Date();
@@ -696,7 +696,7 @@ async function deleteExport(req, res) {
             });
         }
 
-        console.log(`🗑️ Export deleted: ${exportId}`);
+        //console.log(`🗑️ Export deleted: ${exportId}`);
 
         return res.status(200).json({
             success: true,
@@ -742,7 +742,7 @@ async function retryExport(req, res) {
         exportJob.completedAt = null;
         await exportJob.save();
 
-        console.log(`🔄 Retrying export: ${exportId}`);
+        //console.log(`🔄 Retrying export: ${exportId}`);
 
         // Start processing
         processExport(exportId);

@@ -40,13 +40,13 @@ const CoinSelect = () => {
         return;
       }
 
-      console.log('🔍 Validating payment:', { api: api.substring(0, 10) + '...', order_id });
+      //console.log('🔍 Validating payment:', { api: api.substring(0, 10) + '...', order_id });
 
       const response = await paymentsAPI.validatePayment(api, order_id);
 
       if (response.success) {
         setValidationData(response);
-        console.log('✅ Payment validated:', response);
+        //console.log('✅ Payment validated:', response);
       } else {
         setError(response.message || 'Payment validation failed');
       }
@@ -114,7 +114,7 @@ const CoinSelect = () => {
         c => c.id === formData.selectedCrypto
       );
 
-      console.log('💳 Processing payment:', {
+      //console.log('💳 Processing payment:', {
         fname: formData.fname,
         lname: formData.lname,
         email: formData.email,
@@ -133,7 +133,7 @@ const CoinSelect = () => {
       });
 
       if (response.success && response.payid) {
-        console.log('✅ Payment created:', response.payid);
+        //console.log('✅ Payment created:', response.payid);
         // Redirect to final payment page
         navigate(`/payment/final-payment?payid=${response.payid}`);
       } else {

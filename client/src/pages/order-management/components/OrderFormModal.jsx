@@ -82,7 +82,7 @@ const OrderFormModal = ({ isOpen, onClose, onSave, order = null }) => {
         isActive: formData.status === 'active'
       };
       
-      console.log('📋 Order form data being submitted:', formattedData);
+      //console.log('📋 Order form data being submitted:', formattedData);
       onSave(formattedData);
     }
   };

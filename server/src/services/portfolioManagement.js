@@ -16,7 +16,7 @@ async function getAllPortfolioItems(req, res) {
             });
         }
 
-        console.log(`📋 Fetching portfolio items for user: ${userId}`);
+        //console.log(`📋 Fetching portfolio items for user: ${userId}`);
 
         // Build query
         const query = { userId };
@@ -32,7 +32,7 @@ async function getAllPortfolioItems(req, res) {
             .sort(sortObject)
             .limit(parseInt(limit));
 
-        console.log(`✅ Found ${products.length} portfolio items`);
+        //console.log(`✅ Found ${products.length} portfolio items`);
         return res.status(200).json({
             success: true,
             products: products.map(product => ({
@@ -73,7 +73,7 @@ async function getPortfolioItemById(req, res) {
             });
         }
 
-        console.log(`📋 Fetching portfolio item: ${itemId}`);
+        //console.log(`📋 Fetching portfolio item: ${itemId}`);
 
         const product = await Product.findById(itemId);
 
@@ -114,9 +114,9 @@ async function createPortfolioItem(req, res) {
     try {
         const { userId, productName, description, amountUSD, image, isActive = true } = req.body;
 
-        console.log(`➕ Creating new portfolio item for user: ${userId}`);
-        console.log(`📦 Product data:`, { productName, amountUSD, hasImage: !!image });
-        console.log(`📏 Image data length:`, image ? image.length : 0);
+        //console.log(`➕ Creating new portfolio item for user: ${userId}`);
+        //console.log(`📦 Product data:`, { productName, amountUSD, hasImage: !!image });
+        //console.log(`📏 Image data length:`, image ? image.length : 0);
 
         // Validate required fields
         if (!userId) {
@@ -175,7 +175,7 @@ async function createPortfolioItem(req, res) {
                 if (uploadResult.success) {
                     imageUrl = uploadResult.url;
                     imageFileId = uploadResult.fileId;
-                    console.log('✅ Base64 image uploaded to ImageKit');
+                    //console.log('✅ Base64 image uploaded to ImageKit');
                 } else {
                     console.error('❌ Failed to upload base64 image:', uploadResult.error);
                     return res.status(400).json({
@@ -187,7 +187,7 @@ async function createPortfolioItem(req, res) {
             } else if (image.startsWith('http')) {
                 // Image is already uploaded to ImageKit
                 imageUrl = image;
-                console.log('✅ Using existing ImageKit URL');
+                //console.log('✅ Using existing ImageKit URL');
             } else {
                 console.warn('⚠️ Unknown image format');
                 imageUrl = '';
@@ -208,7 +208,7 @@ async function createPortfolioItem(req, res) {
 
         await newProduct.save();
 
-        console.log(`✅ Portfolio item created with product ID: ${productId}`);
+        //console.log(`✅ Portfolio item created with product ID: ${productId}`);
 
         return res.status(201).json({
             success: true,
@@ -250,8 +250,8 @@ async function updatePortfolioItem(req, res) {
         const { itemId } = req.params;
         const { productName, description, amountUSD, image, isActive } = req.body;
 
-        console.log(`📝 Updating portfolio item: ${itemId}`);
-        console.log(`📦 Update data:`, { productName, amountUSD, isActive });
+        //console.log(`📝 Updating portfolio item: ${itemId}`);
+        //console.log(`📦 Update data:`, { productName, amountUSD, isActive });
 
         if (!itemId) {
             return res.status(400).json({
@@ -294,12 +294,12 @@ async function updatePortfolioItem(req, res) {
 
         if (isActive !== undefined) {
             product.isActive = isActive;
-            console.log(`🔄 Product status changed to: ${isActive ? 'active' : 'inactive'}`);
+            //console.log(`🔄 Product status changed to: ${isActive ? 'active' : 'inactive'}`);
         }
 
         await product.save();
 
-        console.log(`✅ Portfolio item updated: ${itemId}`);
+        //console.log(`✅ Portfolio item updated: ${itemId}`);
 
         return res.status(200).json({
             success: true,
@@ -337,7 +337,7 @@ async function deletePortfolioItem(req, res) {
             });
         }
 
-        console.log(`🗑️ Deleting portfolio item: ${itemId}`);
+        //console.log(`🗑️ Deleting portfolio item: ${itemId}`);
 
         const product = await Product.findById(itemId);
         if (!product) {
@@ -356,7 +356,7 @@ async function deletePortfolioItem(req, res) {
             product.isActive = false;
             await product.save();
 
-            console.log(`⚠️ Portfolio item has ${paymentCount} payments, deactivated instead of deleted`);
+            //console.log(`⚠️ Portfolio item has ${paymentCount} payments, deactivated instead of deleted`);
 
             return res.status(200).json({
                 success: true,
@@ -368,7 +368,7 @@ async function deletePortfolioItem(req, res) {
         // Safe to delete
         await Product.findByIdAndDelete(itemId);
 
-        console.log(`✅ Portfolio item deleted: ${itemId}`);
+        //console.log(`✅ Portfolio item deleted: ${itemId}`);
 
         return res.status(200).json({
             success: true,
@@ -396,7 +396,7 @@ async function togglePortfolioItemStatus(req, res) {
             });
         }
 
-        console.log(`⏯️ Toggling portfolio item status: ${itemId}`);
+        //console.log(`⏯️ Toggling portfolio item status: ${itemId}`);
 
         const product = await Product.findById(itemId);
         if (!product) {
@@ -410,7 +410,7 @@ async function togglePortfolioItemStatus(req, res) {
         product.isActive = !product.isActive;
         await product.save();
 
-        console.log(`✅ Portfolio item ${product.isActive ? 'activated' : 'deactivated'}`);
+        //console.log(`✅ Portfolio item ${product.isActive ? 'activated' : 'deactivated'}`);
 
         return res.status(200).json({
             success: true,
@@ -442,7 +442,7 @@ async function getPortfolioStats(req, res) {
             });
         }
 
-        console.log(`📊 Fetching portfolio stats for user: ${userId}`);
+        //console.log(`📊 Fetching portfolio stats for user: ${userId}`);
 
         const products = await Product.find({ userId });
 
@@ -460,7 +460,7 @@ async function getPortfolioStats(req, res) {
             stats.totalSales += product.salesCount || 0;
         });
 
-        console.log(`✅ Portfolio stats calculated:`, stats);
+        //console.log(`✅ Portfolio stats calculated:`, stats);
 
         return res.status(200).json({
             success: true,

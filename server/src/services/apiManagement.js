@@ -14,7 +14,7 @@ async function getAllApiKeys(req, res) {
             });
         }
 
-        console.log(`📋 Fetching API keys for user: ${userId}`);
+        //console.log(`📋 Fetching API keys for user: ${userId}`);
 
         const apiKeys = await BusinessAPI.find({ userId }).sort({ createdAt: -1 });
 
@@ -56,7 +56,7 @@ async function createApiKey(req, res) {
             });
         }
 
-        console.log(`🔑 Creating new API key for user: ${userId}`);
+        //console.log(`🔑 Creating new API key for user: ${userId}`);
 
         // Verify user exists and is a business user
         const user = await User.findById(userId);
@@ -93,7 +93,7 @@ async function createApiKey(req, res) {
 
         await newApiKey.save();
 
-        console.log(`✅ API key created: ${apiKey}`);
+        //console.log(`✅ API key created: ${apiKey}`);
 
         return res.status(201).json({
             success: true,
@@ -133,7 +133,7 @@ async function updateApiKey(req, res) {
             });
         }
 
-        console.log(`📝 Updating API key: ${keyId}`);
+        //console.log(`📝 Updating API key: ${keyId}`);
 
         const apiKey = await BusinessAPI.findById(keyId);
         if (!apiKey) {
@@ -146,12 +146,12 @@ async function updateApiKey(req, res) {
         // Update fields
         if (isActive !== undefined) {
             apiKey.isActive = isActive;
-            console.log(`🔄 API key ${isActive ? 'activated' : 'paused'}`);
+            //console.log(`🔄 API key ${isActive ? 'activated' : 'paused'}`);
         }
 
         if (type !== undefined) {
             apiKey.type = type;
-            console.log(`🔄 API key type changed to: ${type}`);
+            //console.log(`🔄 API key type changed to: ${type}`);
         }
 
         if (label !== undefined) {
@@ -164,7 +164,7 @@ async function updateApiKey(req, res) {
 
         await apiKey.save();
 
-        console.log(`✅ API key updated: ${keyId}`);
+        //console.log(`✅ API key updated: ${keyId}`);
 
         return res.status(200).json({
             success: true,
@@ -203,7 +203,7 @@ async function toggleApiKey(req, res) {
             });
         }
 
-        console.log(`⏯️ Toggling API key: ${keyId}`);
+        //console.log(`⏯️ Toggling API key: ${keyId}`);
 
         const apiKey = await BusinessAPI.findById(keyId);
         if (!apiKey) {
@@ -217,7 +217,7 @@ async function toggleApiKey(req, res) {
         apiKey.isActive = !apiKey.isActive;
         await apiKey.save();
 
-        console.log(`✅ API key ${apiKey.isActive ? 'activated' : 'paused'}`);
+        //console.log(`✅ API key ${apiKey.isActive ? 'activated' : 'paused'}`);
 
         return res.status(200).json({
             success: true,
@@ -249,7 +249,7 @@ async function deleteApiKey(req, res) {
             });
         }
 
-        console.log(`🗑️ Deleting API key: ${keyId}`);
+        //console.log(`🗑️ Deleting API key: ${keyId}`);
 
         const apiKey = await BusinessAPI.findByIdAndDelete(keyId);
         if (!apiKey) {
@@ -259,7 +259,7 @@ async function deleteApiKey(req, res) {
             });
         }
 
-        console.log(`✅ API key deleted: ${keyId}`);
+        //console.log(`✅ API key deleted: ${keyId}`);
 
         return res.status(200).json({
             success: true,
@@ -287,7 +287,7 @@ async function getApiKeyStats(req, res) {
             });
         }
 
-        console.log(`📊 Fetching API key stats for user: ${userId}`);
+        //console.log(`📊 Fetching API key stats for user: ${userId}`);
 
         const apiKeys = await BusinessAPI.find({ userId });
 

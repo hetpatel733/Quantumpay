@@ -52,7 +52,7 @@ const PaymentsManagement = ({ userData }) => {
       setError(null);
       
       try {
-        console.log('🔄 Fetching payments with params:', {
+        //console.log('🔄 Fetching payments with params:', {
           page: currentPage,
           limit: itemsPerPage,
           status: filters.status !== 'all' ? filters.status : undefined,
@@ -88,12 +88,12 @@ const PaymentsManagement = ({ userData }) => {
           apiParams.network = filters.network;
         }
 
-        console.log('📤 API params being sent:', apiParams);
+        //console.log('📤 API params being sent:', apiParams);
 
         // Use the payments API
         const response = await paymentsAPI.getAll(apiParams);
 
-        console.log('📦 Payments API response:', response);
+        //console.log('📦 Payments API response:', response);
 
         if (response.success) {
           const paymentsData = response.payments || [];
@@ -123,11 +123,11 @@ const PaymentsManagement = ({ userData }) => {
             failed: transformedPayments.filter(p => p.status === 'failed').length,
           });
           
-          console.log('✅ Payments loaded successfully:', transformedPayments.length);
+          //console.log('✅ Payments loaded successfully:', transformedPayments.length);
           
         } else if (response.isEmpty || response.isNewUser) {
           // Handle new user with no payments
-          console.log('👤 New user with no payments');
+          //console.log('👤 New user with no payments');
           setPayments([]);
           setStats({ total: 0, completed: 0, pending: 0, failed: 0 });
         } else {
@@ -145,7 +145,7 @@ const PaymentsManagement = ({ userData }) => {
           setError('Payment processing is currently paused. Please contact support to reactivate your account.');
         } else if (err.message.includes('404')) {
           // For new users, show empty state instead of error
-          console.log('👤 No payments found (new user)');
+          //console.log('👤 No payments found (new user)');
           setPayments([]);
           setStats({ total: 0, completed: 0, pending: 0, failed: 0 });
         } else {
@@ -220,7 +220,7 @@ const PaymentsManagement = ({ userData }) => {
     };
     
     const handleViewDetails = (payment) => {
-        console.log('👁️ Opening payment details for:', payment.payId);
+        //console.log('👁️ Opening payment details for:', payment.payId);
         // Use the same URL pattern as Recent Activity
         navigate(`/dashboard/payment-details-modal?id=${payment.payId || payment.id}`);
     };
@@ -229,7 +229,7 @@ const PaymentsManagement = ({ userData }) => {
     const handleBulkExport = () => showToast(`Exporting ${selectedPayments.length} payments...`, 'info');
     
     const handlePaymentLinkSuccess = (link) => {
-        console.log('Payment link created:', link);
+        //console.log('Payment link created:', link);
         // You could show a success notification here
     };
 

@@ -50,7 +50,7 @@ async function getRecentActivity(req, res) {
             });
         }
 
-        console.log(`📋 Fetching recent activity for user: ${userId}, limit: ${limit}`);
+        //console.log(`📋 Fetching recent activity for user: ${userId}, limit: ${limit}`);
 
         // Fetch recent payments for this user
         const payments = await Payment.find({ userId })
@@ -58,7 +58,7 @@ async function getRecentActivity(req, res) {
             .limit(parseInt(limit))
             .lean();
 
-        console.log(`✅ Found ${payments.length} recent transactions`);
+        //console.log(`✅ Found ${payments.length} recent transactions`);
 
         // Transform payments to activity format
         const recentActivity = payments.map(payment => ({
@@ -103,7 +103,7 @@ async function getDashboardOverview(req, res) {
             });
         }
 
-        console.log(`📊 Fetching dashboard overview from daily metrics for user: ${userId}, period: ${period} days`);
+        //console.log(`📊 Fetching dashboard overview from daily metrics for user: ${userId}, period: ${period} days`);
 
         // Calculate date range based on selected period
         const endDate = new Date();
@@ -116,7 +116,7 @@ async function getDashboardOverview(req, res) {
             date: { $gte: startDate, $lte: endDate }
         }).sort({ date: 1 }).lean();
 
-        console.log(`✅ Found ${dailyMetrics.length} daily metric records for the ${period}-day period`);
+        //console.log(`✅ Found ${dailyMetrics.length} daily metric records for the ${period}-day period`);
 
         // Build aggregated data from metrics for the SELECTED PERIOD
         const { volume, totalSales } = buildVolumeFromMetrics(dailyMetrics);
@@ -138,7 +138,7 @@ async function getDashboardOverview(req, res) {
             status: 'pending'
         });
 
-        console.log(`📊 Period summary (${period} days):`, {
+        //console.log(`📊 Period summary (${period} days):`, {
             total: totalPayments,
             completed: completedCount,
             pending: currentPendingCount, // Real-time count
@@ -234,7 +234,7 @@ async function getCryptoDistribution(req, res) {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
 
-        console.log(`📊 Fetching crypto distribution from daily metrics for user: ${userId}, period: ${days} days`);
+        //console.log(`📊 Fetching crypto distribution from daily metrics for user: ${userId}, period: ${days} days`);
 
         // Fetch daily metrics instead of payments
         const dailyMetrics = await DashboardDailyMetric.find({

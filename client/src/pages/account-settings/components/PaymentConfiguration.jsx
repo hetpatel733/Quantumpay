@@ -71,7 +71,7 @@ const PaymentConfiguration = ({ userData }) => {
         });
         setEnabledCryptos(enabled);
         
-        console.log('✅ Payment configuration loaded');
+        //console.log('✅ Payment configuration loaded');
       } else {
         setError(response.message || 'Failed to load configuration');
       }

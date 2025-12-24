@@ -56,7 +56,7 @@ const PortfolioManagement = ({ userData }) => {
           productId: order.productId
         }));
         
-        console.log('✅ Portfolio items loaded:', transformedItems.length);
+        //console.log('✅ Portfolio items loaded:', transformedItems.length);
         setPortfolioItems(transformedItems);
       } else {
         setError(response.message || 'Failed to fetch portfolio items');
@@ -80,13 +80,13 @@ const PortfolioManagement = ({ userData }) => {
   };
 
   const handleEditItem = (item) => {
-    console.log('✏️ Editing item:', item);
+    //console.log('✏️ Editing item:', item);
     setSelectedItem(item);
     setIsModalOpen(true);
   };
 
   const handleDeleteItem = async (itemId) => {
-    console.log('🗑️ Delete button clicked for item:', itemId);
+    //console.log('🗑️ Delete button clicked for item:', itemId);
     
     if (!itemId) {
       console.error('❌ No item ID provided');
@@ -171,7 +171,7 @@ const PortfolioManagement = ({ userData }) => {
     }
 
     try {
-      console.log('💾 Saving item with data:', itemData);
+      //console.log('💾 Saving item with data:', itemData);
       
       if (selectedItem) {
         // Edit existing item
@@ -186,7 +186,7 @@ const PortfolioManagement = ({ userData }) => {
         });
         
         if (response.success) {
-          console.log('✅ Item updated successfully');
+          //console.log('✅ Item updated successfully');
           
           // Immediately update local state with the edited item
           setPortfolioItems(prevItems => 
@@ -225,14 +225,14 @@ const PortfolioManagement = ({ userData }) => {
           image: itemData.image
         };
         
-        console.log('📦 Creating new order:', orderData);
+        //console.log('📦 Creating new order:', orderData);
         
         const response = await ordersAPI.create(orderData);
         
-        console.log('📋 Create response:', response);
+        //console.log('📋 Create response:', response);
         
         if (response.success) {
-          console.log('✅ Item created successfully');
+          //console.log('✅ Item created successfully');
           
           // Get the created order from response
           const newOrder = response.order || response.product || {};
@@ -257,7 +257,7 @@ const PortfolioManagement = ({ userData }) => {
             productId: newOrder.productId || newOrder._id
           };
           
-          console.log('🆕 Adding new item to list:', newItem);
+          //console.log('🆕 Adding new item to list:', newItem);
           
           // Immediately add to local state - prepend to show at top
           setPortfolioItems(prevItems => [newItem, ...prevItems]);

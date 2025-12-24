@@ -12,7 +12,7 @@ const AccountSettings = ({ userData, refreshUserData }) => {
   const [activeTab, setActiveTab] = useState('profile');
 
   // Debug log to see what userData is received
-  console.log('🎯 AccountSettings received userData:', userData);
+  //console.log('🎯 AccountSettings received userData:', userData);
 
   const tabs = [
     {

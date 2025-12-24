@@ -47,7 +47,7 @@ const ExportPreview = ({ config }) => {
         params.amountMax = parseFloat(config.amountRange.max);
       }
 
-      console.log('📊 Fetching preview data with params:', params);
+      //console.log('📊 Fetching preview data with params:', params);
 
       const response = await paymentsAPI.getAll(params);
 

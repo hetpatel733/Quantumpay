@@ -35,23 +35,23 @@ const Login = () => {
     setError(null)
     
     try {
-      console.log('📤 Sending login request for:', formData.email);
+      //console.log('📤 Sending login request for:', formData.email);
       const response = await authAPI.login({
         email: formData.email,
         password: formData.password
       })
 
-      console.log('📥 Login response:', response);
+      //console.log('📥 Login response:', response);
 
       if (response.success) {
         // Store token and user data
         if (response.token) {
           localStorage.setItem('authToken', response.token)
-          console.log('✅ Token stored');
+          //console.log('✅ Token stored');
         }
         if (response.user) {
           localStorage.setItem('userData', JSON.stringify(response.user))
-          console.log('✅ User data stored');
+          //console.log('✅ User data stored');
         }
         
         // Call context handler to update auth state
@@ -59,7 +59,7 @@ const Login = () => {
           handleLoginSuccess(response.user, response.token)
         }
         
-        console.log('✅ Redirecting to dashboard');
+        //console.log('✅ Redirecting to dashboard');
         // Navigate to dashboard
         navigate('/dashboard')
       } else {

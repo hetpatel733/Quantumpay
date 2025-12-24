@@ -15,7 +15,7 @@ function initializePaymentExpirationJob() {
             await checkAndExpirePayments();
         });
 
-        console.log('🕐 Payment expiration cron job initialized (runs every 5 minutes)');
+        //console.log('🕐 Payment expiration cron job initialized (runs every 5 minutes)');
         return cronTask;
     } catch (error) {
         console.error('❌ Failed to initialize payment expiration job:', error);
@@ -38,7 +38,7 @@ async function checkAndExpirePayments() {
         });
 
         if (expiredPayments.length > 0) {
-            console.log(`⏰ Found ${expiredPayments.length} expired payment(s) to mark as failed`);
+            //console.log(`⏰ Found ${expiredPayments.length} expired payment(s) to mark as failed`);
 
             let successCount = 0;
             let errorCount = 0;
@@ -53,7 +53,7 @@ async function checkAndExpirePayments() {
                     // ✅ FIX: Update daily metrics for expired payments
                     await updateDailyMetricsForExpiredPayment(payment, DashboardDailyMetric);
                     
-                    console.log(`✅ Marked payment ${payment.payId} as expired`);
+                    //console.log(`✅ Marked payment ${payment.payId} as expired`);
                     successCount++;
                 } catch (err) {
                     console.error(`❌ Failed to expire payment ${payment.payId}:`, err.message);
@@ -61,9 +61,9 @@ async function checkAndExpirePayments() {
                 }
             }
 
-            console.log(`📊 Payment expiration summary: ${successCount} succeeded, ${errorCount} failed`);
+            //console.log(`📊 Payment expiration summary: ${successCount} succeeded, ${errorCount} failed`);
         } else {
-            console.log('✅ Payment expiration check completed - no expired payments found');
+            //console.log('✅ Payment expiration check completed - no expired payments found');
         }
 
     } catch (error) {
@@ -100,7 +100,7 @@ async function updateDailyMetricsForExpiredPayment(payment, DashboardDailyMetric
 
         await dailyMetric.save();
 
-        console.log(`📊 Daily metrics updated for expired payment on ${today.toDateString()}: failedCount++`);
+        //console.log(`📊 Daily metrics updated for expired payment on ${today.toDateString()}: failedCount++`);
 
     } catch (error) {
         console.error('❌ Update daily metrics error for expired payment:', error);
@@ -110,7 +110,7 @@ async function updateDailyMetricsForExpiredPayment(payment, DashboardDailyMetric
 function stopPaymentExpirationJob() {
     if (cronTask) {
         cronTask.stop();
-        console.log('⏹️ Payment expiration cron job stopped');
+        //console.log('⏹️ Payment expiration cron job stopped');
     }
 }
 

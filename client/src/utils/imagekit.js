@@ -8,7 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_SERVER_URL || '';
  */
 export const uploadImageToImageKit = async (file, folder = 'QuantumPay/products') => {
     try {
-        console.log('📤 Converting file to base64 for server upload...');
+        //console.log('📤 Converting file to base64 for server upload...');
         
         // Convert file to base64
         const base64File = await fileToBase64(file);

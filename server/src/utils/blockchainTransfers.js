@@ -54,7 +54,7 @@ async function fetchAssetTransfers(network, toAddress, category = 'external', fr
     }
 
     try {
-        console.log(`🔍 Fetching ${category} transfers for ${toAddress} on ${network}...`);
+        //console.log(`🔍 Fetching ${category} transfers for ${toAddress} on ${network}...`);
 
         const requestBody = {
             jsonrpc: '2.0',
@@ -91,7 +91,7 @@ async function fetchAssetTransfers(network, toAddress, category = 'external', fr
         }
 
         const transfers = data.result?.transfers || [];
-        console.log(`✅ Found ${transfers.length} ${category} transfers on ${network}`);
+        //console.log(`✅ Found ${transfers.length} ${category} transfers on ${network}`);
         
         return transfers;
     } catch (error) {
@@ -142,12 +142,12 @@ async function findMatchingTransfer(
     paymentCreatedAt, 
     tolerancePercent = 1
 ) {
-    console.log(`🔎 Searching for transfer: ${expectedAmount} ${cryptoType} to ${toAddress} on ${network}`);
+    //console.log(`🔎 Searching for transfer: ${expectedAmount} ${cryptoType} to ${toAddress} on ${network}`);
 
     const transfers = await getAllIncomingTransfers(network, toAddress);
 
     if (transfers.length === 0) {
-        console.log('❌ No transfers found');
+        //console.log('❌ No transfers found');
         return null;
     }
 
@@ -185,11 +185,11 @@ async function findMatchingTransfer(
         const transferValue = parseFloat(transfer.value) || 0;
         
         if (transferValue >= minAmount && transferValue <= maxAmount) {
-            console.log(`✅ Found matching transfer!`);
-            console.log(`   Hash: ${transfer.hash}`);
-            console.log(`   Amount: ${transferValue} ${transferAsset}`);
-            console.log(`   Expected: ${expectedAmount} ${cryptoType}`);
-            console.log(`   Time: ${transfer.metadata?.blockTimestamp}`);
+            //console.log(`✅ Found matching transfer!`);
+            //console.log(`   Hash: ${transfer.hash}`);
+            //console.log(`   Amount: ${transferValue} ${transferAsset}`);
+            //console.log(`   Expected: ${expectedAmount} ${cryptoType}`);
+            //console.log(`   Time: ${transfer.metadata?.blockTimestamp}`);
             
             return {
                 hash: transfer.hash,
@@ -205,7 +205,7 @@ async function findMatchingTransfer(
         }
     }
 
-    console.log(`❌ No matching transfer found within tolerance (${tolerancePercent}%)`);
+    //console.log(`❌ No matching transfer found within tolerance (${tolerancePercent}%)`);
     return null;
 }
 
@@ -226,7 +226,7 @@ async function verifyTransaction(network, txHash, expectedTo, expectedAmount, cr
     }
 
     try {
-        console.log(`🔍 Verifying transaction ${txHash} on ${network}...`);
+        //console.log(`🔍 Verifying transaction ${txHash} on ${network}...`);
 
         const requestBody = {
             jsonrpc: '2.0',
@@ -294,7 +294,7 @@ async function verifyTransaction(network, txHash, expectedTo, expectedAmount, cr
             };
         }
 
-        console.log(`✅ Transaction verified successfully!`);
+        //console.log(`✅ Transaction verified successfully!`);
 
         return {
             verified: true,
@@ -333,7 +333,7 @@ async function checkPendingPayments(pendingPayments) {
 
         // Skip unsupported networks
         if (!NETWORK_CONFIG[alchemyNetwork]) {
-            console.log(`⏭️ Skipping payment ${payId} - unsupported network: ${network}`);
+            //console.log(`⏭️ Skipping payment ${payId} - unsupported network: ${network}`);
             continue;
         }
 
@@ -354,7 +354,7 @@ async function checkPendingPayments(pendingPayments) {
         }
     }
 
-    console.log(`📊 Found ${matches.length} matching transfers out of ${pendingPayments.length} pending payments`);
+    //console.log(`📊 Found ${matches.length} matching transfers out of ${pendingPayments.length} pending payments`);
     return matches;
 }
 

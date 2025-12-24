@@ -24,7 +24,7 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
   // Re-fetch when portfolio changes globally (so new products appear immediately)
   useEffect(() => {
     const onPortfolioUpdated = (e) => {
-      console.log('📣 PaymentLinkModal detected portfolio:updated', e?.detail);
+      //console.log('📣 PaymentLinkModal detected portfolio:updated', e?.detail);
       if (isOpen) fetchData();
     };
     window.addEventListener('portfolio:updated', onPortfolioUpdated);
@@ -46,7 +46,7 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
         return;
       }
 
-      console.log('🔄 Fetching portfolio items and API keys for user:', userId);
+      //console.log('🔄 Fetching portfolio items and API keys for user:', userId);
 
       // Fetch portfolio items and API keys
       const [ordersResponse, apiKeysResponse] = await Promise.all([
@@ -54,8 +54,8 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
         apiKeysAPI.getAll(userId)
       ]);
 
-      console.log('📦 Orders response:', ordersResponse);
-      console.log('📦 API Keys response:', apiKeysResponse);
+      //console.log('📦 Orders response:', ordersResponse);
+      //console.log('📦 API Keys response:', apiKeysResponse);
 
       // --- Normalize products ---
       if (ordersResponse.success) {
@@ -73,7 +73,7 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
           __raw: o
         }));
         setPortfolioItems(orders);
-        console.log(`✅ Loaded ${orders.length} portfolio items`);
+        //console.log(`✅ Loaded ${orders.length} portfolio items`);
       } else {
         console.warn('⚠️ Failed to fetch orders:', ordersResponse.message);
         setPortfolioItems([]);
@@ -93,12 +93,12 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
         const activeKeys = normalized.filter(k => k.isActive);
         setApiKeys(normalized);
 
-        console.log(`✅ Found ${activeKeys.length} active API keys out of ${normalized.length} total`);
+        //console.log(`✅ Found ${activeKeys.length} active API keys out of ${normalized.length} total`);
 
         // Auto-select first active API key id if available
         if (activeKeys.length > 0) {
           setSelectedApiKey(activeKeys[0]._id);
-          console.log('🔑 Auto-selected API key id:', activeKeys[0]._id, 'key:', activeKeys[0].key);
+          //console.log('🔑 Auto-selected API key id:', activeKeys[0]._id, 'key:', activeKeys[0].key);
         } else {
           console.warn('⚠️ No active API keys found');
           setSelectedApiKey('');
@@ -123,9 +123,9 @@ const PaymentLinkModal = ({ isOpen, onClose, onSuccess, userData }) => {
     }
 
     // Debugging info
-    console.log('🔎 generatePaymentLink inputs:', { selectedItem, selectedApiKey });
-    console.log('📦 portfolioItems sample:', portfolioItems && portfolioItems.length ? portfolioItems[0] : 'no-items');
-    console.log('🔑 apiKeys sample:', apiKeys && apiKeys.length ? apiKeys[0] : 'no-keys');
+    //console.log('🔎 generatePaymentLink inputs:', { selectedItem, selectedApiKey });
+    //console.log('📦 portfolioItems sample:', portfolioItems && portfolioItems.length ? portfolioItems[0] : 'no-items');
+    //console.log('🔑 apiKeys sample:', apiKeys && apiKeys.length ? apiKeys[0] : 'no-keys');
 
     // Try to find the order by several possible id fields
     const selectedOrder = portfolioItems.find(item =>

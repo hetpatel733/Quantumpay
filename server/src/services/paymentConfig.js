@@ -6,7 +6,7 @@ async function getPaymentConfig(req, res) {
     try {
         const { userId } = req.params;
 
-        console.log(`📋 Getting payment config for user: ${userId}`);
+        //console.log(`📋 Getting payment config for user: ${userId}`);
 
         if (!userId) {
             return res.status(400).json({
@@ -20,7 +20,7 @@ async function getPaymentConfig(req, res) {
 
         // If no config exists, create one
         if (!config) {
-            console.log('No config found, creating new one');
+            //console.log('No config found, creating new one');
             config = new PaymentConfiguration({
                 userId,
                 wallets: {}
@@ -28,7 +28,7 @@ async function getPaymentConfig(req, res) {
             await config.save();
         }
 
-        console.log(`✅ Payment config retrieved`);
+        //console.log(`✅ Payment config retrieved`);
 
         return res.status(200).json({
             success: true,
@@ -53,7 +53,7 @@ async function updatePaymentConfig(req, res) {
         const { userId } = req.params;
         const { wallets } = req.body;
 
-        console.log(`💰 Updating payment config for user: ${userId}`);
+        //console.log(`💰 Updating payment config for user: ${userId}`);
 
         if (!userId) {
             return res.status(400).json({
@@ -87,7 +87,7 @@ async function updatePaymentConfig(req, res) {
         }
 
         await config.save();
-        console.log(`✅ Payment config updated for: ${user.email}`);
+        //console.log(`✅ Payment config updated for: ${user.email}`);
 
         return res.status(200).json({
             success: true,
@@ -113,7 +113,7 @@ async function updateWalletAddress(req, res) {
         const { userId } = req.params;
         const { currency, address } = req.body;
 
-        console.log(`🪙 Updating wallet for ${currency}: ${userId}`);
+        //console.log(`🪙 Updating wallet for ${currency}: ${userId}`);
 
         if (!userId || !currency) {
             return res.status(400).json({
@@ -141,7 +141,7 @@ async function updateWalletAddress(req, res) {
         }
 
         await config.save();
-        console.log(`✅ Wallet updated for ${currency}`);
+        //console.log(`✅ Wallet updated for ${currency}`);
 
         return res.status(200).json({
             success: true,

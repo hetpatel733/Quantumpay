@@ -18,7 +18,7 @@ function getTodayDate() {
 // Initialize user data after signup
 async function initializeUserData(userId, email, role) {
     try {
-        console.log(`📦 Initializing data for user: ${email}`);
+        //console.log(`📦 Initializing data for user: ${email}`);
 
         // 1. Create default BusinessAPI key (for business users)
         if (role === 'business') {
@@ -36,7 +36,7 @@ async function initializeUserData(userId, email, role) {
                 usageCount: 0
             });
             await businessAPI.save();
-            console.log('✅ Default API key created');
+            //console.log('✅ Default API key created');
         }
 
         // 2. Create Notification entry
@@ -49,7 +49,7 @@ async function initializeUserData(userId, email, role) {
             isRead: false
         });
         await notification.save();
-        console.log('✅ Welcome notification created');
+        //console.log('✅ Welcome notification created');
 
         // 3. Create Payment Configuration
         const paymentConfig = new PaymentConfiguration({
@@ -57,9 +57,9 @@ async function initializeUserData(userId, email, role) {
             wallets: {}
         });
         await paymentConfig.save();
-        console.log('✅ Payment configuration created');
+        //console.log('✅ Payment configuration created');
 
-        console.log(`✅ User initialization completed for: ${email}`);
+        //console.log(`✅ User initialization completed for: ${email}`);
         return true;
     } catch (error) {
         console.error('❌ Error initializing user data:', error);
@@ -72,7 +72,7 @@ async function signup(req, res) {
     try {
         const { name, email, password, type, businessName } = req.body;
 
-        console.log(`🔐 Signup attempt: ${email}, Type: ${type}`);
+        //console.log(`🔐 Signup attempt: ${email}, Type: ${type}`);
 
         // Check if user exists
         const existingUser = await User.findOne({ email });
@@ -98,7 +98,7 @@ async function signup(req, res) {
         });
 
         await user.save();
-        console.log(`✅ User created: ${email}`);
+        //console.log(`✅ User created: ${email}`);
 
         // Initialize user data
         await initializeUserData(user._id, email, role);
@@ -123,7 +123,7 @@ async function login(req, res) {
     try {
         const { email, password } = req.body;
 
-        console.log(`🔐 Login attempt: ${email}`);
+        //console.log(`🔐 Login attempt: ${email}`);
 
         // Find user
         const user = await User.findOne({ email });
@@ -157,7 +157,7 @@ async function login(req, res) {
             sameSite: 'lax'
         });
 
-        console.log(`✅ Login successful: ${email}`);
+        //console.log(`✅ Login successful: ${email}`);
 
         return res.status(200).json({
             success: true,
@@ -276,7 +276,7 @@ async function updateProfile(req, res) {
         const { id } = req.params;
         const updateData = req.body;
 
-        console.log(`📝 Updating profile for user ID: ${id}`);
+        //console.log(`📝 Updating profile for user ID: ${id}`);
 
         if (!id) {
             return res.status(400).json({
@@ -302,7 +302,7 @@ async function updateProfile(req, res) {
 
             if (uploadResult.success) {
                 profileImageUrl = uploadResult.url;
-                console.log('✅ Profile image uploaded to ImageKit:', uploadResult.url);
+                //console.log('✅ Profile image uploaded to ImageKit:', uploadResult.url);
             } else {
                 console.warn('Failed to upload profile image to ImageKit:', uploadResult.error);
                 // Continue with base64 image as fallback
@@ -333,7 +333,7 @@ async function updateProfile(req, res) {
         }
 
         await user.save();
-        console.log(`✅ Profile updated for: ${user.email}`);
+        //console.log(`✅ Profile updated for: ${user.email}`);
 
         return res.status(200).json({
             success: true,
@@ -371,7 +371,7 @@ async function changePassword(req, res) {
         const { id } = req.params;
         const { currentPassword, newPassword } = req.body;
 
-        console.log(`🔐 Password change request for user ID: ${id}`);
+        //console.log(`🔐 Password change request for user ID: ${id}`);
 
         // Validate input
         if (!id || !currentPassword || !newPassword) {
@@ -409,7 +409,7 @@ async function changePassword(req, res) {
         user.password = newPassword;
         await user.save();
 
-        console.log(`✅ Password updated for: ${user.email}`);
+        //console.log(`✅ Password updated for: ${user.email}`);
 
         return res.status(200).json({
             success: true,

@@ -58,7 +58,7 @@ export const apiRequest = async (endpoint, options = {}) => {
     const ttl = options.cacheTTL || 5; // Default 5 minutes
     
     return await apiCache.getOrFetch(cacheKey, async () => {
-      console.log(`🚀 API Request: ${config.method} ${API_BASE_URL}${endpoint}`);
+      //console.log(`🚀 API Request: ${config.method} ${API_BASE_URL}${endpoint}`);
       
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
       
@@ -94,7 +94,7 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   // For non-cacheable requests (POST, PUT, DELETE)
   try {
-    console.log(`🚀 API Request: ${config.method} ${API_BASE_URL}${endpoint}`);
+    //console.log(`🚀 API Request: ${config.method} ${API_BASE_URL}${endpoint}`);
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     
@@ -155,7 +155,7 @@ export const apiRequest = async (endpoint, options = {}) => {
           apiCache.delete(apiCache.generateKey('/api/portfolio/stats', {}));
           apiCache.delete('portfolio-list');
           apiCache.delete('orders-list');
-          console.log('🧹 Cache invalidated for portfolio endpoints:', endpoint);
+          //console.log('🧹 Cache invalidated for portfolio endpoints:', endpoint);
         } catch (e) {
           console.warn('Cache invalidation error for portfolio:', e);
         }
@@ -163,7 +163,7 @@ export const apiRequest = async (endpoint, options = {}) => {
         // Dispatch global event so UI can refresh without reload
         try {
           window.dispatchEvent(new CustomEvent('portfolio:updated', { detail: { endpoint, method: config.method } }));
-          console.log('📣 Dispatched portfolio:updated event');
+          //console.log('📣 Dispatched portfolio:updated event');
         } catch (e) {
           console.warn('Failed to dispatch portfolio:updated event', e);
         }
@@ -192,7 +192,7 @@ export const apiRequest = async (endpoint, options = {}) => {
     
     // Improved error handling for payment config
     if (endpoint.includes('/payment-config') && options.emptyResultsOk) {
-      console.log('🔧 Payment config endpoint failed, returning default structure');
+      //console.log('🔧 Payment config endpoint failed, returning default structure');
       return { 
         success: true, 
         isEmpty: true, 
@@ -539,7 +539,7 @@ export const ordersAPI = {
 
   // Update order (portfolio item)
   update: async (orderId, updateData) => {
-    console.log('🔄 Updating order via API:', orderId, updateData);
+    //console.log('🔄 Updating order via API:', orderId, updateData);
     
     if (!orderId) {
       throw new Error('Order ID is required for update');
@@ -648,10 +648,10 @@ export const usersAPI = {
   // Change user password
   changePassword: async (userId, passwordData) => {
     try {
-      console.log('🔄 API: Changing password for user:', userId);
+      //console.log('🔄 API: Changing password for user:', userId);
       
       const token = getAuthToken();
-      console.log('🔑 Token for password change:', token ? 'Present' : 'Missing');
+      //console.log('🔑 Token for password change:', token ? 'Present' : 'Missing');
       
       if (!token) {
         throw new Error('No authentication token found. Please log in again.');
@@ -667,7 +667,7 @@ export const usersAPI = {
         body: JSON.stringify(passwordData)
       });
 
-      console.log('📤 Password change response status:', response.status);
+      //console.log('📤 Password change response status:', response.status);
 
       // Check if response is ok first
       if (!response.ok) {
@@ -689,7 +689,7 @@ export const usersAPI = {
       }
 
       const data = await response.json();
-      console.log('📤 API: Password change response:', data);
+      //console.log('📤 API: Password change response:', data);
       
       return data;
     } catch (error) {
@@ -715,7 +715,7 @@ export const apiKeysAPI = {
         };
       }
 
-      console.log('🔄 Fetching API keys for userId:', finalUserId);
+      //console.log('🔄 Fetching API keys for userId:', finalUserId);
       
       return await apiRequest(`/api/api-keys?userId=${finalUserId}`, {
         method: 'GET',
@@ -941,7 +941,7 @@ export const dashboardAPI = {
         throw new Error('User ID not found. Please log in again.');
       }
 
-      console.log('📊 Fetching dashboard overview with userId:', userId);
+      //console.log('📊 Fetching dashboard overview with userId:', userId);
 
       return await apiRequest(`/api/dashboard/overview?period=${period}&userId=${userId}`, {
         enableCache: !forceRefresh,
@@ -992,7 +992,7 @@ export const dashboardAPI = {
         throw new Error('User ID not found. Please log in again.');
       }
 
-      console.log('📊 Fetching recent activity with userId:', userId);
+      //console.log('📊 Fetching recent activity with userId:', userId);
 
       return await apiRequest(`/api/dashboard/recent-activity?limit=${limit}&userId=${userId}`, {
         enableCache: true,
@@ -1020,7 +1020,7 @@ export const dashboardAPI = {
         throw new Error('User ID not found. Please log in again.');
       }
 
-      console.log('📊 Fetching crypto distribution with userId:', userId);
+      //console.log('📊 Fetching crypto distribution with userId:', userId);
 
       return await apiRequest(`/api/dashboard/crypto-distribution?period=${period}&userId=${userId}`, {
         enableCache: true,

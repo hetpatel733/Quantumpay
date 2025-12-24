@@ -70,7 +70,7 @@ const Dashboard = ({ userData }) => {
   // Enhanced chart data formatter - MODIFIED: Show total volume only
   const getChartData = () => {
     if (!dashboardData || !dashboardData.dailyBreakdown || dashboardData.dailyBreakdown.length === 0) {
-      console.log('⚠️ No daily breakdown data for chart');
+      //console.log('⚠️ No daily breakdown data for chart');
       // Return placeholder data
       return Array(7).fill(0).map((_, i) => {
         const date = new Date();
@@ -82,7 +82,7 @@ const Dashboard = ({ userData }) => {
       });
     }
 
-    console.log('📊 Using daily breakdown data for chart:', dashboardData.dailyBreakdown.length, 'days');
+    //console.log('📊 Using daily breakdown data for chart:', dashboardData.dailyBreakdown.length, 'days');
     
     // Use the daily breakdown data from the API
     return dashboardData.dailyBreakdown.map(day => ({
@@ -94,12 +94,12 @@ const Dashboard = ({ userData }) => {
   // Create crypto distribution from real data
   const getCryptoDistribution = () => {
     if (!dashboardData || !dashboardData.cryptoDistribution || dashboardData.cryptoDistribution.length === 0) {
-      console.log('⚠️ No crypto distribution data available');
+      //console.log('⚠️ No crypto distribution data available');
       // Return empty array instead of placeholder when no data
       return [];
     }
 
-    console.log('📊 Using crypto distribution data:', dashboardData.cryptoDistribution);
+    //console.log('📊 Using crypto distribution data:', dashboardData.cryptoDistribution);
     
     // Use real distribution data
     return dashboardData.cryptoDistribution.filter(item => item.value > 0);
@@ -124,7 +124,7 @@ const Dashboard = ({ userData }) => {
       setLoading(true);
       setError(null);
       
-      console.log(`🔄 Fetching dashboard data for ${selectedPeriod} days ${forceRefresh ? '(force refresh)' : ''}`);
+      //console.log(`🔄 Fetching dashboard data for ${selectedPeriod} days ${forceRefresh ? '(force refresh)' : ''}`);
       
       const [overviewResponse, cryptoDistResponse] = await Promise.all([
         dashboardAPI.getOverview(selectedPeriod, forceRefresh),
@@ -132,7 +132,7 @@ const Dashboard = ({ userData }) => {
       ]);
       
       if (overviewResponse.success) {
-        console.log(`📊 Dashboard data for ${selectedPeriod} days received:`, {
+        //console.log(`📊 Dashboard data for ${selectedPeriod} days received:`, {
           pendingCount: overviewResponse.periodMetrics?.statusSummary?.pending || 0,
           completedVolume: overviewResponse.periodMetrics?.totalSales || 0,
           failedCount: overviewResponse.periodMetrics?.statusSummary?.failed || 0,

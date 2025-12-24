@@ -101,7 +101,7 @@ const corsOptions = {
         '13.228.225.19',
         '18.142.128.26',
         '54.254.162.138',
-        'https://quantumpay-onrender.onrender.com'
+        'https://quantumpayfinance.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

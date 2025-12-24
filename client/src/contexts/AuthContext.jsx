@@ -30,17 +30,17 @@ const AuthProvider = ({ children }) => {
       const storedUserData = localStorage.getItem("userData");
 
       if (!token || !storedUserData) {
-        console.log("❌ No auth data found");
+        //console.log("❌ No auth data found");
         setIsAuthenticated(false);
         setIsLoading(false);
         return;
       }
 
-      console.log("🔍 Validating token...");
+      //console.log("🔍 Validating token...");
       const response = await authAPI.validateToken();
 
       if (response.success) {
-        console.log("✅ Token valid");
+        //console.log("✅ Token valid");
         setIsAuthenticated(true);
         
         const basicUserData = JSON.parse(storedUserData);
@@ -48,7 +48,7 @@ const AuthProvider = ({ children }) => {
         
         // Fetch complete user data immediately
         if (basicUserData.id) {
-          console.log("🔄 Fetching complete user data for:", basicUserData.id);
+          //console.log("🔄 Fetching complete user data for:", basicUserData.id);
           const completeData = await fetchUserData(basicUserData.id);
           if (completeData) {
             setUserData(completeData);
@@ -57,7 +57,7 @@ const AuthProvider = ({ children }) => {
         
         setAuthError(null);
       } else {
-        console.log("❌ Token invalid");
+        //console.log("❌ Token invalid");
         setIsAuthenticated(false);
         setAuthError("Session expired. Please login again.");
         localStorage.removeItem("authToken");
@@ -78,10 +78,10 @@ const AuthProvider = ({ children }) => {
 
   const fetchUserData = async (userId) => {
     try {
-      console.log('🔄 Fetching complete user data for:', userId);
+      //console.log('🔄 Fetching complete user data for:', userId);
       const response = await authAPI.getUserData(userId);
       if (response.success && response.userData) {
-        console.log('✅ Complete user data fetched:', response.userData);
+        //console.log('✅ Complete user data fetched:', response.userData);
         // Save to both localStorage keys
         localStorage.setItem("completeUserData", JSON.stringify(response.userData));
         localStorage.setItem("userData", JSON.stringify(response.userData));
@@ -94,7 +94,7 @@ const AuthProvider = ({ children }) => {
   };
 
   const handleLoginSuccess = (user, token) => {
-    console.log("✅ Login success handler called with user:", user);
+    //console.log("✅ Login success handler called with user:", user);
     
     // Save both basic and complete user data
     localStorage.setItem("userData", JSON.stringify(user));

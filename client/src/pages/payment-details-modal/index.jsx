@@ -54,13 +54,13 @@ const PaymentDetailsModal = () => {
       }
 
       try {
-        console.log('🔄 Fetching payment details for ID:', id);
+        //console.log('🔄 Fetching payment details for ID:', id);
         
         // Try to fetch from payments API
         const response = await paymentsAPI.getById(id);
         
         if (response.success && response.payment) {
-          console.log('✅ Payment data loaded:', response.payment);
+          //console.log('✅ Payment data loaded:', response.payment);
           setPaymentData(response.payment);
         } else {
           setError(response.message || 'Payment not found');

@@ -78,10 +78,10 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('📋 Form submission started');
+    //console.log('📋 Form submission started');
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed:', errors);
+      //console.log('❌ Form validation failed:', errors);
       return;
     }
 
@@ -96,14 +96,14 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
 
       // Upload image to ImageKit if a new file was selected
       if (selectedFile) {
-        console.log('📤 Uploading new image to ImageKit...');
+        //console.log('📤 Uploading new image to ImageKit...');
         setUploadingImage(true);
         
         const uploadResult = await uploadImageToImageKit(selectedFile, 'QuantumPay/products');
         
         if (uploadResult.success) {
           finalImageUrl = uploadResult.url;
-          console.log('✅ Image uploaded to ImageKit:', uploadResult.url);
+          //console.log('✅ Image uploaded to ImageKit:', uploadResult.url);
         } else {
           console.error('⚠️ ImageKit upload failed:', uploadResult.error);
           
@@ -129,7 +129,7 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
         isActive: formData.status === 'active'
       };
       
-      console.log('📋 Submitting data:', formattedData);
+      //console.log('📋 Submitting data:', formattedData);
       
       // Call the onSave callback
       onSave(formattedData);
@@ -157,7 +157,7 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
       newErrors.price = 'Price must be a positive number';
     }
     
-    console.log('🔍 Validation errors:', newErrors);
+    //console.log('🔍 Validation errors:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -184,7 +184,7 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
       const base64Preview = await fileToBase64(file);
       handleInputChange('image', base64Preview);
       
-      console.log('📷 Image selected, will upload on submit');
+      //console.log('📷 Image selected, will upload on submit');
     } catch (error) {
       console.error('❌ Error creating preview:', error);
       showToast('Failed to load image preview', 'error');
@@ -223,7 +223,7 @@ const ItemFormModal = ({ isOpen, onClose, onSave, item = null }) => {
       const base64Preview = await fileToBase64(file);
       handleInputChange('image', base64Preview);
       
-      console.log('📷 Image dropped, will upload on submit');
+      //console.log('📷 Image dropped, will upload on submit');
     } catch (error) {
       console.error('❌ Error creating preview:', error);
       showToast('Failed to load image preview', 'error');

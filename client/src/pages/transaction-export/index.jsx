@@ -78,7 +78,7 @@ const TransactionExport = () => {
         emailAddress: exportConfig.emailDelivery ? exportConfig.emailAddress : undefined
       };
 
-      console.log('📤 Creating export with config:', apiConfig);
+      //console.log('📤 Creating export with config:', apiConfig);
 
       const response = await exportAPI.create(apiConfig);
 

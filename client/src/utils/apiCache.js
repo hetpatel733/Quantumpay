@@ -20,7 +20,7 @@ class APICache {
   get(key) {
     const item = this.cache.get(key);
     if (this.isValid(item)) {
-      console.log('📦 Cache HIT:', key);
+      //console.log('📦 Cache HIT:', key);
       return item.data;
     }
     if (item) {
@@ -31,7 +31,7 @@ class APICache {
 
   // Set cache data with TTL
   set(key, data, ttlMinutes = 5) {
-    console.log('💾 Cache SET:', key, `TTL: ${ttlMinutes}m`);
+    //console.log('💾 Cache SET:', key, `TTL: ${ttlMinutes}m`);
     this.cache.set(key, {
       data,
       expiry: Date.now() + (ttlMinutes * 60 * 1000)
@@ -41,14 +41,14 @@ class APICache {
   // Clear specific cache entry
   delete(key) {
     this.cache.delete(key);
-    console.log('🗑️ Cache DELETE:', key);
+    //console.log('🗑️ Cache DELETE:', key);
   }
 
   // Clear all cache
   clear() {
     this.cache.clear();
     this.requestPromises.clear();
-    console.log('🧹 Cache CLEARED');
+    //console.log('🧹 Cache CLEARED');
   }
 
   // Prevent duplicate requests
@@ -61,7 +61,7 @@ class APICache {
 
     // Return ongoing request if exists
     if (this.requestPromises.has(key)) {
-      console.log('⏳ Request PENDING:', key);
+      //console.log('⏳ Request PENDING:', key);
       return await this.requestPromises.get(key);
     }
 

@@ -54,7 +54,7 @@ const FALLBACK_RATES = {
 async function fetchBinancePrice(symbol) {
     try {
         const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
-        console.log(`🔄 Fetching price from Binance: ${symbol}`);
+        //console.log(`🔄 Fetching price from Binance: ${symbol}`);
 
         const response = await fetch(url);
 
@@ -86,14 +86,14 @@ async function getExchangeRate(cryptoType) {
 
     // Stablecoins are 1:1 with USD
     if (STABLECOINS.includes(symbol)) {
-        console.log(`💰 ${symbol} is stablecoin: $1.00`);
+        //console.log(`💰 ${symbol} is stablecoin: $1.00`);
         return 1;
     }
 
     // Check cache first
     const cached = rateCache.get(symbol);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        console.log(`💰 Using cached rate for ${symbol}: $${cached.rate.toFixed(2)}`);
+        //console.log(`💰 Using cached rate for ${symbol}: $${cached.rate.toFixed(2)}`);
         return cached.rate;
     }
 
@@ -104,7 +104,7 @@ async function getExchangeRate(cryptoType) {
         if (price) {
             // Cache the rate
             rateCache.set(symbol, { rate: price, timestamp: Date.now() });
-            console.log(`✅ ${symbol} rate from Binance: $${price.toFixed(2)}`);
+            //console.log(`✅ ${symbol} rate from Binance: $${price.toFixed(2)}`);
             return price;
         }
     }
@@ -171,7 +171,7 @@ async function cryptoToUsd(cryptoAmount, cryptoType) {
  */
 function clearCache() {
     rateCache.clear();
-    console.log('🧹 Exchange rate cache cleared');
+    //console.log('🧹 Exchange rate cache cleared');
 }
 
 /**
