@@ -115,12 +115,12 @@ const CoinSelect = () => {
       );
 
       //console.log('💳 Processing payment:', {
-        fname: formData.fname,
-        lname: formData.lname,
-        email: formData.email,
-        type: selectedCryptoData.coinType,
-        network: selectedCryptoData.network
-      });
+      //   fname: formData.fname,
+      //   lname: formData.lname,
+      //   email: formData.email,
+      //   type: selectedCryptoData.coinType,
+      //   network: selectedCryptoData.network
+      // });
 
       const response = await paymentsAPI.processCoinSelection({
         fname: formData.fname,

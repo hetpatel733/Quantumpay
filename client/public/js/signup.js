@@ -78,26 +78,28 @@ $(function () {
                 if (self.settings.input1.val().length > 0)
                     $(self.element).append(message);
                 if (valid) valid_count++;
-                if (this.debug)
-                    //console.log(
-                        index,
-                        self.settings.input1.val(),
-                        validator.message,
-                        valid
-                    );
-            });
-            if (valid_count == self.settings.validators.length) {
-                if (self.settings.ok) self.settings.ok(self);
-            } else {
-                if (self.settings.ko) self.settings.ko(self);
+                //     if (this.debug)
+                //         //console.log(
+                //             index,
+                //             self.settings.input1.val(),
+                //             validator.message,
+                //             valid
+                //         );
+                // });
+                if (valid_count == self.settings.validators.length) {
+                    if (self.settings.ok) self.settings.ok(self);
+                } else {
+                    if (self.settings.ko) self.settings.ko(self);
+                }
+                // if (this.debug)
+                //     //console.log(
+                //     "valid",
+                //         valid_count,
+                //         "of",
+                //         self.settings.validators.length
+                // );
             }
-            if (this.debug)
-                //console.log(
-                    "valid",
-                    valid_count,
-                    "of",
-                    self.settings.validators.length
-                );
+            )
         }
     });
 

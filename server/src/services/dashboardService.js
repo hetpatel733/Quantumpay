@@ -139,12 +139,12 @@ async function getDashboardOverview(req, res) {
         });
 
         //console.log(`📊 Period summary (${period} days):`, {
-            total: totalPayments,
-            completed: completedCount,
-            pending: currentPendingCount, // Real-time count
-            failed: failedCount,
-            totalSales
-        });
+        //     total: totalPayments,
+        //     completed: completedCount,
+        //     pending: currentPendingCount, // Real-time count
+        //     failed: failedCount,
+        //     totalSales
+        // });
 
         // Build daily breakdown from metrics
         const dailyBreakdown = dailyMetrics.map(metric => ({

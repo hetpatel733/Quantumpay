@@ -53,15 +53,15 @@ const PaymentsManagement = ({ userData }) => {
       
       try {
         //console.log('🔄 Fetching payments with params:', {
-          page: currentPage,
-          limit: itemsPerPage,
-          status: filters.status !== 'all' ? filters.status : undefined,
-          search: filters.search || undefined,
-          cryptoType: filters.cryptocurrency !== 'all' ? filters.cryptocurrency : undefined,
-          network: filters.network !== 'all' ? filters.network : undefined,
-          sortBy: sortConfig.key,
-          sortOrder: sortConfig.direction
-        });
+        //   page: currentPage,
+        //   limit: itemsPerPage,
+        //   status: filters.status !== 'all' ? filters.status : undefined,
+        //   search: filters.search || undefined,
+        //   cryptoType: filters.cryptocurrency !== 'all' ? filters.cryptocurrency : undefined,
+        //   network: filters.network !== 'all' ? filters.network : undefined,
+        //   sortBy: sortConfig.key,
+        //   sortOrder: sortConfig.direction
+        // });
 
         // Build clean API parameters
         const apiParams = {

@@ -41,11 +41,11 @@ const Header = ({ userData }) => {
         const unreadCountData = response.pagination?.unreadCount || 0;
 
         //console.log(
-          "✅ Notifications loaded:",
-          notificationsData.length,
-          "Unread:",
-          unreadCountData
-        );
+        //   "✅ Notifications loaded:",
+        //   notificationsData.length,
+        //   "Unread:",
+        //   unreadCountData
+        // );
 
         setNotifications(notificationsData);
         setUnreadCount(unreadCountData);
