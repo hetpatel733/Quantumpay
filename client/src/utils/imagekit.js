@@ -8,36 +8,50 @@ const API_BASE_URL = import.meta.env.VITE_SERVER_URL || '';
  */
 export const uploadImageToImageKit = async (file, folder = 'QuantumPay/products') => {
     try {
-        //console.log('📤 Converting file to base64 for server upload...');
+        console.log('📤 Starting image upload to server...');
+        
+        // Validate API URL
+        if (!API_BASE_URL) {
+            throw new Error('Server URL not configured. Please check your environment variables.');
+        }
         
         // Convert file to base64
         const base64File = await fileToBase64(file);
         
-        // Remove data URL prefix to get pure base64
-        const base64Data = base64File.split(',')[1] || base64File;
+        console.log(`📦 Uploading to: ${API_BASE_URL}/api/imagekit/upload`);
         
         // Upload via server endpoint
         const uploadResponse = await fetch(`${API_BASE_URL}/api/imagekit/upload`, {
             method: 'POST',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
-                file: base64File, // Send full data URL for server to parse
-                fileName: file.name,
+                file: base64File,
+                fileName: `${Date.now()}_${file.name}`,
                 folder: folder
             })
         });
         
+        console.log(`📡 Upload response status: ${uploadResponse.status}`);
+        
         if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            throw new Error(errorData.message || 'Failed to upload image');
+            const errorText = await uploadResponse.text();
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch {
+                errorData = { message: errorText };
+            }
+            throw new Error(errorData.message || `Upload failed with status ${uploadResponse.status}`);
         }
         
         const result = await uploadResponse.json();
         
         if (result.success) {
+            console.log('✅ Image uploaded successfully:', result.url);
             return {
                 success: true,
                 url: result.url,
@@ -48,10 +62,19 @@ export const uploadImageToImageKit = async (file, folder = 'QuantumPay/products'
             throw new Error(result.error || 'Upload failed');
         }
     } catch (error) {
-        console.error('ImageKit upload error:', error);
+        console.error('❌ ImageKit upload error:', error);
+        
+        // Provide user-friendly error messages
+        let errorMessage = error.message;
+        if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        } else if (error.message.includes('CORS')) {
+            errorMessage = 'Server configuration error. Please contact support.';
+        }
+        
         return {
             success: false,
-            error: error.message
+            error: errorMessage
         };
     }
 };

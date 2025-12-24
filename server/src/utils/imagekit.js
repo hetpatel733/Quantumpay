@@ -1,9 +1,25 @@
 const ImageKit = require('imagekit');
 
+// Validate environment variables
+const validateConfig = () => {
+    const required = ['IMAGEKIT_PUBLIC_KEY', 'IMAGEKIT_PRIVATE_KEY', 'IMAGEKIT_URL_ENDPOINT'];
+    const missing = required.filter(key => !process.env[key]);
+    
+    if (missing.length > 0) {
+        console.error('❌ Missing ImageKit configuration:', missing.join(', '));
+        return false;
+    }
+    return true;
+};
+
+if (!validateConfig()) {
+    console.warn('⚠️ ImageKit not configured - image uploads will fail');
+}
+
 const imagekit = new ImageKit({
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-    privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || '',
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY || '',
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || ''
 });
 
 /**
@@ -15,11 +31,24 @@ const imagekit = new ImageKit({
  */
 const uploadImage = async (file, fileName, folder = '/') => {
     try {
+        if (!validateConfig()) {
+            return {
+                success: false,
+                error: 'ImageKit not configured'
+            };
+        }
+
+        console.log(`📤 Uploading to ImageKit: ${fileName} -> ${folder}`);
+
         const result = await imagekit.upload({
             file,
             fileName,
-            folder
+            folder,
+            useUniqueFileName: true
         });
+
+        console.log(`✅ ImageKit upload successful: ${result.fileId}`);
+
         return {
             success: true,
             url: result.url,
@@ -27,10 +56,10 @@ const uploadImage = async (file, fileName, folder = '/') => {
             name: result.name
         };
     } catch (error) {
-        console.error('ImageKit upload error:', error);
+        console.error('❌ ImageKit upload error:', error.message);
         return {
             success: false,
-            error: error.message
+            error: error.message || 'Upload failed'
         };
     }
 };

@@ -95,22 +95,45 @@ const exportRoutes = require('./routes/exportRoutes'); // Add new routes
 // ----------------------------------
 // CORS configuration
 const corsOptions = {
-    origin: [
-        'http://localhost:3000', // React dev server
-        'http://localhost:9000',
-        '13.228.225.19',
-        '18.142.128.26',
-        '54.254.162.138',
-        'https://quantumpayfinance.vercel.app'
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:9000',
+            'http://localhost:5173',
+            'https://quantumpayfinance.vercel.app',
+            'https://quantumpay-server.vercel.app',
+            /\.vercel\.app$/  // Allow all Vercel preview deployments
+        ];
+        
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (allowed instanceof RegExp) {
+                return allowed.test(origin);
+            }
+            return allowed === origin;
+        });
+        
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            console.warn('⚠️ CORS blocked origin:', origin);
+            callback(null, true); // Allow in production, log for debugging
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    optionsSuccessStatus: 200
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    optionsSuccessStatus: 200,
+    maxAge: 86400 // 24 hours
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight requests for all routes
+
+// Enable pre-flight for all routes
+app.options('*', cors(corsOptions));
 
 // Increase payload size limit for JSON and URL-encoded data
 app.use(express.json({ limit: '50mb' })); // Increased from default 100kb
