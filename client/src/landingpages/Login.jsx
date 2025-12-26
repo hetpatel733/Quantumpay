@@ -20,6 +20,15 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  // Add demo credentials auto-fill function
+  const fillDemoCredentials = () => {
+    setFormData({
+      email: 'test@gmail.com',
+      password: 'Test@123'
+    })
+    setError(null)
+  }
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -143,6 +152,40 @@ const Login = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Demo Credentials Banner */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-r from-blue-50 to-primary-50 dark:from-blue-900/20 dark:to-teal-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <i className="bi bi-info-circle-fill text-blue-600 dark:text-blue-400 text-lg"></i>
+                          <h3 className="font-bold text-blue-900 dark:text-blue-300">Try Demo Account</h3>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-blue-800 dark:text-blue-300 font-medium">
+                            <span className="font-semibold">Email:</span> test@gmail.com
+                          </p>
+                          <p className="text-blue-800 dark:text-blue-300 font-medium">
+                            <span className="font-semibold">Password:</span> Test@123
+                          </p>
+                        </div>
+                      </div>
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={fillDemoCredentials}
+                        className="px-4 py-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 whitespace-nowrap"
+                      >
+                        <i className="bi bi-lightning-charge-fill"></i>
+                        <span>Auto Fill</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+
                   {/* Error Message */}
                   {error && (
                     <motion.div

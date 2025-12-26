@@ -9,7 +9,7 @@ const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || 'F1VJYt_AJfuFGhOqy2QmWTYr
 const NETWORK_CONFIG = {
     'Polygon': {
         endpoint: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-        nativeAsset: 'MATIC',
+        nativeAsset: 'POL',
         decimals: 18,
         explorerUrl: 'https://polygonscan.com/tx/'
     },
