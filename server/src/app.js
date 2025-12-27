@@ -43,31 +43,19 @@ try {
                 console.log('🗑️ Dropped old transactionId_1 index');
             }
 
-            // --- Initialize Payment Expiration Job ---
+            // --- Initialize Payment Expiration & Verification Job (combined) ---
             const { initializePaymentExpirationJob } = require('./jobs/paymentExpirationJob');
             initializePaymentExpirationJob();
-
-            // --- NEW: Initialize Payment Verification Job ---
-            const { initializePaymentVerificationJob } = require('./jobs/paymentVerificationJob');
-            initializePaymentVerificationJob();
 
         } catch (err) {
             if (err.code === 27) {
                 console.log('ℹ️ Index transactionId_1 does not exist (already dropped)');
                 const { initializePaymentExpirationJob } = require('./jobs/paymentExpirationJob');
                 initializePaymentExpirationJob();
-                
-                // --- NEW: Initialize Payment Verification Job ---
-                const { initializePaymentVerificationJob } = require('./jobs/paymentVerificationJob');
-                initializePaymentVerificationJob();
             } else {
                 console.warn('⚠️ Index cleanup warning:', err.message);
                 const { initializePaymentExpirationJob } = require('./jobs/paymentExpirationJob');
                 initializePaymentExpirationJob();
-                
-                // --- NEW: Initialize Payment Verification Job ---
-                const { initializePaymentVerificationJob } = require('./jobs/paymentVerificationJob');
-                initializePaymentVerificationJob();
             }
         }
     });
