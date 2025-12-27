@@ -1,7 +1,8 @@
 const { Payment } = require('../models/Payment');
 const { Product } = require('../models/Product');
 const { DashboardDailyMetric } = require('../models/DashboardDailyMetric');
-const { checkAndProcessPayments } = require('../jobs/paymentExpirationJob');
+const { checkAndExpirePayments } = require('../jobs/paymentExpirationJob');
+const { verifyPendingPayments } = require('../jobs/paymentVerificationJob');
 
 // GET ALL PAYMENTS FOR ADMIN
 async function getAllPaymentsAdmin(req, res) {
@@ -210,21 +211,64 @@ async function updateDailyMetrics(payment) {
 // MANUAL CRON JOB TRIGGER
 async function triggerManualCronJob(req, res) {
     try {
-        console.log('🔧 Admin: Manually triggering payment expiration/verification job');
+        console.log('🔧 Admin: Manually triggering payment verification & expiration jobs');
 
-        // Call the payment check function directly
-        await checkAndProcessPayments();
+        const results = {
+            verification: { success: false, error: null },
+            expiration: { success: false, error: null }
+        };
 
-        return res.status(200).json({
-            success: true,
-            message: 'Payment verification job executed successfully'
-        });
+        // Run verification job
+        try {
+            console.log('\n📍 Running payment verification job...');
+            await verifyPendingPayments();
+            results.verification.success = true;
+            console.log('✅ Verification job completed successfully');
+        } catch (error) {
+            console.error('❌ Verification job error:', error.message);
+            results.verification.error = error.message;
+        }
+
+        // Run expiration job
+        try {
+            console.log('\n📍 Running payment expiration job...');
+            await checkAndExpirePayments();
+            results.expiration.success = true;
+            console.log('✅ Expiration job completed successfully');
+        } catch (error) {
+            console.error('❌ Expiration job error:', error.message);
+            results.expiration.error = error.message;
+        }
+
+        // Determine overall success
+        const allSuccess = results.verification.success && results.expiration.success;
+        const anySuccess = results.verification.success || results.expiration.success;
+
+        if (allSuccess) {
+            return res.status(200).json({
+                success: true,
+                message: 'Both verification and expiration jobs executed successfully',
+                details: results
+            });
+        } else if (anySuccess) {
+            return res.status(207).json({
+                success: true,
+                message: 'Jobs executed with partial success',
+                details: results
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                message: 'Both jobs failed to execute',
+                details: results
+            });
+        }
 
     } catch (error) {
         console.error('❌ Admin manual cron job error:', error);
         return res.status(500).json({
             success: false,
-            message: 'Failed to execute payment verification job',
+            message: 'Failed to execute payment jobs',
             error: error.message
         });
     }
