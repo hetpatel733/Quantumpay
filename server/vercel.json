@@ -32,7 +32,7 @@
   "crons": [
     {
       "path": "/jobs/paymentExpirationJob",
-      "schedule": "*/1 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

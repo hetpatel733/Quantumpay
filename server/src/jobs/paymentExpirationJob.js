@@ -49,7 +49,7 @@ function initializePaymentExpirationJob() {
 /**
  * Main function that handles both verification and expiration
  */
-export default async function checkAndProcessPayments() {
+async function checkAndProcessPayments() {
     const startTime = Date.now();
     console.log('\n' + '='.repeat(80));
     console.log(`🔄 [PAYMENT CHECK JOB] Starting at ${new Date().toISOString()}`);

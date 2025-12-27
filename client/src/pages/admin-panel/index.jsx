@@ -7,6 +7,7 @@ const AdminPanel = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [cronLoading, setCronLoading] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -70,6 +71,30 @@ const AdminPanel = () => {
     }
   };
 
+  const handleManualCronJob = async () => {
+    setCronLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/trigger-cron-job`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showToast('Payment verification job executed successfully!', 'success');
+        // Refresh payments to see any updates
+        setTimeout(() => fetchPayments(), 1000);
+      } else {
+        showToast(data.message || 'Failed to execute verification job', 'error');
+      }
+    } catch (err) {
+      showToast('Failed to trigger verification job', 'error');
+      console.error('Cron job trigger error:', err);
+    } finally {
+      setCronLoading(false);
+    }
+  };
+
   const filteredPayments = payments.filter(payment => {
     if (filter === 'all') return true;
     return payment.status === filter;
@@ -93,12 +118,34 @@ const AdminPanel = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            🔧 Admin Panel - Payment Management
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Development Mode: Approve or reject payments manually
-          </p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                🔧 Admin Panel - Payment Management
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Development Mode: Approve or reject payments manually
+              </p>
+            </div>
+            <button
+              onClick={handleManualCronJob}
+              disabled={cronLoading}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed font-medium transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+              title="Manually trigger payment verification/expiration job"
+            >
+              {cronLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Running...</span>
+                </>
+              ) : (
+                <>
+                  <span>⚡</span>
+                  <span>Run Cron Job</span>
+                </>
+              )}
+            </button>
+          </div>
 
           {/* Filters */}
           <div className="flex items-center space-x-4">

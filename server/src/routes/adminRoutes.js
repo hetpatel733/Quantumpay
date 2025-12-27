@@ -3,7 +3,8 @@ const router = express.Router();
 const {
     getAllPaymentsAdmin,
     approvePayment,
-    rejectPayment
+    rejectPayment,
+    triggerManualCronJob
 } = require('../services/adminService');
 
 // Get all payments for admin
@@ -14,5 +15,8 @@ router.post('/payments/:payId/approve', approvePayment);
 
 // Reject payment
 router.post('/payments/:payId/reject', rejectPayment);
+
+// Manual cron job trigger
+router.post('/trigger-cron-job', triggerManualCronJob);
 
 module.exports = router;

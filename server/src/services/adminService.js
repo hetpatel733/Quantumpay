@@ -1,11 +1,12 @@
 const { Payment } = require('../models/Payment');
 const { Product } = require('../models/Product');
 const { DashboardDailyMetric } = require('../models/DashboardDailyMetric');
+const { checkAndProcessPayments } = require('../jobs/paymentExpirationJob');
 
 // GET ALL PAYMENTS FOR ADMIN
 async function getAllPaymentsAdmin(req, res) {
     try {
-        //console.log('📋 Admin: Fetching all payments');
+        console.log('📋 Admin: Fetching all payments');
 
         const payments = await Payment.find()
             .sort({ createdAt: -1 })
@@ -31,7 +32,7 @@ async function approvePayment(req, res) {
         const { payId } = req.params;
         const { hash } = req.body;
 
-        //console.log(`✅ Admin: Approving payment ${payId}`);
+        console.log(`✅ Admin: Approving payment ${payId}`);
 
         // Find payment
         const payment = await Payment.findOne({ payId });
@@ -61,7 +62,7 @@ async function approvePayment(req, res) {
         // Update daily metrics
         await updateDailyMetrics(payment);
 
-        //console.log(`✅ Payment ${payId} approved and metrics updated`);
+        console.log(`✅ Payment ${payId} approved and metrics updated`);
 
         return res.status(200).json({
             success: true,
@@ -84,7 +85,7 @@ async function rejectPayment(req, res) {
         const { payId } = req.params;
         const { reason } = req.body;
 
-        //console.log(`❌ Admin: Rejecting payment ${payId}`);
+        console.log(`❌ Admin: Rejecting payment ${payId}`);
 
         const payment = await Payment.findOne({ payId });
         if (!payment) {
@@ -108,7 +109,7 @@ async function rejectPayment(req, res) {
         // ✅ FIX: Update daily metrics when payment is rejected
         await updateDailyMetrics(payment);
 
-        //console.log(`❌ Payment ${payId} rejected and metrics updated`);
+        console.log(`❌ Payment ${payId} rejected and metrics updated`);
 
         return res.status(200).json({
             success: true,
@@ -137,7 +138,7 @@ async function updateProductMetrics(payment) {
             product.totalVolume = (product.totalVolume || 0) + payment.amountUSD;
             
             await product.save();
-            //console.log(`📊 Product ${product.productId} updated: Sales: ${product.salesCount}, Volume: $${product.totalVolume}`);
+            console.log(`📊 Product ${product.productId} updated: Sales: ${product.salesCount}, Volume: $${product.totalVolume}`);
         } else {
             console.warn(`⚠️ Product not found for productId: ${payment.productId}`);
         }
@@ -199,15 +200,39 @@ async function updateDailyMetrics(payment) {
 
         await dailyMetric.save();
 
-        //console.log(`📊 Daily metrics updated for ${today.toDateString()}: ${cryptoType} += $${usdValue.toFixed(2)} USD`);
+        console.log(`📊 Daily metrics updated for ${today.toDateString()}: ${cryptoType} += $${usdValue.toFixed(2)} USD`);
 
     } catch (error) {
         console.error('❌ Update daily metrics error:', error);
     }
 }
 
+// MANUAL CRON JOB TRIGGER
+async function triggerManualCronJob(req, res) {
+    try {
+        console.log('🔧 Admin: Manually triggering payment expiration/verification job');
+
+        // Call the payment check function directly
+        await checkAndProcessPayments();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Payment verification job executed successfully'
+        });
+
+    } catch (error) {
+        console.error('❌ Admin manual cron job error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to execute payment verification job',
+            error: error.message
+        });
+    }
+}
+
 module.exports = {
     getAllPaymentsAdmin,
     approvePayment,
-    rejectPayment
+    rejectPayment,
+    triggerManualCronJob
 };
