@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from 'contexts/ToastContext';
+import { debounce } from 'components/lib/utils';
 
 const API_BASE_URL = import.meta.env.VITE_SERVER_URL || '';
 
@@ -72,26 +73,48 @@ const AdminPanel = () => {
   };
 
   const handleManualCronJob = async () => {
+    // Prevent multiple simultaneous calls
+    if (cronLoading) {
+      console.log('⚠️ Cron job already running, ignoring duplicate click');
+      return;
+    }
+
     setCronLoading(true);
     try {
+      console.log('🔧 Triggering manual cron job...');
       const response = await fetch(`${API_BASE_URL}/api/admin/trigger-cron-job`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
 
       const data = await response.json();
+      
       if (data.success) {
-        showToast('Payment verification job executed successfully!', 'success');
-        // Refresh payments to see any updates
-        setTimeout(() => fetchPayments(), 1000);
+        // Show detailed results
+        const verificationStatus = data.details?.verification?.success ? '✅' : '❌';
+        const expirationStatus = data.details?.expiration?.success ? '✅' : '❌';
+        
+        showToast(
+          `${verificationStatus} Verification | ${expirationStatus} Expiration - ${data.message}`,
+          data.success ? 'success' : 'warning'
+        );
+        
+        // Refresh payments after a longer delay to avoid race condition
+        setTimeout(() => {
+          console.log('🔄 Refreshing payments list...');
+          fetchPayments();
+        }, 2000);
       } else {
-        showToast(data.message || 'Failed to execute verification job', 'error');
+        showToast(data.message || 'Failed to execute jobs', 'error');
       }
     } catch (err) {
-      showToast('Failed to trigger verification job', 'error');
+      showToast('Failed to trigger verification jobs', 'error');
       console.error('Cron job trigger error:', err);
     } finally {
-      setCronLoading(false);
+      // Add a small delay before re-enabling the button
+      setTimeout(() => {
+        setCronLoading(false);
+      }, 500);
     }
   };
 
@@ -131,17 +154,17 @@ const AdminPanel = () => {
               onClick={handleManualCronJob}
               disabled={cronLoading}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed font-medium transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-              title="Manually trigger payment verification/expiration job"
+              title="Manually trigger payment verification & expiration jobs"
             >
               {cronLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Running...</span>
+                  <span>Running Jobs...</span>
                 </>
               ) : (
                 <>
                   <span>⚡</span>
-                  <span>Run Cron Job</span>
+                  <span>Run Verification & Expiration</span>
                 </>
               )}
             </button>

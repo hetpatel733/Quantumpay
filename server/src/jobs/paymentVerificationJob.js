@@ -23,6 +23,9 @@ let jobStats = {
     errors: []
 };
 
+// Add job lock to prevent concurrent runs
+let isJobRunning = false;
+
 /**
  * Update dashboard metrics for a completed payment
  * @param {Object} payment - Payment object that was just completed
@@ -85,12 +88,20 @@ async function updateDashboardMetrics(payment) {
  * Main verification function
  */
 async function verifyPendingPayments() {
-    const startTime = Date.now();
-    console.log('\n' + '='.repeat(80));
-    console.log(`🔄 [PAYMENT VERIFICATION JOB] Starting at ${new Date().toISOString()}`);
-    console.log('='.repeat(80));
+    // Prevent concurrent runs
+    if (isJobRunning) {
+        console.log('\n⚠️ Payment verification job already running - skipping duplicate call');
+        return;
+    }
 
+    isJobRunning = true;
+    const startTime = Date.now();
+    
     try {
+        console.log('\n' + '='.repeat(80));
+        console.log(`🔄 [PAYMENT VERIFICATION JOB] Starting at ${new Date().toISOString()}`);
+        console.log('='.repeat(80));
+
         jobStats.totalRuns++;
         jobStats.lastRun = new Date();
 
@@ -272,6 +283,10 @@ async function verifyPendingPayments() {
             error: error.message,
             timestamp: new Date()
         });
+    } finally {
+        // Always release the lock
+        isJobRunning = false;
+        console.log('🔓 Verification job lock released');
     }
 }
 

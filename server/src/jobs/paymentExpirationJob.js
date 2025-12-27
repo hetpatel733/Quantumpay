@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
  */
 
 let cronTask = null;
+let isJobRunning = false; // Add job lock
 
 function initializePaymentExpirationJob() {
     try {
@@ -24,6 +25,14 @@ function initializePaymentExpirationJob() {
 }
 
 async function checkAndExpirePayments() {
+    // Prevent concurrent runs
+    if (isJobRunning) {
+        console.log('⚠️ Payment expiration job already running - skipping duplicate call');
+        return;
+    }
+
+    isJobRunning = true;
+
     try {
         const Payment = mongoose.model('Payment');
         const DashboardDailyMetric = mongoose.model('DashboardDailyMetric');
@@ -68,6 +77,10 @@ async function checkAndExpirePayments() {
 
     } catch (error) {
         console.error('❌ Payment expiration cron job error:', error);
+    } finally {
+        // Always release the lock
+        isJobRunning = false;
+        console.log('🔓 Expiration job lock released');
     }
 }
 

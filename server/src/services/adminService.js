@@ -211,14 +211,14 @@ async function updateDailyMetrics(payment) {
 // MANUAL CRON JOB TRIGGER
 async function triggerManualCronJob(req, res) {
     try {
-        console.log('🔧 Admin: Manually triggering payment verification & expiration jobs');
+        console.log('🔧 Admin: Manually triggering payment verification & expiration jobs (SINGLE RUN)');
 
         const results = {
             verification: { success: false, error: null },
             expiration: { success: false, error: null }
         };
 
-        // Run verification job
+        // Run verification job ONCE
         try {
             console.log('\n📍 Running payment verification job...');
             await verifyPendingPayments();
@@ -229,7 +229,7 @@ async function triggerManualCronJob(req, res) {
             results.verification.error = error.message;
         }
 
-        // Run expiration job
+        // Run expiration job ONCE
         try {
             console.log('\n📍 Running payment expiration job...');
             await checkAndExpirePayments();
@@ -243,6 +243,8 @@ async function triggerManualCronJob(req, res) {
         // Determine overall success
         const allSuccess = results.verification.success && results.expiration.success;
         const anySuccess = results.verification.success || results.expiration.success;
+
+        console.log('📊 Manual cron job completed - returning results to client');
 
         if (allSuccess) {
             return res.status(200).json({
