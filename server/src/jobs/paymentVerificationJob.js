@@ -29,7 +29,7 @@ let jobStats = {
  */
 async function updateDashboardMetrics(payment) {
     try {
-        // console.log(`\n   📊 Updating dashboard metrics for payment ${payment.payId}...`);
+        console.log(`\n   📊 Updating dashboard metrics for payment ${payment.payId}...`);
 
         const paymentDate = new Date(payment.completedAt || new Date());
         const dateKey = paymentDate.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -69,10 +69,10 @@ async function updateDashboardMetrics(payment) {
         // Save updated metrics
         await dailyMetric.save();
 
-        // console.log(`   ✅ Dashboard metrics updated successfully`);
-        // console.log(`      Total Sales: $${dailyMetric.totalSales.toFixed(2)}`);
-        // console.log(`      Completed: ${dailyMetric.completedCount}`);
-        // console.log(`      ${cryptoKey} Volume: ${dailyMetric.cryptoVolume[cryptoKey]}`);
+        console.log(`   ✅ Dashboard metrics updated successfully`);
+        console.log(`      Total Sales: $${dailyMetric.totalSales.toFixed(2)}`);
+        console.log(`      Completed: ${dailyMetric.completedCount}`);
+        console.log(`      ${cryptoKey} Volume: ${dailyMetric.cryptoVolume[cryptoKey]}`);
 
     } catch (error) {
         console.error(`   ❌ Error updating dashboard metrics:`, error.message);
@@ -105,20 +105,20 @@ async function verifyPendingPayments() {
         console.log(`📋 Found ${totalPending} pending payment(s) to verify`);
 
         if (totalPending === 0) {
-            // console.log('✅ No pending payments to verify');
-            // console.log('='.repeat(80) + '\n');
+            console.log('✅ No pending payments to verify');
+            console.log('='.repeat(80) + '\n');
             return;
         }
 
         // Log payment details for debugging
         pendingPayments.forEach((payment, index) => {
-            // console.log(`\n📄 Payment ${index + 1}/${totalPending}:`);
-            // console.log(`   PayID: ${payment.payId}`);
-            // console.log(`   Amount: ${payment.amountCrypto} ${payment.cryptoType}`);
-            // console.log(`   Network: ${payment.network}`);
-            // console.log(`   Wallet: ${payment.walletAddress}`);
-            // console.log(`   Created: ${payment.createdAt.toISOString()}`);
-            // console.log(`   Age: ${Math.floor((Date.now() - payment.createdAt.getTime()) / 1000 / 60)} minutes`);
+            console.log(`\n📄 Payment ${index + 1}/${totalPending}:`);
+            console.log(`   PayID: ${payment.payId}`);
+            console.log(`   Amount: ${payment.amountCrypto} ${payment.cryptoType}`);
+            console.log(`   Network: ${payment.network}`);
+            console.log(`   Wallet: ${payment.walletAddress}`);
+            console.log(`   Created: ${payment.createdAt.toISOString()}`);
+            console.log(`   Age: ${Math.floor((Date.now() - payment.createdAt.getTime()) / 1000 / 60)} minutes`);
         });
 
         const supportedNetworks = getSupportedNetworks();
@@ -150,9 +150,9 @@ async function verifyPendingPayments() {
         for (let i = 0; i < supportedPayments.length; i++) {
             const payment = supportedPayments[i];
             
-            // console.log(`\n${'─'.repeat(80)}`);
-            // console.log(`🔎 [${i + 1}/${supportedPayments.length}] Checking payment: ${payment.payId}`);
-            // console.log(`${'─'.repeat(80)}`);
+            console.log(`\n${'─'.repeat(80)}`);
+            console.log(`🔎 [${i + 1}/${supportedPayments.length}] Checking payment: ${payment.payId}`);
+            console.log(`${'─'.repeat(80)}`);
 
             try {
                 // Map network names to Alchemy network names
@@ -161,10 +161,10 @@ async function verifyPendingPayments() {
                 if (payment.network?.toUpperCase() === 'ETHEREUM' || payment.network?.toUpperCase() === 'ETH') alchemyNetwork = 'Ethereum';
                 if (payment.network?.toUpperCase() === 'BSC' || payment.network?.toUpperCase() === 'BNB') alchemyNetwork = 'BSC';
 
-                // console.log(`   Network: ${payment.network} → ${alchemyNetwork}`);
-                // console.log(`   Searching for: ${payment.amountCrypto} ${payment.cryptoType}`);
-                // console.log(`   To address: ${payment.walletAddress}`);
-                // console.log(`   Created at: ${payment.createdAt.toISOString()}`);
+                console.log(`   Network: ${payment.network} → ${alchemyNetwork}`);
+                console.log(`   Searching for: ${payment.amountCrypto} ${payment.cryptoType}`);
+                console.log(`   To address: ${payment.walletAddress}`);
+                console.log(`   Created at: ${payment.createdAt.toISOString()}`);
 
                 // Search for matching transfer
                 const match = await findMatchingTransfer(
@@ -177,13 +177,13 @@ async function verifyPendingPayments() {
                 );
 
                 if (match) {
-                    // console.log(`\n   ✅ MATCH FOUND!`);
-                    // console.log(`   Transaction Hash: ${match.hash}`);
-                    // console.log(`   From: ${match.from}`);
-                    // console.log(`   Amount: ${match.value} ${match.asset}`);
-                    // console.log(`   Block: ${match.blockNumber}`);
-                    // console.log(`   Timestamp: ${match.timestamp}`);
-                    // console.log(`   Explorer: ${match.explorerUrl}`);
+                    console.log(`\n   ✅ MATCH FOUND!`);
+                    console.log(`   Transaction Hash: ${match.hash}`);
+                    console.log(`   From: ${match.from}`);
+                    console.log(`   Amount: ${match.value} ${match.asset}`);
+                    console.log(`   Block: ${match.blockNumber}`);
+                    console.log(`   Timestamp: ${match.timestamp}`);
+                    console.log(`   Explorer: ${match.explorerUrl}`);
 
                     // Update payment status
                     payment.status = 'completed';
@@ -225,29 +225,29 @@ async function verifyPendingPayments() {
 
         // Summary
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        // console.log('\n' + '='.repeat(80));
-        // console.log('📊 JOB SUMMARY');
-        // console.log('='.repeat(80));
-        // console.log(`   Total Pending: ${totalPending}`);
-        // console.log(`   Checked: ${supportedPayments.length}`);
-        // console.log(`   ✅ Verified: ${verifiedCount}`);
-        // console.log(`   ⏳ Still Pending: ${supportedPayments.length - verifiedCount}`);
-        // console.log(`   ❌ Errors: ${failedCount}`);
-        // console.log(`   ⏱️ Duration: ${duration}s`);
-        // console.log('='.repeat(80));
+        console.log('\n' + '='.repeat(80));
+        console.log('📊 JOB SUMMARY');
+        console.log('='.repeat(80));
+        console.log(`   Total Pending: ${totalPending}`);
+        console.log(`   Checked: ${supportedPayments.length}`);
+        console.log(`   ✅ Verified: ${verifiedCount}`);
+        console.log(`   ⏳ Still Pending: ${supportedPayments.length - verifiedCount}`);
+        console.log(`   ❌ Errors: ${failedCount}`);
+        console.log(`   ⏱️ Duration: ${duration}s`);
+        console.log('='.repeat(80));
 
         if (verifiedCount > 0) {
             jobStats.lastSuccess = new Date();
         }
 
         // Log overall statistics
-        // console.log('\n📈 OVERALL STATISTICS:');
-        // console.log(`   Total Runs: ${jobStats.totalRuns}`);
-        // console.log(`   Total Checked: ${jobStats.totalChecked}`);
-        // console.log(`   Total Verified: ${jobStats.totalVerified}`);
-        // console.log(`   Last Run: ${jobStats.lastRun?.toISOString()}`);
-        // console.log(`   Last Success: ${jobStats.lastSuccess?.toISOString() || 'Never'}`);
-        // console.log(`   Recent Errors: ${jobStats.errors.length}`);
+        console.log('\n📈 OVERALL STATISTICS:');
+        console.log(`   Total Runs: ${jobStats.totalRuns}`);
+        console.log(`   Total Checked: ${jobStats.totalChecked}`);
+        console.log(`   Total Verified: ${jobStats.totalVerified}`);
+        console.log(`   Last Run: ${jobStats.lastRun?.toISOString()}`);
+        console.log(`   Last Success: ${jobStats.lastSuccess?.toISOString() || 'Never'}`);
+        console.log(`   Recent Errors: ${jobStats.errors.length}`);
         
         if (jobStats.errors.length > 0) {
             console.log(`\n⚠️ Recent Errors (last ${Math.min(5, jobStats.errors.length)}):`);
@@ -260,12 +260,12 @@ async function verifyPendingPayments() {
         console.log('\n' + '='.repeat(80) + '\n');
 
     } catch (error) {
-        // console.error('\n' + '='.repeat(80));
-        // console.error('❌ CRITICAL ERROR IN PAYMENT VERIFICATION JOB');
-        // console.error('='.repeat(80));
-        // console.error(`Error: ${error.message}`);
-        // console.error(`Stack: ${error.stack}`);
-        // console.error('='.repeat(80) + '\n');
+        console.error('\n' + '='.repeat(80));
+        console.error('❌ CRITICAL ERROR IN PAYMENT VERIFICATION JOB');
+        console.error('='.repeat(80));
+        console.error(`Error: ${error.message}`);
+        console.error(`Stack: ${error.stack}`);
+        console.error('='.repeat(80) + '\n');
 
         jobStats.errors.push({
             payId: 'JOB_LEVEL_ERROR',
@@ -280,24 +280,24 @@ async function verifyPendingPayments() {
  * Runs every 2 minutes
  */
 function initializePaymentVerificationJob() {
-    // console.log('\n' + '🚀'.repeat(40));
-    // console.log('🚀 INITIALIZING PAYMENT VERIFICATION JOB');
-    // console.log('🚀'.repeat(40));
-    // console.log('📅 Schedule: Every 2 minutes');
-    // console.log('🌐 Supported Networks: Polygon, Ethereum, BSC');
-    // console.log('🔍 Will check pending payments for matching blockchain transfers');
-    // console.log('🚀'.repeat(40) + '\n');
+    console.log('\n' + '🚀'.repeat(40));
+    console.log('🚀 INITIALIZING PAYMENT VERIFICATION JOB');
+    console.log('🚀'.repeat(40));
+    console.log('📅 Schedule: Every 2 minutes');
+    console.log('🌐 Supported Networks: Polygon, Ethereum, BSC');
+    console.log('🔍 Will check pending payments for matching blockchain transfers');
+    console.log('🚀'.repeat(40) + '\n');
 
     // Run immediately on startup
     console.log('▶️ Running initial verification check...\n');
     verifyPendingPayments();
 
-    // Schedule to run every 2 minutes
-    const job = cron.schedule('*/2 * * * *', () => {
+    // Schedule to run every 1 minutes
+    const job = cron.schedule('*/1 * * * *', () => {
         verifyPendingPayments();
     });
 
-    // console.log('✅ Payment verification job scheduled successfully\n');
+    console.log('✅ Payment verification job scheduled successfully\n');
 
     return job;
 }
