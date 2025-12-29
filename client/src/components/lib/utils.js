@@ -78,7 +78,7 @@ const pendingRequests = new Map();
 
 export function dedupeRequest(key, requestFunction) {
     if (pendingRequests.has(key)) {
-        //console.log('🔄 Deduping request:', key);
+        console.log('🔄 Deduping request:', key);
         return pendingRequests.get(key);
     }
     
@@ -107,7 +107,7 @@ export function onlyWhenVisible(callback) {
         if (!document.hidden) {
             return callback(...args);
         }
-        //console.log('🚫 Skipping API call - tab not visible');
+        console.log('🚫 Skipping API call - tab not visible');
         return Promise.resolve();
     };
 }

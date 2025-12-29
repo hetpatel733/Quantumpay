@@ -54,13 +54,13 @@ const PaymentDetailsModal = () => {
       }
 
       try {
-        //console.log('🔄 Fetching payment details for ID:', id);
+        console.log('🔄 Fetching payment details for ID:', id);
         
         // Try to fetch from payments API
         const response = await paymentsAPI.getById(id);
         
         if (response.success && response.payment) {
-          //console.log('✅ Payment data loaded:', response.payment);
+          console.log('✅ Payment data loaded:', response.payment);
           setPaymentData(response.payment);
         } else {
           setError(response.message || 'Payment not found');
@@ -169,7 +169,7 @@ const PaymentDetailsModal = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div 
         ref={modalRef}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[110vh] overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -450,7 +450,7 @@ const PaymentDetailsModal = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
           <button 
             onClick={handleClose} 
             className="w-full sm:w-auto order-2 sm:order-1 px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"

@@ -22,7 +22,7 @@ const Header = ({ userData }) => {
   // Debounced notification fetch to prevent rapid successive calls
   const debouncedFetchNotifications = debounce(async () => {
     if (!userData?.email) {
-      //console.log("❌ No user email available for fetching notifications");
+      console.log("❌ No user email available for fetching notifications");
       return;
     }
 
@@ -30,28 +30,28 @@ const Header = ({ userData }) => {
       setNotificationLoading(true);
       setNotificationError(null);
 
-      //console.log("🚀 Fetching notifications for user:", userData.email);
+      console.log("🚀 Fetching notifications for user:", userData.email);
 
       const response = await notificationsAPI.getAll();
 
-      //console.log("📤 Notifications API response:", response);
+      console.log("📤 Notifications API response:", response);
 
       if (response.success) {
         const notificationsData = response.notifications || [];
         const unreadCountData = response.pagination?.unreadCount || 0;
 
-        //console.log(
-        //   "✅ Notifications loaded:",
-        //   notificationsData.length,
-        //   "Unread:",
-        //   unreadCountData
-        // );
+        console.log(
+          "✅ Notifications loaded:",
+          notificationsData.length,
+          "Unread:",
+          unreadCountData
+        );
 
         setNotifications(notificationsData);
         setUnreadCount(unreadCountData);
       } else if (response.isEmpty || response.isNewUser) {
         // Handle new user with no notifications
-        //console.log("📭 No notifications found (new user)");
+        console.log("📭 No notifications found (new user)");
         setNotifications([]);
         setUnreadCount(0);
       } else {
@@ -75,11 +75,11 @@ const Header = ({ userData }) => {
   // Load notifications only when user data is available and component mounts
   useEffect(() => {
     if (userData?.email) {
-      //console.log("👤 User data available, fetching notifications...");
+      console.log("👤 User data available, fetching notifications...");
       fetchNotifications();
       // Notifications are now only fetched on manual load, not auto-polled
     } else {
-      //console.log("👤 No user data available yet");
+      console.log("👤 No user data available yet");
     }
   }, [userData?.email]);
 

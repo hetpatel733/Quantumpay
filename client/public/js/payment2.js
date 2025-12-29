@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            // //console.log('🔍 Checking payment status for:', payid);
+            console.log('🔍 Checking payment status for:', payid);
             const res = await fetch(`/api/payment/check-status?payid=${encodeURIComponent(payid)}`);
             const data = await res.json();
 
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const payunsuccess = document.getElementById("unsuccess");
                 const paysuccess = document.getElementById("success");
                 
-                //console.log('📊 Payment status:', status);
+                console.log('📊 Payment status:', status);
                 
                 if (status == "completed") {
                     if (paysuccess) {
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function startPolling() {
         if (isPolling) return;
         
-        //console.log('🔄 Starting payment status polling');
+        console.log('🔄 Starting payment status polling');
         isPolling = true;
         
         // Check every 30 seconds instead of continuous checking
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function stopPolling() {
         if (statusCheckInterval) {
-            //console.log('⏹️ Stopping payment status polling');
+            console.log('⏹️ Stopping payment status polling');
             clearInterval(statusCheckInterval);
             statusCheckInterval = null;
             isPolling = false;
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Only reload if payment is still pending after 5 minutes
     pageReloadInterval = setInterval(() => {
         if (paymentStatus === 'pending' && document.visibilityState === 'visible') {
-            //console.log('🔄 Auto-refreshing page after 5 minutes');
+            console.log('🔄 Auto-refreshing page after 5 minutes');
             window.location.reload();
         }
     }, 5 * 60 * 1000); // 5 minutes instead of 1 minute

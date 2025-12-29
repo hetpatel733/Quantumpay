@@ -25,7 +25,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
   });
 
   // Debug log
-  //console.log('🎯 ProfileInformation received userData:', userData);
+  console.log('🎯 ProfileInformation received userData:', userData);
 
   useEffect(() => {
     if (userData && typeof userData === 'object') {
@@ -41,7 +41,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         businessDescription: userData.description || '',
         profileImage: userData.profileImage || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face'
       };
-      //console.log('📝 Setting profile data:', updatedProfileData);
+      console.log('📝 Setting profile data:', updatedProfileData);
       setProfileData(updatedProfileData);
     }
   }, [userData]);
@@ -77,7 +77,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         ...prev,
         profileImage: base64Preview
       }));
-      //console.log('📷 Profile image selected, will upload on save');
+      console.log('📷 Profile image selected, will upload on save');
     } catch (error) {
       console.error('❌ Error creating preview:', error);
       showToast('Failed to load image preview', 'error');
@@ -96,14 +96,14 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
       let finalProfileImageUrl = profileData.profileImage;
 
       if (selectedFile) {
-        //console.log('📤 Uploading profile image to ImageKit...');
+        console.log('📤 Uploading profile image to ImageKit...');
         setUploadingImage(true);
         
         const uploadResult = await uploadImageToImageKit(selectedFile, 'QuantumPay/profiles');
         
         if (uploadResult.success) {
           finalProfileImageUrl = uploadResult.url;
-          //console.log('✅ Profile image uploaded to ImageKit:', uploadResult.url);
+          console.log('✅ Profile image uploaded to ImageKit:', uploadResult.url);
         } else {
           console.error('⚠️ ImageKit upload failed:', uploadResult.error);
           showToast(`Failed to upload profile image: ${uploadResult.error}. Saving other changes.`, 'warning');
@@ -125,7 +125,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         profileImage: finalProfileImageUrl
       };
 
-      //console.log('💾 Saving profile with userId:', userData.id);
+      console.log('💾 Saving profile with userId:', userData.id);
       const response = await authAPI.updateProfile(userData.id, updateData);
       
       if (response?.success) {

@@ -67,7 +67,7 @@ const Signup = () => {
         })
       }
 
-      //console.log('📤 Sending signup request:', signupData);
+      console.log('📤 Sending signup request:', signupData);
       const response = await authAPI.signup(signupData)
 
       if (response.success) {

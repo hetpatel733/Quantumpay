@@ -14,7 +14,7 @@ const PaymentRedirect = () => {
       return;
     }
 
-    //console.log('🔄 Redirecting payment request:', { api, order_id });
+    console.log('🔄 Redirecting payment request:', { api, order_id });
     
     // Redirect to coin selection with proper query parameters
     navigate(`/payment/coinselect?api=${api}&order_id=${order_id}`, { replace: true });

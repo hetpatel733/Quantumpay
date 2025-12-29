@@ -62,8 +62,8 @@ const SecuritySettings = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     
-    //console.log('🔄 Password form submission started');
-    //console.log('📊 Auth data:', authData);
+    console.log('🔄 Password form submission started');
+    console.log('📊 Auth data:', authData);
     
     if (!authData?.id) {
       console.error('❌ No user ID found in auth data');
@@ -105,7 +105,7 @@ const SecuritySettings = () => {
     }
 
     if (Object.keys(errors).length > 0) {
-      //console.log('❌ Validation errors:', errors);
+      console.log('❌ Validation errors:', errors);
       setPasswordErrors(errors);
       return;
     }
@@ -113,14 +113,14 @@ const SecuritySettings = () => {
     setIsChangingPassword(true);
 
     try {
-      //console.log('🔄 Starting password change for user:', authData.id);
+      console.log('🔄 Starting password change for user:', authData.id);
       
       const response = await authAPI.changePassword(authData.id, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
 
-      //console.log('📤 Password change response:', response);
+      console.log('📤 Password change response:', response);
 
       if (response.success) {
         // Show success message
@@ -133,7 +133,7 @@ const SecuritySettings = () => {
           confirmPassword: ''
         });
         
-        //console.log('✅ Password changed successfully');
+        console.log('✅ Password changed successfully');
         
         // Clear success message after 5 seconds
         setTimeout(() => {

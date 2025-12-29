@@ -179,7 +179,7 @@ const FinalPayment = () => {
   const startStatusPolling = () => {
     if (statusIntervalRef.current) return; // Already polling
     
-    //console.log('🔄 Starting status polling for payment:', payid);
+    console.log('🔄 Starting status polling for payment:', payid);
     setIsPolling(true);
     
     // Check immediately
@@ -195,7 +195,7 @@ const FinalPayment = () => {
 
   const stopStatusPolling = () => {
     if (statusIntervalRef.current) {
-      //console.log('⏹️ Stopping status polling for payment:', payid);
+      console.log('⏹️ Stopping status polling for payment:', payid);
       clearInterval(statusIntervalRef.current);
       statusIntervalRef.current = null;
       setIsPolling(false);
@@ -204,10 +204,10 @@ const FinalPayment = () => {
 
   const fetchPaymentDetails = async () => {
     try {
-      //console.log('🔄 Fetching payment details for:', payid);
+      console.log('🔄 Fetching payment details for:', payid);
       
       const data = await paymentsAPI.getDetails(payid);
-      //console.log('📦 Payment details response:', data);
+      console.log('📦 Payment details response:', data);
 
       if (data.success && data.payment) {
         setPaymentData(data.payment);
@@ -238,7 +238,7 @@ const FinalPayment = () => {
                               walletAddress.trim() !== '';
                               
         if (isValidAddress) {
-          //console.log('🔗 Valid wallet address found, generating QR code for:', walletAddress.substring(0, 10) + '...');
+          console.log('🔗 Valid wallet address found, generating QR code for:', walletAddress.substring(0, 10) + '...');
           await generateQRCode(walletAddress, data.payment);
         } else {
           console.warn('⚠️ No valid wallet address found for QR code generation');
@@ -299,7 +299,7 @@ const FinalPayment = () => {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(qrData)}&size=256x256&margin=10`;
       setQrCodeUrl(qrUrl);
       
-      //console.log('✅ QR code generated for:', cryptoType, 'on', network || 'default network');
+      console.log('✅ QR code generated for:', cryptoType, 'on', network || 'default network');
     } catch (err) {
       console.error('❌ Failed to generate QR code:', err);
     }
@@ -313,11 +313,11 @@ const FinalPayment = () => {
     }
 
     try {
-      //console.log('🔍 Checking payment status for:', payid);
+      console.log('🔍 Checking payment status for:', payid);
       const data = await paymentsAPI.checkStatus(payid);
       
       if (data.success && data.status !== paymentStatus) {
-        //console.log('📊 Payment status changed:', paymentStatus, '->', data.status);
+        console.log('📊 Payment status changed:', paymentStatus, '->', data.status);
         setPaymentStatus(data.status);
         
         // If terminal status, refresh full payment details so failureReason is available
@@ -351,7 +351,7 @@ const FinalPayment = () => {
     
     try {
       setIsRetrying(true);
-      //console.log('🔄 Retrying payment for:', paymentData.payId);
+      console.log('🔄 Retrying payment for:', paymentData.payId);
       
       const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/payment/retry`, {
         method: 'POST',
@@ -370,7 +370,7 @@ const FinalPayment = () => {
       const data = await response.json();
       
       if (data.success && data.newPayId) {
-        //console.log('✅ New payment created:', data.newPayId);
+        console.log('✅ New payment created:', data.newPayId);
         navigate(`/payment/final-payment?payid=${data.newPayId}`, { replace: true });
         window.location.reload();
       } else {

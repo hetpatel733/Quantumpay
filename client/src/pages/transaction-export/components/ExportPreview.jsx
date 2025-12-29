@@ -7,6 +7,7 @@ const ExportPreview = ({ config }) => {
   const [loading, setLoading] = useState(true);
   const [totalRecords, setTotalRecords] = useState(0);
   const [estimatedSize, setEstimatedSize] = useState('0 KB');
+  const [estimatedRecords, setEstimatedRecords] = useState(0);
 
   // Only use the columns selected in config - NO EXTRA COLUMNS
   const displayColumns = config.columns && config.columns.length > 0 
@@ -47,7 +48,7 @@ const ExportPreview = ({ config }) => {
         params.amountMax = parseFloat(config.amountRange.max);
       }
 
-      //console.log('📊 Fetching preview data with params:', params);
+      console.log('📊 Fetching preview data with params:', params);
 
       const response = await paymentsAPI.getAll(params);
 
@@ -66,6 +67,7 @@ const ExportPreview = ({ config }) => {
         
         setPreviewData(payments);
         setTotalRecords(payments.length);
+        setEstimatedRecords(params.limit);
         
         // Estimate file size based on selected columns only
         const avgBytesPerRecord = displayColumns.length * 35;
@@ -203,6 +205,90 @@ const ExportPreview = ({ config }) => {
     }
   };
 
+  const formatDateRange = (range) => {
+    // Format the date range for display
+    switch (range) {
+      case 'today':
+        return 'Today';
+      case 'yesterday':
+        return 'Yesterday';
+      case 'last7days':
+        return 'Last 7 Days';
+      case 'last30days':
+        return 'Last 30 Days';
+      case 'last90days':
+        return 'Last 90 Days';
+      case 'thisMonth':
+        return 'This Month';
+      case 'lastMonth':
+        return 'Last Month';
+      case 'custom':
+        return 'Custom Range';
+      default:
+        return range;
+    }
+  };
+
+  const formatColumnName = (column) => {
+    // Format column names for display
+    const columnNames = {
+      transactionId: 'Transaction ID',
+      payId: 'Payment ID',
+      amount: 'Amount (USD)',
+      amountCrypto: 'Crypto Amount',
+      cryptocurrency: 'Cryptocurrency',
+      cryptoSymbol: 'Symbol',
+      network: 'Network',
+      status: 'Status',
+      date: 'Date',
+      customer: 'Customer',
+      customerEmail: 'Email',
+      walletAddress: 'Wallet Address',
+      hash: 'TX Hash',
+      fees: 'Fees',
+      exchangeRate: 'Exchange Rate',
+      productId: 'Product ID',
+      completedAt: 'Completed At',
+      failureReason: 'Failure Reason'
+    };
+    return columnNames[column] || column;
+  };
+
+  const formatCellValue = (value, column) => {
+    // Format cell values based on column type
+    switch (column) {
+      case 'amount':
+        return `$${(value || 0).toFixed(2)}`;
+      case 'amountCrypto':
+        return `${value || 0} ${config.cryptocurrencies[0] || ''}`;
+      case 'date':
+        return value 
+          ? new Date(value).toLocaleString('en-US', {
+              year: 'numeric', month: 'short', day: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            })
+          : '-';
+      case 'status':
+        return getStatusBadge(value);
+      case 'transactionId':
+      case 'payId':
+        return (
+          <code className="font-mono text-xs bg-secondary-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-text-primary dark:text-gray-300">
+            {value}
+          </code>
+        );
+      case 'walletAddress':
+      case 'hash':
+        return (
+          <code className="font-mono text-xs text-text-secondary dark:text-gray-400">
+            {value}
+          </code>
+        );
+      default:
+        return value;
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
@@ -232,139 +318,147 @@ const ExportPreview = ({ config }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Preview Header */}
-      <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <Icon name="Eye" size={20} className="text-primary dark:text-teal-400" />
-            <h3 className="text-lg font-medium text-text-primary dark:text-white">Data Preview</h3>
-          </div>
-          <div className="flex items-center space-x-4 text-sm text-text-secondary dark:text-gray-400">
-            <div className="flex items-center space-x-1">
-              <Icon name={getFormatIcon()} size={14} color="currentColor" />
-              <span className="font-medium text-text-primary dark:text-white">{config.format.toUpperCase()}</span>
-            </div>
-            <span>•</span>
-            <span>Records: <span className="font-medium text-text-primary dark:text-white">{totalRecords.toLocaleString()}</span></span>
-            <span>•</span>
-            <span>Est. size: <span className="font-medium text-text-primary dark:text-white">{estimatedSize}</span></span>
-          </div>
+      <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h3 className="text-base sm:text-lg font-medium text-text-primary dark:text-white flex items-center space-x-2">
+            <Icon name="Eye" size={18} className="sm:w-5 sm:h-5" color="currentColor" />
+            <span>Data Preview</span>
+          </h3>
         </div>
-        
-        <div className="flex items-center flex-wrap gap-2 text-sm text-text-secondary dark:text-gray-400">
-          <div className="flex items-center space-x-1">
-            <Icon name="Calendar" size={14} color="currentColor" />
-            <span>Range: <span className="font-medium text-text-primary dark:text-white">{getDateRangeLabel()}</span></span>
+
+        {/* Summary Stats - Responsive Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-background dark:bg-gray-900 rounded-lg p-3 sm:p-4">
+            <div className="flex items-center space-x-2 mb-1">
+              <Icon name="FileText" size={14} className="sm:w-4 sm:h-4" color="var(--color-primary)" />
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Format</span>
+            </div>
+            <p className="text-sm sm:text-base font-semibold text-text-primary dark:text-white uppercase">
+              {config.format || 'CSV'}
+            </p>
           </div>
-          {config.status !== 'all' && (
-            <>
-              <span>•</span>
-              <span>Status: <span className="font-medium text-text-primary dark:text-white capitalize">{config.status}</span></span>
-            </>
-          )}
-          {config.cryptocurrencies && !config.cryptocurrencies.includes('all') && (
-            <>
-              <span>•</span>
-              <span>Crypto: <span className="font-medium text-text-primary dark:text-white">{config.cryptocurrencies.join(', ')}</span></span>
-            </>
-          )}
-          <span>•</span>
-          <span>Columns: <span className="font-medium text-text-primary dark:text-white">{displayColumns.length}</span></span>
+
+          <div className="bg-background dark:bg-gray-900 rounded-lg p-3 sm:p-4">
+            <div className="flex items-center space-x-2 mb-1">
+              <Icon name="Calendar" size={14} className="sm:w-4 sm:h-4" color="var(--color-primary)" />
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Range</span>
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-text-primary dark:text-white truncate">
+              {formatDateRange(config.dateRange)}
+            </p>
+          </div>
+
+          <div className="bg-background dark:bg-gray-900 rounded-lg p-3 sm:p-4">
+            <div className="flex items-center space-x-2 mb-1">
+              <Icon name="Columns" size={14} className="sm:w-4 sm:h-4" color="var(--color-primary)" />
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Columns</span>
+            </div>
+            <p className="text-sm sm:text-base font-semibold text-text-primary dark:text-white">
+              {config.columns?.length || 0}
+            </p>
+          </div>
+
+          <div className="bg-background dark:bg-gray-900 rounded-lg p-3 sm:p-4">
+            <div className="flex items-center space-x-2 mb-1">
+              <Icon name="Database" size={14} className="sm:w-4 sm:h-4" color="var(--color-primary)" />
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400 truncate">Est. Records</span>
+            </div>
+            <p className="text-sm sm:text-base font-semibold text-text-primary dark:text-white">
+              {estimatedRecords.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="col-span-2 bg-background dark:bg-gray-900 rounded-lg p-3 sm:p-4">
+            <div className="flex items-center space-x-2 mb-1">
+              <Icon name="HardDrive" size={14} className="sm:w-4 sm:h-4" color="var(--color-primary)" />
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Est. Size</span>
+            </div>
+            <p className="text-sm sm:text-base font-semibold text-text-primary dark:text-white">
+              {estimatedSize}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Preview Table - ONLY SELECTED COLUMNS */}
-      <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-border dark:divide-gray-700">
-            <thead className="bg-secondary-50 dark:bg-gray-900">
-              <tr>
-                {displayColumns.map((column) => (
-                  <th key={column} className="px-3 py-3 text-left text-xs font-medium text-text-secondary dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
-                    {getColumnLabel(column)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-surface dark:bg-gray-800 divide-y divide-border dark:divide-gray-700">
-              {previewData.length > 0 ? (
-                previewData.map((payment, index) => (
-                  <tr key={payment.payId || payment.id || index} className="hover:bg-secondary-50 dark:hover:bg-gray-700/50 transition-smooth">
-                    {displayColumns.map((column) => (
-                      <td key={column} className="px-3 py-3 text-sm text-text-primary dark:text-gray-300 whitespace-nowrap">
-                        {column === 'status' ? (
-                          getStatusBadge(getColumnValue(payment, column))
-                        ) : column === 'transactionId' || column === 'payId' ? (
-                          <code className="font-mono text-xs bg-secondary-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-text-primary dark:text-gray-300">
-                            {getColumnValue(payment, column)}
-                          </code>
-                        ) : column === 'walletAddress' || column === 'hash' ? (
-                          <code className="font-mono text-xs text-text-secondary dark:text-gray-400">
-                            {getColumnValue(payment, column)}
-                          </code>
-                        ) : column === 'amount' ? (
-                          <span className="font-medium text-success dark:text-green-400">
-                            {getColumnValue(payment, column)}
-                          </span>
-                        ) : (
-                          getColumnValue(payment, column)
-                        )}
+      {/* Data Table - Scrollable on mobile */}
+      {loading ? (
+        <div className="flex items-center justify-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-teal-500"></div>
+        </div>
+      ) : (
+        <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className="p-3 sm:p-4 border-b border-border dark:border-gray-700">
+            <h4 className="text-sm sm:text-base font-medium text-text-primary dark:text-white flex items-center space-x-2">
+              <Icon name="Table" size={16} className="sm:w-5 sm:h-5" color="currentColor" />
+              <span>Sample Data</span>
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">
+                (First {previewData.length} records)
+              </span>
+            </h4>
+          </div>
+
+          {/* Horizontal scroll wrapper for mobile */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-max">
+              <thead className="bg-secondary-100 dark:bg-gray-700">
+                <tr>
+                  {config.columns.map((column) => (
+                    <th 
+                      key={column}
+                      className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-text-primary dark:text-white whitespace-nowrap"
+                    >
+                      {formatColumnName(column)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border dark:divide-gray-700">
+                {previewData.map((row, index) => (
+                  <tr 
+                    key={index}
+                    className="hover:bg-secondary-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    {config.columns.map((column) => (
+                      <td 
+                        key={column}
+                        className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-text-secondary dark:text-gray-400 whitespace-nowrap"
+                      >
+                        {formatCellValue(row[column], column)}
                       </td>
                     ))}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={displayColumns.length} className="px-4 py-12 text-center text-text-secondary dark:text-gray-400">
-                    <Icon name="FileText" size={32} color="currentColor" className="mx-auto mb-3 opacity-50" />
-                    <p className="font-medium text-text-primary dark:text-white mb-1">No data found</p>
-                    <p className="text-sm">Try adjusting your filters to see more results</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        <div className="px-4 py-3 bg-secondary-50 dark:bg-gray-900 border-t border-border dark:border-gray-700 flex items-center justify-between">
-          <p className="text-sm text-text-secondary dark:text-gray-400">
-            Showing {previewData.length} of {totalRecords.toLocaleString()} records
-          </p>
-          <p className="text-sm text-text-secondary dark:text-gray-400">
-            {displayColumns.length} column{displayColumns.length !== 1 ? 's' : ''} selected
-          </p>
-        </div>
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Selected Columns Summary */}
-      <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
-        <h4 className="text-sm font-medium text-text-primary dark:text-white mb-3">
-          Columns in Export ({displayColumns.length})
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {displayColumns.map((column) => (
-            <span key={column} className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-primary-50 dark:bg-teal-900/30 text-primary dark:text-teal-400 border border-primary-200 dark:border-teal-800/50">
-              {getColumnLabel(column)}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Warning if no data */}
-      {previewData.length === 0 && (
-        <div className="bg-warning-50 dark:bg-yellow-900/20 border border-warning-200 dark:border-yellow-800/50 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <Icon name="AlertTriangle" size={20} className="text-warning mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-sm font-medium text-warning-800 dark:text-yellow-300">No matching data</h4>
-              <p className="text-sm text-warning-700 dark:text-yellow-400 mt-1">
-                No transactions match your current filter criteria. Try expanding your date range or adjusting other filters.
-              </p>
-            </div>
+          {/* Mobile scroll hint */}
+          <div className="sm:hidden p-3 bg-secondary-50 dark:bg-gray-700/30 border-t border-border dark:border-gray-700">
+            <p className="text-xs text-text-secondary dark:text-gray-400 text-center flex items-center justify-center space-x-1">
+              <Icon name="ArrowLeftRight" size={12} color="currentColor" />
+              <span>Scroll horizontally to view all columns</span>
+            </p>
           </div>
         </div>
       )}
+
+      {/* Info Message */}
+      <div className="bg-primary-50 dark:bg-teal-900/20 border border-primary-200 dark:border-teal-800 rounded-lg p-3 sm:p-4">
+        <div className="flex items-start space-x-2 sm:space-x-3">
+          <Icon name="Info" size={16} className="sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" color="var(--color-primary)" />
+          <div>
+            <p className="text-xs sm:text-sm text-text-primary dark:text-white font-medium mb-1">
+              Preview Information
+            </p>
+            <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">
+              This is a sample preview. The actual export will contain all matching records based on your selected filters. 
+              Estimated {estimatedRecords.toLocaleString()} records will be included in the final export.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

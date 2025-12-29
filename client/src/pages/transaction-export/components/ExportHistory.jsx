@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Icon from 'components/AppIcon';
 import { exportAPI } from 'utils/api';
 import { useToast } from 'contexts/ToastContext';
@@ -10,25 +10,8 @@ const ExportHistory = ({ refreshTrigger = 0 }) => {
   const [sortBy, setSortBy] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  // Fetch exports on mount and when refreshTrigger changes
-  useEffect(() => {
-    fetchExports();
-  }, [refreshTrigger]);
-
-  // Poll for processing exports
-  useEffect(() => {
-    const hasProcessing = exports.some(exp => exp.status === 'processing' || exp.status === 'pending');
-    
-    if (hasProcessing) {
-      const pollInterval = setInterval(() => {
-        fetchExports();
-      }, 5000); // Poll every 5 seconds
-
-      return () => clearInterval(pollInterval);
-    }
-  }, [exports]);
-
-  const fetchExports = async () => {
+  // Wrap fetchExports in useCallback to maintain stable reference
+  const fetchExports = useCallback(async () => {
     try {
       const response = await exportAPI.getAll({ limit: 50 });
       
@@ -42,7 +25,25 @@ const ExportHistory = ({ refreshTrigger = 0 }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch exports on mount and when refreshTrigger changes
+  useEffect(() => {
+    fetchExports();
+  }, [refreshTrigger, fetchExports]);
+
+  // Poll for processing exports
+  useEffect(() => {
+    const hasProcessing = exports.some(exp => exp.status === 'processing' || exp.status === 'pending');
+    
+    if (hasProcessing) {
+      const pollInterval = setInterval(() => {
+        fetchExports();
+      }, 5000);
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [exports, fetchExports]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -191,146 +192,149 @@ const ExportHistory = ({ refreshTrigger = 0 }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-text-primary dark:text-white flex items-center space-x-2">
-            <Icon name="Clock" size={20} color="currentColor" />
+      <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h3 className="text-base sm:text-lg font-medium text-text-primary dark:text-white flex items-center space-x-2">
+            <Icon name="Clock" size={18} className="sm:w-5 sm:h-5" color="currentColor" />
             <span>Export History</span>
           </h3>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={fetchExports}
-              className="p-2 hover:bg-secondary-100 dark:hover:bg-gray-700 rounded-lg transition-smooth text-text-secondary dark:text-gray-400"
-              title="Refresh"
-            >
-              <Icon name="RefreshCcw" size={16} color="currentColor" />
-            </button>
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split('-');
-                setSortBy(field);
-                setSortOrder(order);
-              }}
-              className="
-                px-3 py-2 border border-border dark:border-gray-700 rounded-lg text-sm
-                bg-background dark:bg-gray-900 text-text-primary dark:text-white
-                focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent
-                transition-smooth
-              "
-            >
-              <option value="date-desc">Newest First</option>
-              <option value="date-asc">Oldest First</option>
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="status-asc">Status</option>
-            </select>
-          </div>
+          <select
+            value={`${sortBy}-${sortOrder}`}
+            onChange={(e) => {
+              const [field, order] = e.target.value.split('-');
+              setSortBy(field);
+              setSortOrder(order);
+            }}
+            className="
+              w-full sm:w-auto
+              px-3 py-2 border border-border dark:border-gray-700 rounded-lg text-xs sm:text-sm
+              bg-background dark:bg-gray-900 text-text-primary dark:text-white
+              focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-teal-500 focus:border-transparent
+              transition-smooth
+            "
+          >
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="name-asc">Name A-Z</option>
+            <option value="name-desc">Name Z-A</option>
+            <option value="status-asc">Status</option>
+          </select>
         </div>
 
-        <div className="text-sm text-text-secondary dark:text-gray-400">
+        <div className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">
           <p>Export files are available for download for 1 hour after generation. Download your files before they expire.</p>
         </div>
       </div>
 
       {/* Export List */}
       {sortedExports.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {sortedExports.map((exportItem) => (
             <div
               key={exportItem.id}
-              className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6 hover:shadow-card dark:hover:shadow-teal-500/5 transition-smooth"
+              className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-4 sm:p-6 hover:shadow-card dark:hover:shadow-teal-500/5 transition-smooth"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
+              <div className="flex flex-col space-y-4">
+                {/* Mobile: Stack everything */}
+                <div className="flex items-start space-x-3 sm:space-x-4">
                   {/* Format Icon */}
                   <div className="w-10 h-10 bg-secondary-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Icon 
                       name={getFormatIcon(exportItem.format)} 
-                      size={20} 
+                      size={18} 
+                      className="sm:w-5 sm:h-5"
                       color="var(--color-text-secondary)" 
                     />
                   </div>
 
                   {/* Export Details */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2 flex-wrap gap-2">
-                      <h4 className="text-md font-medium text-text-primary dark:text-white truncate">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h4 className="text-sm sm:text-base font-medium text-text-primary dark:text-white truncate max-w-full">
                         {exportItem.name}
                       </h4>
                       <span className={`
-                        inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                        inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium whitespace-nowrap
                         ${getStatusColor(exportItem.status)}
                       `}>
                         <Icon 
                           name={getStatusIcon(exportItem.status)} 
-                          size={12} 
+                          size={10} 
+                          className="sm:w-3 sm:h-3 mr-1"
                           color="currentColor"
-                          className="mr-1"
+                  
                         />
                         {exportItem.status.charAt(0).toUpperCase() + exportItem.status.slice(1)}
                       </span>
                       {exportItem.status === 'completed' && isExpiringSoon(exportItem.expiresAt) && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-100 dark:bg-yellow-900/30 text-warning dark:text-yellow-400">
-                          <Icon name="AlertTriangle" size={12} color="currentColor" className="mr-1" />
+                        <span className="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-warning-100 dark:bg-yellow-900/30 text-warning dark:text-yellow-400 whitespace-nowrap">
+                          <Icon name="AlertTriangle" size={10} className="sm:w-3 sm:h-3 mr-1" color="currentColor" />
                           {getTimeUntilExpiry(exportItem.expiresAt)}
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-text-secondary dark:text-gray-400">
-                      <div>
+                    <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-text-secondary dark:text-gray-400">
+                      <div className="truncate">
                         <span className="font-medium">Format:</span> {exportItem.format}
                       </div>
-                      <div>
-                        <span className="font-medium">Created:</span> {formatDate(exportItem.createdAt)}
+                      <div className="truncate">
+                        <span className="font-medium">Created:</span> <span className="hidden sm:inline">{formatDate(exportItem.createdAt)}</span>
+                        <span className="sm:hidden">{new Date(exportItem.createdAt).toLocaleDateString()}</span>
                       </div>
                       {exportItem.recordCount > 0 && (
-                        <div>
+                        <div className="truncate">
                           <span className="font-medium">Records:</span> {exportItem.recordCount.toLocaleString()}
                         </div>
                       )}
                       {exportItem.fileSize && (
-                        <div>
+                        <div className="truncate">
                           <span className="font-medium">Size:</span> {exportItem.fileSize}
                         </div>
                       )}
                     </div>
 
                     {exportItem.completedAt && (
-                      <div className="mt-2 text-sm text-text-secondary dark:text-gray-400">
-                        <span className="font-medium">Completed:</span> {formatDate(exportItem.completedAt)}
-                        {exportItem.expiresAt && exportItem.status === 'completed' && (
-                          <>
-                            <span className="mx-2">•</span>
-                            <span className="font-medium">Expires:</span> {formatDate(exportItem.expiresAt)}
-                          </>
-                        )}
+                      <div className="mt-2 text-xs sm:text-sm text-text-secondary dark:text-gray-400">
+                        <div className="flex flex-wrap gap-x-2">
+                          <span className="font-medium">Completed:</span> 
+                          <span className="hidden sm:inline">{formatDate(exportItem.completedAt)}</span>
+                          <span className="sm:hidden">{new Date(exportItem.completedAt).toLocaleDateString()}</span>
+                          {exportItem.expiresAt && exportItem.status === 'completed' && (
+                            <>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="font-medium">Expires:</span> 
+                              <span className="hidden sm:inline">{formatDate(exportItem.expiresAt)}</span>
+                              <span className="sm:hidden">{new Date(exportItem.expiresAt).toLocaleDateString()}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {exportItem.errorMessage && (
-                      <div className="mt-2 text-sm text-error dark:text-red-400">
+                      <div className="mt-2 text-xs sm:text-sm text-error dark:text-red-400 break-words">
                         <span className="font-medium">Error:</span> {exportItem.errorMessage}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+                {/* Actions - Full width on mobile */}
+                <div className="flex items-center gap-2 pt-3 border-t border-border dark:border-gray-700 sm:border-0 sm:pt-0">
                   {exportItem.status === 'completed' && exportItem.downloadUrl && (
                     <button
                       onClick={() => handleDownload(exportItem)}
                       className="
-                        flex items-center space-x-2 px-3 py-2
-                        bg-primary dark:bg-teal-500 text-white rounded-lg text-sm
+                        flex-1 sm:flex-none
+                        flex items-center justify-center space-x-2 px-3 sm:px-4 py-2
+                        bg-primary dark:bg-teal-500 text-white rounded-lg text-xs sm:text-sm
                         hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth
                       "
                     >
-                      <Icon name="Download" size={16} color="currentColor" />
+                      <Icon name="Download" size={14} className="sm:w-4 sm:h-4" color="currentColor" />
                       <span>Download</span>
                     </button>
                   )}
@@ -339,19 +343,20 @@ const ExportHistory = ({ refreshTrigger = 0 }) => {
                     <button
                       onClick={() => handleRetry(exportItem)}
                       className="
-                        flex items-center space-x-2 px-3 py-2
-                        bg-warning text-white rounded-lg text-sm
+                        flex-1 sm:flex-none
+                        flex items-center justify-center space-x-2 px-3 sm:px-4 py-2
+                        bg-warning text-white rounded-lg text-xs sm:text-sm
                         hover:bg-warning-700 transition-smooth
                       "
                     >
-                      <Icon name="RotateCcw" size={16} color="currentColor" />
+                      <Icon name="RotateCcw" size={14} className="sm:w-4 sm:h-4" color="currentColor" />
                       <span>Retry</span>
                     </button>
                   )}
 
                   {(exportItem.status === 'processing' || exportItem.status === 'pending') && (
-                    <span className="text-sm text-text-secondary dark:text-gray-400 flex items-center space-x-2">
-                      <Icon name="Loader2" size={16} color="currentColor" className="animate-spin" />
+                    <span className="flex-1 sm:flex-none text-xs sm:text-sm text-text-secondary dark:text-gray-400 flex items-center justify-center space-x-2">
+                      <Icon name="Loader2" size={14} className="sm:w-4 sm:h-4 animate-spin" color="currentColor" />
                       <span>Processing...</span>
                     </span>
                   )}
@@ -364,7 +369,7 @@ const ExportHistory = ({ refreshTrigger = 0 }) => {
                     "
                     title="Delete export"
                   >
-                    <Icon name="Trash2" size={16} color="currentColor" />
+                    <Icon name="Trash2" size={14} className="sm:w-4 sm:h-4" color="currentColor" />
                   </button>
                 </div>
               </div>
@@ -373,12 +378,12 @@ const ExportHistory = ({ refreshTrigger = 0 }) => {
         </div>
       ) : (
         /* Empty State */
-        <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-12 text-center">
-          <div className="w-16 h-16 bg-secondary-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon name="FileText" size={32} color="var(--color-text-secondary)" />
+        <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-8 sm:p-12 text-center">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-secondary-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="FileText" size={24} className="sm:w-8 sm:h-8" color="var(--color-text-secondary)" />
           </div>
-          <h3 className="text-lg font-medium text-text-primary dark:text-white mb-2">No Export History</h3>
-          <p className="text-text-secondary dark:text-gray-400 mb-6">
+          <h3 className="text-base sm:text-lg font-medium text-text-primary dark:text-white mb-2">No Export History</h3>
+          <p className="text-sm sm:text-base text-text-secondary dark:text-gray-400 mb-4 sm:mb-6">
             You haven't created any exports yet. Configure your export settings and generate your first report.
           </p>
         </div>

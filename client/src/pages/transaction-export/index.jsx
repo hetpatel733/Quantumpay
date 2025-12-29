@@ -78,7 +78,7 @@ const TransactionExport = () => {
         emailAddress: exportConfig.emailDelivery ? exportConfig.emailAddress : undefined
       };
 
-      //console.log('📤 Creating export with config:', apiConfig);
+      console.log('📤 Creating export with config:', apiConfig);
 
       const response = await exportAPI.create(apiConfig);
 
@@ -114,19 +114,23 @@ const TransactionExport = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 overflow-x-hidden max-w-full">
-      <div className="px-6 py-8">
+    <div className="min-h-screen bg-background dark:bg-gray-900 overflow-x-hidden">
+      <div className="px-4 sm:px-6 py-6 sm:py-8">
         
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary-100 dark:bg-teal-900/20 rounded-lg flex items-center justify-center">
-                <Icon name="Download" size={24} color="var(--color-primary)" />
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start sm:items-center space-x-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-teal-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Icon name="Download" size={20} className="sm:w-6 sm:h-6" color="var(--color-primary)" />
               </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-text-primary dark:text-white">Transaction Export</h1>
-                <p className="text-text-secondary dark:text-gray-400">Generate comprehensive payment reports for analysis</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-semibold text-text-primary dark:text-white truncate">
+                  Transaction Export
+                </h1>
+                <p className="text-sm sm:text-base text-text-secondary dark:text-gray-400 line-clamp-2">
+                  Generate comprehensive payment reports for analysis
+                </p>
               </div>
             </div>
             
@@ -135,20 +139,21 @@ const TransactionExport = () => {
                 onClick={handleExport}
                 disabled={isExporting || exportConfig.columns.length === 0}
                 className="
-                  flex items-center space-x-2 px-6 py-3
-                  bg-primary dark:bg-teal-500 text-white rounded-lg
+                  w-full sm:w-auto
+                  flex items-center justify-center space-x-2 px-4 sm:px-6 py-2.5 sm:py-3
+                  bg-primary dark:bg-teal-500 text-white rounded-lg text-sm sm:text-base
                   hover:bg-primary-700 dark:hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed
                   transition-smooth font-medium
                 "
               >
                 {isExporting ? (
                   <>
-                    <Icon name="Loader2" size={20} color="currentColor" className="animate-spin" />
+                    <Icon name="Loader2" size={18} className="sm:w-5 sm:h-5 animate-spin" color="currentColor"/>
                     <span>Exporting...</span>
                   </>
                 ) : (
                   <>
-                    <Icon name="Download" size={20} color="currentColor" />
+                    <Icon name="Download" size={18} className="sm:w-5 sm:h-5" color="currentColor" />
                     <span>Generate Export</span>
                   </>
                 )}
@@ -159,10 +164,10 @@ const TransactionExport = () => {
 
         {/* Export Progress */}
         {isExporting && (
-          <div className="mb-6 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-4">
+          <div className="mb-4 sm:mb-6 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-text-primary dark:text-white">Generating Export</span>
-              <span className="text-sm text-text-secondary dark:text-gray-400">{Math.round(exportProgress)}%</span>
+              <span className="text-xs sm:text-sm font-medium text-text-primary dark:text-white">Generating Export</span>
+              <span className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">{Math.round(exportProgress)}%</span>
             </div>
             <div className="w-full bg-secondary-200 dark:bg-gray-700 rounded-full h-2">
               <div 
@@ -179,22 +184,22 @@ const TransactionExport = () => {
         )}
 
         {/* Tabs */}
-        <div className="mb-6">
-          <div className="border-b border-border dark:border-gray-700">
-            <nav className="flex space-x-8">
+        <div className="mb-4 sm:mb-6">
+          <div className="border-b border-border dark:border-gray-700 overflow-x-auto">
+            <nav className="flex space-x-4 sm:space-x-8 min-w-max">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-sm transition-smooth
+                    flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-xs sm:text-sm transition-smooth whitespace-nowrap
                     ${activeTab === tab.id
                       ? 'border-primary dark:border-teal-500 text-primary dark:text-teal-400' 
                       : 'border-transparent text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white hover:border-secondary-300 dark:hover:border-gray-600'
                     }
                   `}
                 >
-                  <Icon name={tab.icon} size={16} color="currentColor" />
+                  <Icon name={tab.icon} size={14} className="sm:w-4 sm:h-4" color="currentColor" />
                   <span>{tab.label}</span>
                 </button>
               ))}
