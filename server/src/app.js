@@ -93,6 +93,7 @@ const corsOptions = {
             'http://localhost:5173',
             'https://quantumpayfinance.vercel.app',
             'https://quantumpay-server.vercel.app',
+            'https://quantumpay.finance',
             /\.vercel\.app$/  // Allow all Vercel preview deployments
         ];
         
