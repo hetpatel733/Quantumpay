@@ -71,6 +71,37 @@ const Login = () => {
         //console.log('✅ Redirecting to dashboard');
         // Navigate to dashboard
         navigate('/dashboard')
+      } else if (response.twoFactorRequired) {
+        localStorage.setItem('pendingVerificationEmail', formData.email)
+        localStorage.setItem('pendingOtpPurpose', 'login')
+        if (response.userId) {
+          localStorage.setItem('pendingVerificationUserId', response.userId)
+        }
+        if (response.verificationCode) {
+          localStorage.setItem('pendingVerificationCode', response.verificationCode)
+        }
+        navigate('/verify-email', {
+          state: {
+            email: formData.email,
+            purpose: 'login',
+            message: response.message || 'Enter the OTP sent to your email to complete login.'
+          }
+        })
+      } else if (response.verificationRequired) {
+        localStorage.setItem('pendingVerificationEmail', formData.email)
+        localStorage.setItem('pendingOtpPurpose', 'signup')
+        if (response.userId) {
+          localStorage.setItem('pendingVerificationUserId', response.userId)
+        }
+        if (response.verificationCode) {
+          localStorage.setItem('pendingVerificationCode', response.verificationCode)
+        }
+        navigate('/verify-email', {
+          state: {
+            email: formData.email,
+            message: response.message || 'Please verify your email to continue.'
+          }
+        })
       } else {
         setError(response.message || 'Login failed. Please try again.')
       }

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Icon from "../AppIcon";
 import Image from "../AppImage";
-import { notificationsAPI, authAPI } from "../../utils/api";
+import { notificationsAPI, authAPI, paymentsAPI } from "../../utils/api";
 import { debounce } from "../lib/utils";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -15,8 +16,16 @@ const Header = ({ userData }) => {
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [notificationError, setNotificationError] = useState(null);
   const [hideMobileSearch, setHideMobileSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
 
   // Debounced notification fetch to prevent rapid successive calls
@@ -67,6 +76,42 @@ const Header = ({ userData }) => {
     }
   }, 500);
 
+  const debouncedSearchPayments = debounce(async (term) => {
+    const trimmed = term.trim();
+    if (!trimmed) {
+      setSearchResults([]);
+      setSearchError(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    try {
+      setSearchLoading(true);
+      setSearchError(null);
+
+      const response = await paymentsAPI.getAll({
+        search: trimmed,
+        limit: 5,
+        skip: 0,
+        sortBy: "createdAt",
+        sortOrder: "desc"
+      });
+
+      if (response.success) {
+        setSearchResults(response.payments || []);
+      } else {
+        setSearchResults([]);
+        setSearchError(response.message || "No matches found");
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchResults([]);
+      setSearchError("Failed to search payments");
+    } finally {
+      setSearchLoading(false);
+    }
+  }, 400);
+
   // Optimized notification fetching
   const fetchNotifications = () => {
     debouncedFetchNotifications();
@@ -111,6 +156,10 @@ const Header = ({ userData }) => {
           localStorage.removeItem("authToken");
           localStorage.removeItem("userData");
           localStorage.removeItem("completeUserData");
+          localStorage.removeItem('pendingVerificationEmail');
+          localStorage.removeItem('pendingVerificationUserId');
+          localStorage.removeItem('pendingVerificationCode');
+          localStorage.removeItem('pendingOtpPurpose');
           
           // Redirect to login
           window.location.href = "/login";
@@ -148,6 +197,9 @@ const Header = ({ userData }) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setIsNotificationOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -155,6 +207,15 @@ const Header = ({ userData }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const querySearch = params.get("search");
+    if (querySearch) {
+      setSearchTerm(querySearch);
+      setSearchOpen(false);
+    }
+  }, [location.search]);
 
   // Hide mobile search button if sidebar is open on mobile
   useEffect(() => {
@@ -252,6 +313,51 @@ const Header = ({ userData }) => {
     }
   };
 
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    if (!value.trim()) {
+      setSearchResults([]);
+      setSearchError(null);
+      setSearchOpen(false);
+      return;
+    }
+    setSearchOpen(true);
+    debouncedSearchPayments(value);
+  };
+
+  const handleSearchFocus = () => {
+    if (searchTerm.trim()) {
+      setSearchOpen(true);
+    }
+  };
+
+  const handleSearchKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (searchTerm.trim()) {
+        handleShowMoreMatches();
+      }
+    }
+    if (event.key === "Escape") {
+      setSearchOpen(false);
+    }
+  };
+
+  const handleShowMoreMatches = () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    setSearchOpen(false);
+    navigate(`/dashboard/payments-management?search=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleSearchResultClick = (payment) => {
+    const payId = payment.payId || payment._id || payment.id;
+    if (!payId) return;
+    setSearchOpen(false);
+    navigate(`/dashboard/payment-details-modal?id=${encodeURIComponent(payId)}`);
+  };
+
   // Optimized mark as read with immediate UI update
   const markAsRead = async (notificationId) => {
     try {
@@ -313,7 +419,7 @@ const Header = ({ userData }) => {
           {/* Mobile spacing for menu button */}
           <div className="w-10 lg:w-0"></div>
 
-          <div className="hidden sm:block flex-1 max-w-md">
+          <div className="hidden sm:block flex-1 max-w-md" ref={searchRef}>
             <div className="relative">
               <Icon
                 name="Search"
@@ -324,6 +430,10 @@ const Header = ({ userData }) => {
               <input
                 type="text"
                 placeholder="Search transactions..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onFocus={handleSearchFocus}
+                onKeyDown={handleSearchKeyDown}
                 className="
                   w-full pl-10 pr-4 py-2
                   bg-background dark:bg-gray-700 border border-border dark:border-gray-600 rounded-lg
@@ -332,6 +442,70 @@ const Header = ({ userData }) => {
                   transition-colors duration-200 text-sm h-9
                 "
               />
+
+              {searchOpen && searchTerm.trim() && (
+                <div className="absolute left-0 right-0 mt-2 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <div className="max-h-80 overflow-y-auto">
+                    {searchLoading && (
+                      <div className="px-4 py-3 text-sm text-text-secondary dark:text-gray-400 flex items-center space-x-2">
+                        <Icon name="Loader2" size={16} className="animate-spin" />
+                        <span>Searching payments...</span>
+                      </div>
+                    )}
+
+                    {!searchLoading && searchError && (
+                      <div className="px-4 py-3 text-sm text-error dark:text-red-400">
+                        {searchError}
+                      </div>
+                    )}
+
+                    {!searchLoading && !searchError && searchResults.length === 0 && (
+                      <div className="px-4 py-3 text-sm text-text-secondary dark:text-gray-400">
+                        No matches found
+                      </div>
+                    )}
+
+                    {!searchLoading && !searchError && searchResults.length > 0 && (
+                      <div className="divide-y divide-border dark:divide-gray-700">
+                        {searchResults.map((payment) => (
+                          <button
+                            key={payment.payId || payment._id}
+                            onClick={() => handleSearchResultClick(payment)}
+                            className="w-full text-left px-4 py-3 hover:bg-secondary-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-text-primary dark:text-white truncate">
+                                {payment.customerName || "Unknown Customer"}
+                              </p>
+                              <span className="text-sm text-text-primary dark:text-white font-semibold">
+                                ${Number(payment.amountUSD || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                            <p className="text-xs text-text-secondary dark:text-gray-400 truncate">
+                              {payment.customerEmail || "No email"}
+                            </p>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-xs text-text-secondary dark:text-gray-400 font-mono">
+                                {payment.payId || payment._id}
+                              </span>
+                              <span className="text-xs text-text-secondary dark:text-gray-400 capitalize">
+                                {payment.status || "pending"}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleShowMoreMatches}
+                    className="w-full px-4 py-2 text-sm text-primary dark:text-teal-400 hover:text-primary-700 dark:hover:text-teal-300 border-t border-border dark:border-gray-700 bg-background dark:bg-gray-900/40"
+                  >
+                    Show more matches
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

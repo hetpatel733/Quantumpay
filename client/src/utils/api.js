@@ -75,7 +75,7 @@ export const apiRequest = async (endpoint, options = {}) => {
           errorData = { message: await response.text() };
         }
         
-        if (response.status === 403) {
+        if (response.status === 403 && options.throwOnForbidden !== false) {
           console.error('🚫 403 Forbidden - Check authentication and permissions');
           throw new Error(errorData.message || `Access forbidden`);
         }
@@ -121,7 +121,7 @@ export const apiRequest = async (endpoint, options = {}) => {
         errorData = { message: `HTTP error! status: ${response.status}` };
       }
       
-      if (response.status === 403) {
+      if (response.status === 403 && options.throwOnForbidden !== false) {
         console.error('🚫 403 Forbidden - Check authentication and permissions');
         throw new Error(errorData.message || `Access forbidden`);
       }
@@ -226,7 +226,26 @@ export const authAPI = {
   login: async (credentials) => {
     return await apiRequest('/api/auth/login', {
       method: 'POST',
-      body: credentials
+      body: credentials,
+      throwOnForbidden: false
+    });
+  },
+
+  // Verify OTP
+  verifyOtp: async (payload) => {
+    return await apiRequest('/api/auth/verify-otp', {
+      method: 'POST',
+      body: payload,
+      throwOnForbidden: false
+    });
+  },
+
+  // Resend OTP
+  resendOtp: async (payload) => {
+    return await apiRequest('/api/auth/resend-otp', {
+      method: 'POST',
+      body: payload,
+      throwOnForbidden: false
     });
   },
 
@@ -272,6 +291,15 @@ export const authAPI = {
     return await apiRequest(`/api/auth/password/${userId}`, {
       method: 'PUT',
       body: passwordData
+    });
+  },
+
+  // Update 2FA settings
+  updateTwoFactorSetting: async (userId, enabled) => {
+    return await apiRequest(`/api/auth/2fa/${userId}`, {
+      method: 'PUT',
+      body: { enabled },
+      throwOnForbidden: false
     });
   }
 };
@@ -1191,6 +1219,35 @@ export const paymentConfigAPI = {
 
 // Transaction Export API
 export const exportAPI = {
+  // Upload dashboard snapshot PDF and save it in export history
+  uploadDashboardPDF: async ({ name, fileName, pdfBlob }) => {
+    const userId = getUserId();
+    if (!userId) {
+      return { success: false, message: 'User ID not found' };
+    }
+
+    if (!pdfBlob) {
+      return { success: false, message: 'PDF blob is required' };
+    }
+
+    const pdfBase64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read PDF data'));
+      reader.readAsDataURL(pdfBlob);
+    });
+
+    return await apiRequest('/api/exports/dashboard-pdf', {
+      method: 'POST',
+      body: {
+        userId,
+        name,
+        fileName,
+        pdfBase64
+      }
+    });
+  },
+
   // Create new export job
   create: async (exportConfig) => {
     const userId = getUserId();
@@ -1223,7 +1280,8 @@ export const exportAPI = {
     return await apiRequest(`/api/exports?${queryParams}`, {
       method: 'GET',
       emptyResultsOk: true,
-      emptyData: []
+      emptyData: [],
+      enableCache: false
     });
   },
 

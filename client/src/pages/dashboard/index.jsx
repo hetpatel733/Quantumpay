@@ -240,6 +240,7 @@ const Dashboard = ({ userData }) => {
           month: 'short',
           day: 'numeric'
         })}`,
+        period: selectedPeriod,
         onProgress: (progress, message) => {
           setExportProgress(progress);
           console.log(`Export progress: ${progress}% - ${message}`);
@@ -362,7 +363,7 @@ const Dashboard = ({ userData }) => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6 sm:mb-8">
           {/* Payment Trends Chart */}
-          <div className="xl:col-span-2 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
+          <div className="xl:col-span-2 bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6" data-export-chart="payment-trends">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
               <div className="flex-1">
                 <div className="flex items-baseline space-x-3">
@@ -442,7 +443,7 @@ const Dashboard = ({ userData }) => {
           </div>
 
           {/* Cryptocurrency Distribution */}
-          <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6">
+          <div className="bg-surface dark:bg-gray-800 border border-border dark:border-gray-700 rounded-lg p-6" data-export-chart="crypto-distribution">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-text-primary dark:text-white">Crypto Distribution</h2>
               <p className="text-text-secondary dark:text-gray-400 text-sm">Payment volume by cryptocurrency</p>

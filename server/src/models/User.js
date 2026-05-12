@@ -66,6 +66,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    twoFactorEnabled: {
+        type: Boolean,
+        default: false
+    },
     status: {
         type: String,
         enum: ['active', 'suspended', 'pending', 'inactive'],

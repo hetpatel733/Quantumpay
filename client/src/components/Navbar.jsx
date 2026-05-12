@@ -2,11 +2,21 @@ import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ThemeToggle from './ThemeToggle'
+import { useAuth } from 'contexts/AuthContext'
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
+  const { isAuthenticated, isLoading, userData } = useAuth()
+
+  const pendingVerificationEmail = localStorage.getItem('pendingVerificationEmail')
+  const needsVerification = Boolean(
+    !isLoading && (
+      (isAuthenticated && userData?.verified === false) ||
+      (!isAuthenticated && pendingVerificationEmail)
+    )
+  )
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,6 +43,7 @@ const Navbar = () => {
     { path: '/cryptocurrencies', label: 'Supported Cryptocurrencies' },
     { path: '/pricing', label: 'Pricing' },
     { path: '/contact', label: 'Contact Us' },
+    ...(needsVerification ? [{ path: '/verify-email', label: 'Verify Email', highlight: true }] : []),
     { path: '/login', label: 'Login', icon: 'bi-chevron-right' },
     { path: '/signup', label: 'Sign up', icon: 'bi-chevron-right', highlight: true },
   ]

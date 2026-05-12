@@ -35,25 +35,24 @@ async function updateDashboardMetrics(payment) {
         console.log(`\n   📊 Updating dashboard metrics for payment ${payment.payId}...`);
 
         const paymentDate = new Date(payment.completedAt || new Date());
-        const dateKey = paymentDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        paymentDate.setHours(0, 0, 0, 0);
 
         // Find or create daily metric for this date
         let dailyMetric = await DashboardDailyMetric.findOne({
             userId: payment.userId,
-            date: dateKey
+            date: paymentDate
         });
 
         if (!dailyMetric) {
-            console.log(`   📝 Creating new daily metric for ${dateKey}`);
+            console.log(`   📝 Creating new daily metric for ${paymentDate.toDateString()}`);
             dailyMetric = new DashboardDailyMetric({
                 userId: payment.userId,
-                date: dateKey,
+                date: paymentDate,
                 totalSales: 0,
                 transactionCount: 0,
                 completedCount: 0,
                 failedCount: 0,
-                pendingCount: 0,
-                cryptoVolume: {}
+                volume: {}
             });
         }
 
@@ -64,10 +63,16 @@ async function updateDashboardMetrics(payment) {
 
         // Update crypto volume
         const cryptoKey = payment.cryptoType || payment.cryptoSymbol || 'UNKNOWN';
-        if (!dailyMetric.cryptoVolume) {
-            dailyMetric.cryptoVolume = {};
+        const usdValue = Number(payment.amountUSD || 0);
+        if (!dailyMetric.volume) {
+            dailyMetric.volume = {};
         }
-        dailyMetric.cryptoVolume[cryptoKey] = (dailyMetric.cryptoVolume[cryptoKey] || 0) + (payment.amountCrypto || 0);
+        if (typeof dailyMetric.volume.get === 'function') {
+            const prev = Number(dailyMetric.volume.get(cryptoKey) || 0);
+            dailyMetric.volume.set(cryptoKey, prev + usdValue);
+        } else {
+            dailyMetric.volume[cryptoKey] = (Number(dailyMetric.volume[cryptoKey] || 0) + usdValue);
+        }
 
         // Save updated metrics
         await dailyMetric.save();
@@ -75,7 +80,10 @@ async function updateDashboardMetrics(payment) {
         console.log(`   ✅ Dashboard metrics updated successfully`);
         console.log(`      Total Sales: $${dailyMetric.totalSales.toFixed(2)}`);
         console.log(`      Completed: ${dailyMetric.completedCount}`);
-        console.log(`      ${cryptoKey} Volume: ${dailyMetric.cryptoVolume[cryptoKey]}`);
+        const volumeDisplay = typeof dailyMetric.volume.get === 'function'
+            ? dailyMetric.volume.get(cryptoKey)
+            : dailyMetric.volume[cryptoKey];
+        console.log(`      ${cryptoKey} Volume (USD): $${Number(volumeDisplay || 0).toFixed(2)}`);
 
     } catch (error) {
         console.error(`   ❌ Error updating dashboard metrics:`, error.message);

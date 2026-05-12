@@ -21,7 +21,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
     country: 'United States',
     timezone: 'America/New_York',
     businessDescription: '',
-    profileImage: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face'
+    profileImage: ''
   });
 
   // Debug log
@@ -39,7 +39,7 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         country: userData.country || 'United States',
         timezone: userData.timeZone || 'America/New_York',
         businessDescription: userData.description || '',
-        profileImage: userData.profileImage || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face'
+        profileImage: userData.profileImage || ''
       };
       console.log('📝 Setting profile data:', updatedProfileData);
       setProfileData(updatedProfileData);
@@ -163,9 +163,16 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         country: userData.country || 'United States',
         timezone: userData.timeZone || 'America/New_York',
         businessDescription: userData.description || '',
-        profileImage: userData.profileImage || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face'
+        profileImage: userData.profileImage || ''
       });
     }
+  };
+
+  const getInitials = () => {
+    const sourceName = profileData.contactName || profileData.businessName || 'User';
+    const parts = sourceName.trim().split(/\s+/).filter(Boolean);
+    const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+    return initials || 'U';
   };
 
   return (
@@ -216,8 +223,14 @@ const ProfileInformation = ({ userData, refreshUserData }) => {
         <h3 className="text-lg font-semibold text-text-primary dark:text-white mb-4">Profile Photo</h3>
         <div className="flex items-center space-x-6">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary-100 dark:bg-gray-700">
-              <Image src={profileData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary-100 dark:bg-gray-700 flex items-center justify-center border border-border dark:border-gray-600">
+              {profileData.profileImage ? (
+                <Image src={profileData.profileImage} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200 dark:from-gray-700 dark:to-gray-600 text-primary dark:text-teal-300 font-bold text-2xl">
+                  {getInitials()}
+                </div>
+              )}
             </div>
             {isEditing && (
               <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary dark:bg-teal-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth">

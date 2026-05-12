@@ -72,6 +72,15 @@ const Signup = () => {
 
       if (response.success) {
         setSuccess(response.message || 'Account created successfully!')
+
+        if (response.verificationRequired && response.userId) {
+          localStorage.setItem('pendingVerificationEmail', signupData.email)
+          localStorage.setItem('pendingVerificationUserId', response.userId)
+          localStorage.setItem('pendingOtpPurpose', 'signup')
+          if (response.verificationCode) {
+            localStorage.setItem('pendingVerificationCode', response.verificationCode)
+          }
+        }
         
         // Clear form
         setFormData({
@@ -85,11 +94,20 @@ const Signup = () => {
         })
         setAcceptTerms(false)
         
-        // Redirect to login after 2 seconds
+        // Redirect to verification flow after 2 seconds when needed
         setTimeout(() => {
-          navigate('/login', { 
-            state: { message: 'Account created! Please login to continue.' }
-          })
+          if (response.verificationRequired) {
+            navigate('/verify-email', {
+              state: {
+                email: signupData.email,
+                message: 'Account created. Verify your email to continue.'
+              }
+            })
+          } else {
+            navigate('/login', { 
+              state: { message: 'Account created! Please login to continue.' }
+            })
+          }
         }, 2000)
       } else {
         setError(response.message || 'Signup failed. Please try again.')

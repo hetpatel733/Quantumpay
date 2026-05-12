@@ -20,6 +20,10 @@ export const logout = async () => {
   localStorage.removeItem("authToken");
   localStorage.removeItem("userData");
   localStorage.removeItem("completeUserData");
+  localStorage.removeItem('pendingVerificationEmail');
+  localStorage.removeItem('pendingVerificationUserId');
+  localStorage.removeItem('pendingVerificationCode');
+  localStorage.removeItem('pendingOtpPurpose');
   
   // Redirect to home
   window.location.href = "/";

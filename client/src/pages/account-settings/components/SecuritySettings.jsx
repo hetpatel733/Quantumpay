@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Icon from 'components/AppIcon';
 import { authAPI } from 'utils/api';
 import { useAuth } from 'contexts/AuthContext';
 
-const SecuritySettings = () => {
+const SecuritySettings = ({ userData }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [isUpdatingTwoFactor, setIsUpdatingTwoFactor] = useState(false);
+  const [twoFactorMessage, setTwoFactorMessage] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -18,6 +21,57 @@ const SecuritySettings = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   const { userData: authData } = useAuth();
+
+  useEffect(() => {
+    const enabled = Boolean(
+      authData?.twoFactorEnabled ?? userData?.twoFactorEnabled ?? false
+    );
+    setTwoFactorEnabled(enabled);
+  }, [authData?.twoFactorEnabled, userData?.twoFactorEnabled]);
+
+  const handleTwoFactorToggle = async () => {
+    const userId = authData?.id || userData?.id;
+    if (!userId) {
+      setTwoFactorError('User session expired. Please log in again.');
+      return;
+    }
+
+    const nextValue = !twoFactorEnabled;
+    setIsUpdatingTwoFactor(true);
+    setTwoFactorError('');
+    setTwoFactorMessage('');
+
+    try {
+      const response = await authAPI.updateTwoFactorSetting(userId, nextValue);
+      if (response.success) {
+        setTwoFactorEnabled(response.twoFactorEnabled);
+        setTwoFactorMessage(response.message || 'Two-factor authentication settings updated');
+
+        // Keep local storage user snapshots in sync with server response.
+        const storedUserData = localStorage.getItem('userData');
+        const storedCompleteUserData = localStorage.getItem('completeUserData');
+
+        if (storedUserData) {
+          const parsed = JSON.parse(storedUserData);
+          parsed.twoFactorEnabled = response.twoFactorEnabled;
+          localStorage.setItem('userData', JSON.stringify(parsed));
+        }
+
+        if (storedCompleteUserData) {
+          const parsed = JSON.parse(storedCompleteUserData);
+          parsed.twoFactorEnabled = response.twoFactorEnabled;
+          localStorage.setItem('completeUserData', JSON.stringify(parsed));
+        }
+      } else {
+        setTwoFactorError(response.message || 'Failed to update two-factor authentication');
+      }
+    } catch (error) {
+      console.error('❌ Failed to update two-factor setting:', error);
+      setTwoFactorError('Failed to update two-factor authentication. Please try again.');
+    } finally {
+      setIsUpdatingTwoFactor(false);
+    }
+  };
 
   const validatePassword = (password) => {
     const errors = [];
@@ -222,6 +276,24 @@ const SecuritySettings = () => {
         </div>
       )}
 
+      {twoFactorMessage && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <Icon name="CheckCircle" size={16} color="#10b981" />
+            <p className="text-sm text-green-700 dark:text-green-300">{twoFactorMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {twoFactorError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <Icon name="AlertCircle" size={16} color="#ef4444" />
+            <p className="text-sm text-red-700 dark:text-red-300">{twoFactorError}</p>
+          </div>
+        </div>
+      )}
+
       {/* Password Change */}
       <div className="bg-surface dark:bg-gray-800 rounded-lg border border-border dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-text-primary dark:text-white mb-4">Change Password</h3>
@@ -390,7 +462,7 @@ const SecuritySettings = () => {
           <div>
             <h3 className="text-lg font-semibold text-text-primary dark:text-white">Two-Factor Authentication</h3>
             <p className="text-text-secondary dark:text-gray-400 text-sm mt-1">
-              Add an extra layer of security to your account
+              Require an email OTP at every login after logout
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -398,10 +470,12 @@ const SecuritySettings = () => {
               {twoFactorEnabled ? 'Enabled' : 'Disabled'}
             </span>
             <button
-              onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
+              onClick={handleTwoFactorToggle}
+              disabled={isUpdatingTwoFactor}
               className={`
                 relative inline-flex h-6 w-11 items-center rounded-full transition-smooth
                 ${twoFactorEnabled ? 'bg-green-600' : 'bg-gray-300'}
+                ${isUpdatingTwoFactor ? 'opacity-60 cursor-not-allowed' : ''}
               `}
             >
               <span
@@ -419,16 +493,8 @@ const SecuritySettings = () => {
             <div className="flex items-center space-x-2">
               <Icon name="Shield" size={16} color="#10b981" />
               <p className="text-sm text-green-700">
-                Two-factor authentication is active. You'll need your authenticator app to sign in.
+                Two-factor authentication is active. You will need an email OTP each time you log in.
               </p>
-            </div>
-            <div className="mt-3 flex space-x-3">
-              <button className="text-sm text-green-700 hover:text-green-800 font-medium">
-                View Recovery Codes
-              </button>
-              <button className="text-sm text-green-700 hover:text-green-800 font-medium">
-                Reconfigure
-              </button>
             </div>
           </div>
         )}
@@ -441,8 +507,12 @@ const SecuritySettings = () => {
                 Your account is not protected by two-factor authentication. Enable it for better security.
               </p>
             </div>
-            <button className="mt-3 text-sm text-yellow-700 hover:text-yellow-800 font-medium">
-              Set Up Two-Factor Authentication
+            <button
+              onClick={handleTwoFactorToggle}
+              disabled={isUpdatingTwoFactor}
+              className="mt-3 text-sm text-yellow-700 hover:text-yellow-800 font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Enable Two-Factor Authentication
             </button>
           </div>
         )}

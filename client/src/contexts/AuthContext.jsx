@@ -95,6 +95,11 @@ const AuthProvider = ({ children }) => {
 
   const handleLoginSuccess = (user, token) => {
     console.log("✅ Login success handler called with user:", user);
+
+    localStorage.removeItem('pendingVerificationEmail');
+    localStorage.removeItem('pendingVerificationUserId');
+    localStorage.removeItem('pendingVerificationCode');
+    localStorage.removeItem('pendingOtpPurpose');
     
     // Save both basic and complete user data
     localStorage.setItem("userData", JSON.stringify(user));
@@ -158,6 +163,10 @@ const AuthProvider = ({ children }) => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
     localStorage.removeItem("completeUserData");
+    localStorage.removeItem('pendingVerificationEmail');
+    localStorage.removeItem('pendingVerificationUserId');
+    localStorage.removeItem('pendingVerificationCode');
+    localStorage.removeItem('pendingOtpPurpose');
 
     setIsAuthenticated(false);
     setUserData(null);

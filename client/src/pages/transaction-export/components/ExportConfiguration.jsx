@@ -50,6 +50,11 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
     { value: 'failureReason', label: 'Failure Reason', description: 'Reason for failed payments' }
   ];
 
+  const allCryptoValues = cryptocurrencyOptions.map((crypto) => crypto.value);
+  const selectedCryptos = (config.cryptocurrencies || []).includes('all')
+    ? allCryptoValues
+    : (config.cryptocurrencies || []);
+
   const handleConfigChange = (key, value) => {
     onConfigChange(prev => ({
       ...prev,
@@ -58,22 +63,18 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
   };
 
   const handleCryptocurrencyToggle = (crypto) => {
-    const currentCryptos = config.cryptocurrencies || [];
-    let newCryptos;
-    
-    if (currentCryptos.includes(crypto)) {
-      newCryptos = currentCryptos.filter(c => c !== crypto);
-    } else {
-      // Remove 'all' if selecting specific cryptos
-      newCryptos = currentCryptos.filter(c => c !== 'all');
-      newCryptos.push(crypto);
-    }
-    
-    // If no cryptos selected, default to 'all'
+    const currentCryptos = selectedCryptos;
+    const alreadySelected = currentCryptos.includes(crypto);
+
+    let newCryptos = alreadySelected
+      ? currentCryptos.filter(c => c !== crypto)
+      : [...currentCryptos, crypto];
+
+    // Keep all currencies checked by default if user clears all.
     if (newCryptos.length === 0) {
-      newCryptos = ['all'];
+      newCryptos = allCryptoValues;
     }
-    
+
     handleConfigChange('cryptocurrencies', newCryptos);
   };
 
@@ -175,7 +176,7 @@ const ExportConfiguration = ({ config, onConfigChange }) => {
               <label key={crypto.value} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-secondary-50 dark:hover:bg-gray-700 transition-smooth">
                 <input
                   type="checkbox"
-                  checked={config.cryptocurrencies?.includes(crypto.value) || false}
+                  checked={selectedCryptos.includes(crypto.value)}
                   onChange={() => handleCryptocurrencyToggle(crypto.value)}
                   className="w-4 h-4 text-primary dark:text-teal-500 border-border dark:border-gray-600 rounded focus:ring-2 focus:ring-primary dark:focus:ring-teal-500"
                 />

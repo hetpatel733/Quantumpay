@@ -23,6 +23,9 @@ const ExportPreview = ({ config }) => {
       setLoading(true);
 
       const params = {
+        dateRange: config.dateRange,
+        customStartDate: config.customStartDate || undefined,
+        customEndDate: config.customEndDate || undefined,
         limit: 10,
         sortBy: 'createdAt',
         sortOrder: 'desc'
@@ -37,7 +40,7 @@ const ExportPreview = ({ config }) => {
       if (config.cryptocurrencies && 
           config.cryptocurrencies.length > 0 && 
           !config.cryptocurrencies.includes('all')) {
-        params.cryptoType = config.cryptocurrencies[0];
+        params.cryptoTypes = config.cryptocurrencies.join(',');
       }
 
       // Apply amount range filters
@@ -53,25 +56,16 @@ const ExportPreview = ({ config }) => {
       const response = await paymentsAPI.getAll(params);
 
       if (response.success) {
-        let payments = response.payments || [];
-        
-        // Client-side filtering for amount range (backup if server doesn't support it)
-        if (config.amountRange?.min && config.amountRange.min !== '') {
-          const minAmount = parseFloat(config.amountRange.min);
-          payments = payments.filter(p => (p.amountUSD || 0) >= minAmount);
-        }
-        if (config.amountRange?.max && config.amountRange.max !== '') {
-          const maxAmount = parseFloat(config.amountRange.max);
-          payments = payments.filter(p => (p.amountUSD || 0) <= maxAmount);
-        }
-        
+        const payments = response.payments || [];
+        const totalMatchedRecords = response.pagination?.total ?? payments.length;
+
         setPreviewData(payments);
-        setTotalRecords(payments.length);
-        setEstimatedRecords(params.limit);
+        setTotalRecords(totalMatchedRecords);
+        setEstimatedRecords(totalMatchedRecords);
         
         // Estimate file size based on selected columns only
         const avgBytesPerRecord = displayColumns.length * 35;
-        const estimatedBytes = payments.length * avgBytesPerRecord;
+        const estimatedBytes = totalMatchedRecords * avgBytesPerRecord;
         
         // PDF files are typically larger
         const multiplier = config.format === 'pdf' ? 3 : 1;
@@ -415,21 +409,36 @@ const ExportPreview = ({ config }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border dark:divide-gray-700">
-                {previewData.map((row, index) => (
-                  <tr 
-                    key={index}
-                    className="hover:bg-secondary-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    {config.columns.map((column) => (
-                      <td 
-                        key={column}
-                        className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-text-secondary dark:text-gray-400 whitespace-nowrap"
-                      >
-                        {formatCellValue(row[column], column)}
-                      </td>
-                    ))}
+                {previewData.length > 0 ? (
+                  previewData.map((row, index) => (
+                    <tr 
+                      key={row._id || row.payId || index}
+                      className="hover:bg-secondary-50 dark:hover:bg-gray-700/50 transition-colors"
+                    >
+                      {config.columns.map((column) => {
+                        const value = getColumnValue(row, column);
+
+                        return (
+                          <td 
+                            key={column}
+                            className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-text-secondary dark:text-gray-400 whitespace-nowrap"
+                          >
+                            {column === 'status' ? getStatusBadge(value || 'pending') : value}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={config.columns.length}
+                      className="px-4 py-6 text-center text-sm text-text-secondary dark:text-gray-400"
+                    >
+                      No matching records found for the selected export filters.
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

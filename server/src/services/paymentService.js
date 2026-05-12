@@ -8,6 +8,68 @@ const crypto = require('crypto');
 // Import the new currency converter utility
 const { getExchangeRate, usdToCrypto } = require('../utils/currencyConverter');
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Build date range filter for list endpoints
+const buildDateRangeFilter = (dateRange, customStartDate, customEndDate) => {
+    if (!dateRange) return null;
+
+    const endDate = new Date();
+    let startDate = new Date();
+
+    switch (dateRange) {
+        case 'today':
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'yesterday':
+            startDate.setDate(startDate.getDate() - 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setDate(endDate.getDate() - 1);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'last7days':
+            startDate.setDate(startDate.getDate() - 7);
+            break;
+        case 'last30days':
+            startDate.setDate(startDate.getDate() - 30);
+            break;
+        case 'last90days':
+            startDate.setDate(startDate.getDate() - 90);
+            break;
+        case 'thisMonth':
+            startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1, 0, 0, 0, 0);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'lastMonth':
+            startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1, 0, 0, 0, 0);
+            endDate.setDate(0);
+            endDate.setHours(23, 59, 59, 999);
+            break;
+        case 'custom': {
+            if (!customStartDate && !customEndDate) return null;
+
+            const customStart = customStartDate ? new Date(customStartDate) : new Date(0);
+            const customEnd = customEndDate ? new Date(customEndDate) : new Date();
+
+            customStart.setHours(0, 0, 0, 0);
+            customEnd.setHours(23, 59, 59, 999);
+
+            return {
+                $gte: customStart,
+                $lte: customEnd
+            };
+        }
+        default:
+            return null;
+    }
+
+    return {
+        $gte: startDate,
+        $lte: endDate
+    };
+};
+
 // Generate unique payment ID
 const generatePayId = () => {
     const timestamp = Date.now().toString(36).toUpperCase();
@@ -400,8 +462,12 @@ async function getAllPayments(req, res) {
             userId, 
             status, 
             cryptoType, 
+            cryptoTypes,
             network,
             search,
+            dateRange,
+            customStartDate,
+            customEndDate,
             sortBy = 'createdAt',
             sortOrder = 'desc',
             skip = 0,
@@ -423,12 +489,43 @@ async function getAllPayments(req, res) {
             query.status = status;
         }
 
-        if (cryptoType && cryptoType !== 'all') {
+        const normalizedCryptoTypes = cryptoTypes
+            ? (Array.isArray(cryptoTypes) ? cryptoTypes : String(cryptoTypes).split(','))
+                .map((value) => String(value).trim())
+                .filter((value) => value && value !== 'all')
+            : [];
+
+        if (normalizedCryptoTypes.length > 0) {
+            query.cryptoType = { $in: normalizedCryptoTypes };
+        } else if (cryptoType && cryptoType !== 'all') {
             query.cryptoType = cryptoType;
         }
 
         if (network && network !== 'all') {
             query.network = network;
+        }
+
+        if (search && String(search).trim()) {
+            const searchValue = String(search).trim();
+            const regex = new RegExp(escapeRegExp(searchValue), 'i');
+            const searchConditions = [
+                { payId: regex },
+                { customerName: regex },
+                { customerEmail: regex },
+                { productId: regex }
+            ];
+
+            const numericSearch = Number(searchValue.replace(/[^0-9.-]/g, ''));
+            if (!Number.isNaN(numericSearch) && /[0-9]/.test(searchValue)) {
+                searchConditions.push({
+                    amountUSD: { $gte: numericSearch - 0.01, $lte: numericSearch + 0.01 }
+                });
+                searchConditions.push({
+                    amountCrypto: { $gte: numericSearch - 0.00000001, $lte: numericSearch + 0.00000001 }
+                });
+            }
+
+            query.$or = searchConditions;
         }
 
         // Add amount range filtering
@@ -440,6 +537,12 @@ async function getAllPayments(req, res) {
             if (amountMax) {
                 query.amountUSD.$lte = parseFloat(amountMax);
             }
+        }
+
+        // Add date range filtering
+        const createdAtRange = buildDateRangeFilter(dateRange, customStartDate, customEndDate);
+        if (createdAtRange) {
+            query.createdAt = createdAtRange;
         }
 
         // Build sort

@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Development files
+.git
+.gitignore
+.env
+.env.*
+*.md
+.vscode
+.idea
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files
+**/*.test.js
+**/*.spec.js
+coverage
+
+# Docker files (no need to copy into container)
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -36,6 +36,14 @@ function calculateDateRange(dateRange, customStart, customEnd) {
         case 'last90days':
             startDate.setDate(startDate.getDate() - 90);
             break;
+        case 'lastYear':
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            startDate.setMonth(0, 1);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setFullYear(endDate.getFullYear() - 1);
+            endDate.setMonth(11, 31);
+            endDate.setHours(23, 59, 59, 999);
+            break;
         case 'thisMonth':
             startDate.setDate(1);
             startDate.setHours(0, 0, 0, 0);
@@ -385,6 +393,105 @@ async function uploadToTmpFiles(filePath, fileName) {
             success: false,
             error: error.message
         };
+    }
+}
+
+// CREATE DASHBOARD PDF EXPORT (direct upload path)
+async function createDashboardPDFExport(req, res) {
+    let tempFilePath;
+
+    try {
+        const { userId, name, fileName, pdfBase64 } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID is required'
+            });
+        }
+
+        if (!pdfBase64 || typeof pdfBase64 !== 'string') {
+            return res.status(400).json({
+                success: false,
+                message: 'PDF base64 payload is required'
+            });
+        }
+
+        const base64Content = pdfBase64.includes(',') ? pdfBase64.split(',')[1] : pdfBase64;
+        const pdfBuffer = Buffer.from(base64Content, 'base64');
+
+        if (!pdfBuffer || pdfBuffer.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid PDF payload'
+            });
+        }
+
+        const safeFileName = (fileName || `dashboard-report-${formatDateForFilename()}.pdf`).replace(/[^a-zA-Z0-9._-]/g, '_');
+        tempFilePath = path.join(os.tmpdir(), `${Date.now()}_${safeFileName}`);
+        fs.writeFileSync(tempFilePath, pdfBuffer);
+
+        const uploadResult = await uploadToTmpFiles(tempFilePath, safeFileName);
+        if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Failed to upload dashboard PDF');
+        }
+
+        const fileSizeFormatted = pdfBuffer.length > 1024 * 1024
+            ? `${(pdfBuffer.length / (1024 * 1024)).toFixed(2)} MB`
+            : `${(pdfBuffer.length / 1024).toFixed(2)} KB`;
+
+        const now = new Date();
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+        const exportJob = new TransactionExport({
+            userId,
+            name: name || `Dashboard Report - ${formatDateForFilename()}`,
+            format: 'pdf',
+            status: 'completed',
+            filters: { dateRange: 'custom' },
+            columns: ['dashboardSnapshot'],
+            includeHeaders: false,
+            recordCount: 1,
+            fileSize: fileSizeFormatted,
+            downloadUrl: uploadResult.url,
+            expiresAt,
+            startedAt: now,
+            completedAt: now,
+            emailDelivery: false,
+            emailAddress: null
+        });
+
+        await exportJob.save();
+
+        return res.status(201).json({
+            success: true,
+            message: 'Dashboard PDF uploaded successfully',
+            export: {
+                id: exportJob._id,
+                name: exportJob.name,
+                format: 'PDF',
+                status: exportJob.status,
+                fileSize: exportJob.fileSize,
+                downloadUrl: exportJob.downloadUrl,
+                viewUrl: uploadResult.viewUrl || null,
+                expiresAt: exportJob.expiresAt,
+                createdAt: exportJob.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('❌ Create dashboard PDF export error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to upload dashboard PDF export'
+        });
+    } finally {
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+            try {
+                fs.unlinkSync(tempFilePath);
+            } catch (e) {
+                console.warn(`⚠️ Failed to cleanup temp dashboard PDF: ${e.message}`);
+            }
+        }
     }
 }
 
@@ -766,6 +873,7 @@ async function retryExport(req, res) {
 }
 
 module.exports = {
+    createDashboardPDFExport,
     createExport,
     getAllExports,
     getExportById,

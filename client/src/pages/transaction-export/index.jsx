@@ -7,6 +7,25 @@ import ExportConfiguration from './components/ExportConfiguration';
 import ExportPreview from './components/ExportPreview';
 import ExportHistory from './components/ExportHistory';
 
+const DEFAULT_CRYPTOCURRENCIES = ['BTC', 'ETH', 'USDT', 'USDC', 'MATIC', 'SOL'];
+const DEFAULT_COLUMNS = [
+  'transactionId',
+  'date',
+  'amount',
+  'amountCrypto',
+  'cryptocurrency',
+  'network',
+  'status',
+  'customer',
+  'customerEmail',
+  'walletAddress',
+  'hash',
+  'exchangeRate',
+  'fees',
+  'completedAt',
+  'failureReason'
+];
+
 const TransactionExport = () => {
   const { showToast } = useToast();
   const [exportConfig, setExportConfig] = useState({
@@ -14,18 +33,10 @@ const TransactionExport = () => {
     customStartDate: '',
     customEndDate: '',
     status: 'all',
-    cryptocurrencies: ['all'],
+    cryptocurrencies: DEFAULT_CRYPTOCURRENCIES,
     amountRange: { min: '', max: '' },
     format: 'csv',
-    // Default columns - reasonable starting set
-    columns: [
-      'transactionId',
-      'date',
-      'amount',
-      'cryptocurrency',
-      'status',
-      'customer'
-    ],
+    columns: DEFAULT_COLUMNS,
     includeHeaders: true,
     emailDelivery: false,
     emailAddress: ''

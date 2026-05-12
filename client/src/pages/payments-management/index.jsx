@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from 'components/AppIcon';
 import { paymentsAPI } from 'utils/api';
 import { useToast } from 'contexts/ToastContext';
@@ -21,6 +21,7 @@ const MockModal = ({ title, onClose, children }) => (
 
 const PaymentsManagement = ({ userData }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { showToast } = useToast();
     // --- STATE MANAGEMENT ---
     const [payments, setPayments] = useState([]);
@@ -47,6 +48,15 @@ const PaymentsManagement = ({ userData }) => {
 
     // --- DATA FETCHING ---
     useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const searchQuery = params.get('search') || '';
+        if (searchQuery && searchQuery !== filters.search) {
+            setFilters(prev => ({ ...prev, search: searchQuery }));
+            setCurrentPage(1);
+        }
+    }, [location.search]);
+
+    useEffect(() => {
     const fetchPayments = async () => {
       setLoading(true);
       setError(null);
@@ -57,12 +67,13 @@ const PaymentsManagement = ({ userData }) => {
           limit: itemsPerPage,
           status: filters.status !== 'all' ? filters.status : undefined,
           cryptoType: filters.cryptocurrency !== 'all' ? filters.cryptocurrency : undefined,
-          network: filters.network !== 'all' ? filters.network : undefined,
-          sortBy: sortConfig.key,
-          sortOrder: sortConfig.direction
+                    network: filters.network !== 'all' ? filters.network : undefined,
+                    sortBy: sortConfig.key,
+                    sortOrder: sortConfig.direction,
+                    search: filters.search || undefined
         });
 
-        // Build clean API parameters - REMOVED search from server call
+                // Build clean API parameters
         const apiParams = {
           skip: (currentPage - 1) * itemsPerPage,
           limit: itemsPerPage,
@@ -79,9 +90,13 @@ const PaymentsManagement = ({ userData }) => {
           apiParams.cryptoType = filters.cryptocurrency;
         }
 
-        if (filters.network && filters.network !== 'all') {
+                if (filters.network && filters.network !== 'all') {
           apiParams.network = filters.network;
         }
+
+                if (filters.search) {
+                    apiParams.search = filters.search.trim();
+                }
 
         console.log('📤 API params being sent:', apiParams);
 
@@ -152,7 +167,7 @@ const PaymentsManagement = ({ userData }) => {
     };
 
     fetchPayments();
-  }, [currentPage, itemsPerPage, filters.status, filters.cryptocurrency, filters.network, sortConfig]);
+    }, [currentPage, itemsPerPage, filters.status, filters.cryptocurrency, filters.network, filters.search, sortConfig]);
   // REMOVED filters.search from dependencies
 
     // --- CLIENT-SIDE COMPUTATIONS (Filtering, Sorting, Pagination) ---
@@ -162,11 +177,22 @@ const PaymentsManagement = ({ userData }) => {
         // Apply search filter on client-side
         if (filters.search) {
             const searchTerm = filters.search.toLowerCase();
-            filtered = filtered.filter(p =>
-                p.payId.toLowerCase().includes(searchTerm) ||
-                p.customerName.toLowerCase().includes(searchTerm) ||
-                p.customerEmail.toLowerCase().includes(searchTerm)
-            );
+            const numericTerm = Number(searchTerm.replace(/[^0-9.-]/g, ''));
+            filtered = filtered.filter(p => {
+                const matchesText =
+                    p.payId.toLowerCase().includes(searchTerm) ||
+                    p.customerName.toLowerCase().includes(searchTerm) ||
+                    p.customerEmail.toLowerCase().includes(searchTerm);
+
+                if (matchesText) return true;
+
+                if (!Number.isNaN(numericTerm) && /[0-9]/.test(searchTerm)) {
+                    const amountUsd = Number(p.amountUSD || 0);
+                    return Math.abs(amountUsd - numericTerm) < 0.01;
+                }
+
+                return false;
+            });
         }
         
         // Other filters are already applied server-side, but keep for consistency

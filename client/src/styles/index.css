@@ -131,3 +131,52 @@ select option:checked {
   animation: slideOut 0.3s ease-in forwards;
 }
 
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-overlay {
+    background: #ffffff !important;
+  }
+
+  .print-modal {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+
+  .print-content {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .print-receipt {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-receipt [class*="bg-gray-"] {
+    background: #ffffff !important;
+  }
+
+  .print-receipt [class*="border-gray-"] {
+    border-color: #e5e7eb !important;
+  }
+
+  .print-receipt [class*="text-gray-"] {
+    color: #475569 !important;
+  }
+}
+

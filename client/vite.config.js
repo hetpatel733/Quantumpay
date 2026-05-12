@@ -4,6 +4,12 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  envDir: path.resolve(__dirname, '..'),
+  build: {
+    outDir: 'dist',
+    chunkSizeWarningLimit: 2000,
+    sourcemap: false,
+  },
   resolve: {
     alias: {
       // Define path aliases to match your imports

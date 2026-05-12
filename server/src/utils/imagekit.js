@@ -1,4 +1,4 @@
-const ImageKit = require('imagekit');
+const ImageKit = require('@imagekit/nodejs');
 
 // Validate environment variables
 const validateConfig = () => {

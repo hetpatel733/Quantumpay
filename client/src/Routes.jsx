@@ -14,6 +14,7 @@ import Header from "components/ui/Header";
 import Home from "landingpages/Home";
 import Login from "landingpages/Login";
 import Signup from "landingpages/Signup";
+import VerifyEmail from "landingpages/VerifyEmail";
 import Contact from "landingpages/Contact";
 import Cryptocurrencies from "landingpages/Cryptocurrencies";
 import Pricing from "landingpages/Pricing";
@@ -130,6 +131,7 @@ const Routes = () => {
             <Route path="/admin" element={<LandingLayout><AdminPanel /></LandingLayout>} />
             <Route path="/login" element={<LandingLayout><LoginWrapper /></LandingLayout>} />
             <Route path="/signup" element={<LandingLayout><Signup /></LandingLayout>} />
+            <Route path="/verify-email" element={<LandingLayout><VerifyEmail /></LandingLayout>} />
             <Route path="/contact" element={<LandingLayout><Contact /></LandingLayout>} />
             <Route path="/cryptocurrencies" element={<LandingLayout><Cryptocurrencies /></LandingLayout>} />
             <Route path="/pricing" element={<LandingLayout><Pricing /></LandingLayout>} />

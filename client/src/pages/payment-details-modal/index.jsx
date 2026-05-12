@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useReactToPrint } from "react-to-print";
 import Icon from "components/AppIcon";
 import { paymentsAPI } from "utils/api";
 import { useToast } from "contexts/ToastContext";
@@ -42,6 +43,11 @@ const PaymentDetailsModal = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { showToast } = useToast();
+  const printTitle = paymentData?.payId ? `payment-${paymentData.payId}` : "payment-receipt";
+  const handlePrint = useReactToPrint({
+    content: () => modalRef.current,
+    documentTitle: printTitle
+  });
 
   const id = new URLSearchParams(location.search).get("id");
 
@@ -166,10 +172,10 @@ const PaymentDetailsModal = () => {
   const explorerUrl = getExplorerUrl(network, hash);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 print-overlay">
       <div 
         ref={modalRef}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[110vh] overflow-hidden"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[110vh] overflow-hidden print-modal print-receipt"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -177,13 +183,13 @@ const PaymentDetailsModal = () => {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Payment Details</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-mono mt-1">{payId}</p>
           </div>
-          <button onClick={handleClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+          <button onClick={handleClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg print-hide">
             <Icon name="X" size={20} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] print-content">
           {/* Status & Amount Summary */}
           <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -450,7 +456,7 @@ const PaymentDetailsModal = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 print-hide">
           <button 
             onClick={handleClose} 
             className="w-full sm:w-auto order-2 sm:order-1 px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
@@ -458,7 +464,7 @@ const PaymentDetailsModal = () => {
             Close
           </button>
           <button 
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="w-full sm:w-auto order-1 sm:order-2 px-6 py-2.5 bg-primary dark:bg-teal-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-teal-600 transition-colors flex items-center justify-center space-x-2 font-medium shadow-sm"
           >
             <Icon name="Download" size={16} />

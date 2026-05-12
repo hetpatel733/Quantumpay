@@ -3,7 +3,7 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
 // ----------------------------------
 //      INITIALIZATION & SETUP
@@ -18,6 +18,7 @@ require("./db/conn");
 try {
     require("./models/User");
     require("./models/LoginToken");
+    require("./models/Otp");
     require("./models/Notification");
     require("./models/DashboardDailyMetric");
     require("./models/Product");
@@ -34,7 +35,7 @@ try {
         try {
             const Payment = mongoose.model('Payment');
             const indexes = await Payment.collection.indexes();
-            console.log('📋 Current Payment indexes:', indexes.map(i => i.name));
+            // console.log('📋 Current Payment indexes:', indexes.map(i => i.name));
 
             // Drop old transactionId index if it exists
             const hasOldIndex = indexes.some(i => i.name === 'transactionId_1');
@@ -91,10 +92,8 @@ const corsOptions = {
             'http://localhost:3000',
             'http://localhost:9000',
             'http://localhost:5173',
-            'https://quantumpayfinance.vercel.app',
-            'https://quantumpay-server.vercel.app',
-            'https://quantumpay.finance',
-            /\.vercel\.app$/  // Allow all Vercel preview deployments
+            'http://localhost',
+            'http://168.231.121.187:80'
         ];
         
         const isAllowed = allowedOrigins.some(allowed => {

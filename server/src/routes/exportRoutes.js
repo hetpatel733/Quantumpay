@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const {
+    createDashboardPDFExport,
     createExport,
     getAllExports,
     getExportById,
     deleteExport,
     retryExport
 } = require('../services/exportService');
+
+// Upload dashboard PDF and save in export history
+router.post('/dashboard-pdf', createDashboardPDFExport);
 
 // Create new export job
 router.post('/', createExport);

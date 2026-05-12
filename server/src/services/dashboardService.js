@@ -38,6 +38,21 @@ function buildVolumeFromMetrics(dailyMetrics) {
     return { volume, totalSales };
 }
 
+function buildVolumeFromPayments(payments) {
+    const volume = {};
+    let totalSales = 0;
+
+    payments.forEach(payment => {
+        const crypto = payment.cryptoType || payment.cryptoSymbol || 'UNKNOWN';
+        const usdValue = Number(payment.amountUSD || 0);
+
+        totalSales += usdValue;
+        volume[crypto] = (volume[crypto] || 0) + usdValue;
+    });
+
+    return { volume, totalSales };
+}
+
 // GET RECENT ACTIVITY
 async function getRecentActivity(req, res) {
     try {
@@ -120,6 +135,20 @@ async function getDashboardOverview(req, res) {
 
         // Build aggregated data from metrics for the SELECTED PERIOD
         const { volume, totalSales } = buildVolumeFromMetrics(dailyMetrics);
+        let distributionVolume = volume;
+        let distributionTotalSales = totalSales;
+
+        if (Object.keys(volume).length === 0 && totalSales > 0) {
+            const fallbackPayments = await Payment.find({
+                userId,
+                status: 'completed',
+                createdAt: { $gte: startDate, $lte: endDate }
+            }).lean();
+
+            const fallback = buildVolumeFromPayments(fallbackPayments);
+            distributionVolume = fallback.volume;
+            distributionTotalSales = fallback.totalSales || totalSales;
+        }
 
         // Calculate status counts from metrics for the SELECTED PERIOD
         let totalPayments = 0;
@@ -168,9 +197,9 @@ async function getDashboardOverview(req, res) {
         }
 
         // Crypto distribution for pie chart
-        const cryptoDistribution = Object.entries(volume)
+        const cryptoDistribution = Object.entries(distributionVolume)
             .map(([name, value]) => {
-                const percentage = totalSales > 0 ? (value / totalSales * 100).toFixed(1) : 0;
+                const percentage = distributionTotalSales > 0 ? (value / distributionTotalSales * 100).toFixed(1) : 0;
                 return {
                     name,
                     value: parseFloat(percentage),
@@ -243,25 +272,32 @@ async function getCryptoDistribution(req, res) {
         }).lean();
 
         const { volume, totalSales } = buildVolumeFromMetrics(dailyMetrics);
+        let distributionVolume = volume;
+        let distributionTotalSales = totalSales;
 
-        const distribution = Object.entries(volume)
+        if (Object.keys(volume).length === 0 && totalSales > 0) {
+            const fallbackPayments = await Payment.find({
+                userId,
+                status: 'completed',
+                createdAt: { $gte: startDate, $lte: endDate }
+            }).lean();
+
+            const fallback = buildVolumeFromPayments(fallbackPayments);
+            distributionVolume = fallback.volume;
+            distributionTotalSales = fallback.totalSales || totalSales;
+        }
+
+        const distribution = Object.entries(distributionVolume)
             .map(([name, value]) => ({
                 name,
-                value: totalSales > 0 ? parseFloat(((value / totalSales) * 100).toFixed(1)) : 0,
+                value: distributionTotalSales > 0 ? parseFloat(((value / distributionTotalSales) * 100).toFixed(1)) : 0,
                 color: CRYPTO_COLORS[name] || '#999999'
             }))
             .filter(entry => entry.value > 0);
 
         return res.status(200).json({
             success: true,
-            distribution: distribution.length > 0 ? distribution : [
-                { name: 'USDT', value: 20, color: CRYPTO_COLORS.USDT },
-                { name: 'USDC', value: 20, color: CRYPTO_COLORS.USDC },
-                { name: 'BTC', value: 20, color: CRYPTO_COLORS.BTC },
-                { name: 'ETH', value: 20, color: CRYPTO_COLORS.ETH },
-                { name: 'MATIC', value: 10, color: CRYPTO_COLORS.MATIC },
-                { name: 'SOL', value: 10, color: CRYPTO_COLORS.SOL }
-            ]
+            distribution
         });
 
     } catch (error) {
