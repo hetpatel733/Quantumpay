@@ -93,7 +93,8 @@ const corsOptions = {
             'http://localhost:9000',
             'http://localhost:5173',
             'http://localhost',
-            'http://168.231.121.187:80'
+            'http://168.231.121.187:80',
+            'https://quantumpayfinance.vercel.app',
         ];
         
         const isAllowed = allowedOrigins.some(allowed => {
