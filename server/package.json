@@ -1,6 +1,6 @@
 {
   "engines": {
-    "node": "25.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@imagekit/nodejs": "^7.5.0",
