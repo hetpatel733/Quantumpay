@@ -27,7 +27,12 @@ const sizes = {
 
 function Base({ as: As = 'button', className, children, loading, fullWidth, ...rest }) {
   return (
-    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className={clsx(fullWidth && 'w-full')}>
+    <motion.div
+      whileHover={fullWidth ? { scale: 1 } : { scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      className={clsx(fullWidth && 'w-full')}
+      style={{ overflow: 'hidden' }}
+    >
       <As {...rest} className={className}>
         {loading ? (
           <span className="flex items-center justify-center">

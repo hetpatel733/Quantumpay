@@ -1,0 +1,279 @@
+/* ============================================================
+   GLOBAL MOBILE RESPONSIVE FIXES
+   Comprehensive mobile-first overrides for all pages
+   ============================================================ */
+
+/* ============================================================
+   1. BASE & TYPOGRAPHY FIXES (applies to ALL pages)
+   ============================================================ */
+
+/* Prevent horizontal overflow globally */
+html, body, #root, .App {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Fix AppButton overflow caused by framer-motion scale on mobile */
+@media (max-width: 768px) {
+
+  /* ============================================================
+     2. NAVBAR FIXES
+     ============================================================ */
+
+  /* Ensure navbar doesn't clip content */
+  header {
+    overflow: visible !important;
+  }
+
+  /* ============================================================
+     3. HERO / LANDING PAGE FIXES
+     ============================================================ */
+
+  /* Hero section: ensure content is visible below fixed navbar */
+  main[style*="marginTop"] {
+    margin-top: 70px !important;
+  }
+
+  /* Scale down large headings for mobile */
+  .text-5xl {
+    font-size: 1.75rem !important;
+    line-height: 2.15rem !important;
+  }
+
+  .text-6xl {
+    font-size: 2rem !important;
+    line-height: 2.5rem !important;
+  }
+
+  .text-7xl {
+    font-size: 2.25rem !important;
+    line-height: 2.75rem !important;
+  }
+
+  .text-4xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  /* Scale subtitle/paragraph text */
+  .text-2xl {
+    font-size: 1.15rem !important;
+    line-height: 1.65rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.05rem !important;
+    line-height: 1.55rem !important;
+  }
+
+  /* ============================================================
+     4. LAYOUT 2 (Features Banner) FIXES
+     ============================================================ */
+
+  /* Rounded feature banner - reduce corner radius on small screens */
+  .rounded-\[30px\] {
+    border-radius: 1.25rem !important;
+  }
+
+  /* ============================================================
+     5. PRICING PAGE FIXES
+     ============================================================ */
+
+  /* Pricing cards: remove scale transform on highlighted card */
+  .scale-105,
+  .md\:scale-110 {
+    transform: none !important;
+    scale: 1 !important;
+  }
+
+  /* CTA section bottom padding fix */
+  .bg-gradient-to-r.rounded-3xl.p-12 {
+    padding: 1.5rem !important;
+    border-radius: 1.25rem !important;
+  }
+
+  /* ============================================================
+     6. FOOTER FIXES
+     ============================================================ */
+
+  /* Footer text wrapping */
+  footer .text-sm {
+    word-break: break-word;
+  }
+
+  /* Footer grid spacing */
+  footer .grid {
+    gap: 1.25rem !important;
+  }
+
+  /* ============================================================
+     7. FORM PAGE (LOGIN/SIGNUP) FIXES
+     ============================================================ */
+
+  /* Fix form card padding on mobile */
+  .bg-surface.rounded-3xl.shadow-2xl.p-8,
+  .dark .bg-gray-800.rounded-3xl.shadow-2xl.p-8 {
+    padding: 1.25rem !important;
+  }
+
+  .bg-surface.rounded-3xl.shadow-2xl .md\:p-12 {
+    padding: 1.25rem !important;
+  }
+
+  /* ============================================================
+     8. DASHBOARD FIXES
+     ============================================================ */
+
+  /* Dashboard header - stack action buttons */
+  .px-4.sm\:px-6.py-6.sm\:py-8 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Payment Trends chart header: stack title and badge vertically */
+  .flex.items-baseline.space-x-3 {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.375rem;
+  }
+
+  /* Period selector buttons: reduce padding */
+  .flex.space-x-2 button {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* ============================================================
+     9. PAYMENTS MANAGEMENT TABLE FIXES
+     ============================================================ */
+
+  /* Ensure table scroll works properly */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ============================================================
+     10. CONTACT PAGE FIXES
+     ============================================================ */
+
+  /* Contact methods grid: 1 column on mobile */
+  .grid.lg\:grid-cols-4.gap-6 {
+    gap: 0.75rem !important;
+  }
+
+  /* FAQ items spacing */
+  .space-y-4 > div {
+    margin-bottom: 0;
+  }
+
+  /* ============================================================
+     11. CRYPTOCURRENCIES PAGE FIXES
+     ============================================================ */
+
+  /* Stats grid cards */
+  .grid.grid-cols-2 .rounded-2xl.p-6 {
+    padding: 0.875rem !important;
+  }
+
+  /* Crypto cards grid - single column on very small screens */
+  .grid.xl\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ============================================================
+     12. ACCOUNT SETTINGS FIXES
+     ============================================================ */
+
+  /* Settings page left padding */
+  .px-6.py-8 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Mobile tabs: ensure scroll works well */
+  .flex.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .flex.overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Even smaller screens (< 480px) */
+@media (max-width: 480px) {
+
+  /* Further scale down headings */
+  .text-5xl {
+    font-size: 1.5rem !important;
+    line-height: 1.9rem !important;
+  }
+
+  .text-6xl {
+    font-size: 1.65rem !important;
+    line-height: 2.1rem !important;
+  }
+
+  .text-7xl {
+    font-size: 1.85rem !important;
+    line-height: 2.3rem !important;
+  }
+
+  .text-4xl {
+    font-size: 1.35rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .text-3xl {
+    font-size: 1.2rem !important;
+    line-height: 1.6rem !important;
+  }
+
+  /* Partner logos grid: 2 columns always */
+  .grid.lg\:grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Crypto cards: single column */
+  .grid.xl\:grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Pricing cards: full width, reset ring */
+  .ring-4 {
+    ring-width: 2px !important;
+  }
+}
+
+/* Very small phones (< 360px) */
+@media (max-width: 360px) {
+  .text-5xl {
+    font-size: 1.35rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .text-4xl {
+    font-size: 1.2rem !important;
+    line-height: 1.6rem !important;
+  }
+
+  .text-3xl {
+    font-size: 1.1rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* Reduce section padding */
+  .py-20 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  .px-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}

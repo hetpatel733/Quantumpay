@@ -52,10 +52,10 @@ const Footer = () => {
   ]
 
   return (
-    <footer className="bg-[#20263B] dark:bg-gray-950 text-white py-12 px-4 sm:px-6 transition-colors duration-300 w-full overflow-hidden">
+    <footer className="bg-[#20263B] dark:bg-gray-950 text-white py-8 sm:py-12 px-4 sm:px-6 transition-colors duration-300 w-full overflow-hidden">
       {/* Footer Navigation Grid */}
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 mb-8 sm:mb-12">
           {footerSections.map((section, index) => (
             <motion.div
               key={section.title}
@@ -65,12 +65,12 @@ const Footer = () => {
               transition={{ delay: index * 0.1 }}
               className="min-w-0"
             >
-              <h2 className="text-lg font-bold mb-4 text-white">{section.title}</h2>
+              <h2 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-white">{section.title}</h2>
               <ul className="space-y-2 listremove">
                 {section.links.map((link) => (
                   <li
                     key={link.label}
-                    className="text-sm transition-colors duration-200"
+                    className="text-xs sm:text-sm transition-colors duration-200"
                   >
                     {link.to ? (
                       <Link
@@ -96,7 +96,7 @@ const Footer = () => {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="flex justify-center items-center gap-5 my-8 flex-wrap"
+          className="flex justify-center items-center gap-3 sm:gap-5 my-6 sm:my-8 flex-wrap"
         >
           {socialLinks.map((social) => (
             <motion.a
@@ -107,7 +107,7 @@ const Footer = () => {
               aria-label={social.label}
               whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="text-gray-300 text-2xl hover:text-white transition-all duration-300 p-2 rounded-full hover:bg-white/10 flex items-center justify-center w-12 h-12"
+              className="text-gray-300 text-xl sm:text-2xl hover:text-white transition-all duration-300 p-1.5 sm:p-2 rounded-full hover:bg-white/10 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12"
             >
               <i className={`bi ${social.icon}`}></i>
             </motion.a>

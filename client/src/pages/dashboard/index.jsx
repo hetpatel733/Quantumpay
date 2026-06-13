@@ -350,10 +350,10 @@ const Dashboard = ({ userData }) => {
               <button
                 onClick={handleRefreshData}
                 className="
-                  flex items-center justify-center space-x-2 px-4 py-2
+                  flex items-center justify-center space-x-2 px-3 sm:px-4 py-2
                   border border-border dark:border-gray-600 rounded-lg
                   text-text-primary dark:text-white hover:bg-secondary-100 dark:hover:bg-gray-700
-                  transition-smooth font-medium
+                  transition-smooth font-medium text-sm
                 "
               >
                 <Icon name="RefreshCcw" size={20} color="currentColor" />
@@ -362,10 +362,10 @@ const Dashboard = ({ userData }) => {
               <button
                 onClick={handleGeneratePaymentLink}
                 className="
-                  flex items-center justify-center space-x-2 px-4 py-2
+                  flex items-center justify-center space-x-2 px-3 sm:px-4 py-2
                   bg-primary dark:bg-teal-500 text-white rounded-lg
                   hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth
-                  font-medium
+                  font-medium text-sm
                 "
               >
                 <Icon name="Link" size={20} color="currentColor" />
@@ -375,11 +375,11 @@ const Dashboard = ({ userData }) => {
                 onClick={handleExportDashboard}
                 disabled={isExporting}
                 className="
-                  flex items-center justify-center space-x-2 px-4 py-2
+                  flex items-center justify-center space-x-2 px-3 sm:px-4 py-2
                   bg-primary dark:bg-teal-500 text-white rounded-lg
                   hover:bg-primary-700 dark:hover:bg-teal-600 
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-smooth font-medium
+                  transition-smooth font-medium text-sm
                 "
               >
                 {isExporting ? (

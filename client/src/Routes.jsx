@@ -20,6 +20,7 @@ import MockDocument from "landingpages/MockDocument";
 import Cryptocurrencies from "landingpages/Cryptocurrencies";
 import Pricing from "landingpages/Pricing";
 import AdminPanel from "pages/admin-panel";
+import AdminRoute from "components/AdminRoute";
 
 // Payment pages
 import CoinSelect from "pages/payment/CoinSelect";
@@ -76,7 +77,7 @@ const ProtectedRoute = ({ children }) => {
 
 // Login wrapper
 const LoginWrapper = () => {
-  const { isAuthenticated, isLoading } = useContext(AuthContext);
+  const { isAuthenticated, isLoading, userData } = useContext(AuthContext);
 
   if (isLoading || isAuthenticated === null) {
     return (
@@ -87,7 +88,7 @@ const LoginWrapper = () => {
   }
 
   if (isAuthenticated === true) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={userData?.role === 'admin' ? '/admin' : '/dashboard'} replace />;
   }
 
   return <Login />;
@@ -129,7 +130,11 @@ const Routes = () => {
           <RouterRoutes>
             {/* Landing Routes */}
             <Route path="/" element={<LandingLayout><Home /></LandingLayout>} />
-            <Route path="/admin" element={<LandingLayout><AdminPanel /></LandingLayout>} />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            } />
             <Route path="/login" element={<LandingLayout><LoginWrapper /></LandingLayout>} />
             <Route path="/signup" element={<LandingLayout><Signup /></LandingLayout>} />
             <Route path="/verify-email" element={<LandingLayout><VerifyEmail /></LandingLayout>} />
