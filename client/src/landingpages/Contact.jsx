@@ -34,7 +34,7 @@ const Contact = () => {
     setSubmitStatus(null)
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/general/contact`, {
+      const response = await fetch(`${API_BASE_URL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,29 +71,29 @@ const Contact = () => {
     {
       icon: 'bi-envelope',
       title: 'Email Us',
-      content: 'support@quantumpay.com',
+      content: 'hetpatel7627@gmail.com',
       description: 'Response within 24 hours',
       color: 'from-blue-500 to-blue-600'
     },
     {
       icon: 'bi-telephone',
       title: 'Call Us',
-      content: '+1 (555) 123-4567',
+      content: '+91 79900 26700',
       description: 'Mon-Fri, 9am-6pm EST',
       color: 'from-green-500 to-green-600'
     },
     {
       icon: 'bi-chat-dots',
-      title: 'Live Chat',
-      content: 'Start a conversation',
+      title: 'Send A Message',
+      content: 'Connect With Form',
       description: 'Available 24/7',
       color: 'from-purple-500 to-purple-600'
     },
     {
       icon: 'bi-geo-alt',
       title: 'Visit Us',
-      content: '123 Crypto Street, SF',
-      description: 'San Francisco, CA 94102',
+      content: 'Ahmedabad, Gujarat',
+      description: 'India, 382480',
       color: 'from-pink-500 to-pink-600'
     }
   ]

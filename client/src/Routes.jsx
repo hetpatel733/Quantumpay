@@ -16,6 +16,7 @@ import Login from "landingpages/Login";
 import Signup from "landingpages/Signup";
 import VerifyEmail from "landingpages/VerifyEmail";
 import Contact from "landingpages/Contact";
+import MockDocument from "landingpages/MockDocument";
 import Cryptocurrencies from "landingpages/Cryptocurrencies";
 import Pricing from "landingpages/Pricing";
 import AdminPanel from "pages/admin-panel";
@@ -135,6 +136,7 @@ const Routes = () => {
             <Route path="/contact" element={<LandingLayout><Contact /></LandingLayout>} />
             <Route path="/cryptocurrencies" element={<LandingLayout><Cryptocurrencies /></LandingLayout>} />
             <Route path="/pricing" element={<LandingLayout><Pricing /></LandingLayout>} />
+            <Route path="/docs/:docSlug" element={<LandingLayout><MockDocument /></LandingLayout>} />
 
             {/* Payment Routes - Public */}
             <Route path="/payment/:api/:order_id" element={<LandingLayout><PaymentRedirect /></LandingLayout>} />

@@ -6,19 +6,39 @@ const Footer = () => {
   const footerSections = [
     {
       title: 'Developer',
-      links: ['Documentation', 'API Reference', 'Billing', 'Supported Currencies']
+      links: [
+        { label: 'Documentation', to: '/docs/documentation' },
+        { label: 'API Reference', to: '/docs/api-reference' },
+        { label: 'Billing', to: '/docs/billing' },
+        { label: 'Supported Currencies', to: '/docs/supported-currencies' }
+      ]
     },
     {
       title: 'Resources',
-      links: ['Pricing', 'FAQ', 'Blog', 'Case Studies']
+      links: [
+        { label: 'Pricing', to: '/pricing' },
+        { label: 'FAQ', to: '/docs/faq' },
+        { label: 'Blog', to: '/docs/blog' },
+        { label: 'Case Studies', to: '/docs/case-studies' }
+      ]
     },
     {
       title: 'Company',
-      links: ['About Us', 'Careers', 'Contact us', 'Press Kit']
+      links: [
+        { label: 'About Us', to: '/docs/about-us' },
+        { label: 'Careers', to: '/docs/careers' },
+        { label: 'Contact us', to: '/contact' },
+        { label: 'Press Kit', to: '/docs/press-kit' }
+      ]
     },
     {
       title: 'Legal',
-      links: ['Restricted Jurisdictions', 'User Agreement', 'Privacy Policy', 'Cookie Policy']
+      links: [
+        { label: 'Restricted Jurisdictions', to: '/docs/restricted-jurisdictions' },
+        { label: 'User Agreement', to: '/docs/user-agreement' },
+        { label: 'Privacy Policy', to: '/docs/privacy-policy' },
+        { label: 'Cookie Policy', to: '/docs/cookie-policy' }
+      ]
     }
   ]
 
@@ -49,10 +69,21 @@ const Footer = () => {
               <ul className="space-y-2 listremove">
                 {section.links.map((link) => (
                   <li
-                    key={link}
-                    className="text-sm text-gray-300 dark:text-gray-400 hover:text-white dark:hover:text-teal-400 cursor-pointer transition-colors duration-200"
+                    key={link.label}
+                    className="text-sm transition-colors duration-200"
                   >
-                    {link}
+                    {link.to ? (
+                      <Link
+                        to={link.to}
+                        className="text-gray-300 dark:text-gray-400 hover:text-white dark:hover:text-teal-400"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-500 dark:text-gray-600 cursor-not-allowed" title="Coming soon">
+                        {link.label}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -104,8 +135,8 @@ const Footer = () => {
             © 2013-2025 QuantumPay, Inc. All Rights Reserved.
           </p>
           <p className="text-sm text-gray-400">
-            <a href="mailto:support@quantumpay.com" target="_blank" className="hover:text-primary transition-colors">
-              support@quantumpay.com
+            <a href="mailto:hetpatel7627@gmail.com" target="_blank" className="hover:text-primary transition-colors">
+              hetpatel7627@gmail.com
             </a>
           </p>
         </div>
