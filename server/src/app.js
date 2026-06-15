@@ -198,8 +198,12 @@ app.use('/api/*', (req, res) => {
 // ----------------------------------
 //          START SERVER
 // ----------------------------------
-app.listen(port, () => {
-    console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
-    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
-});
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`✅ QuantumPay Server running on http://localhost:${port}/`);
+        console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`   Database: ${process.env.MONGO_URI ? 'Connected' : 'Not configured'}`);
+    });
+}
+
+module.exports = app;
