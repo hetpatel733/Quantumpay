@@ -112,10 +112,10 @@ const Pricing = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary dark:text-white mb-4 sm:mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary dark:text-white mb-6">
               Simple, Transparent Pricing
             </h1>
-            <p className="text-base sm:text-xl md:text-2xl text-text-secondary dark:text-gray-400 mb-8 sm:mb-12 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-text-secondary dark:text-gray-400 mb-12 max-w-3xl mx-auto">
               No hidden fees. No surprises. Choose the plan that's right for your business.
             </p>
 
@@ -150,15 +150,15 @@ const Pricing = () => {
 
         {/* Pricing Cards */}
         <section className="max-w-7xl mx-auto mb-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
               <motion.div
                 key={plan.name}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative bg-surface dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-card hover:shadow-elevated dark:shadow-teal-500/10 transition-all duration-300 overflow-hidden ${
-                  plan.highlighted ? 'ring-2 sm:ring-4 ring-primary dark:ring-teal-400 md:scale-105' : ''
+                className={`relative bg-surface dark:bg-gray-800 rounded-3xl shadow-card hover:shadow-elevated dark:shadow-teal-500/10 transition-all duration-300 overflow-hidden ${
+                  plan.highlighted ? 'ring-4 ring-primary dark:ring-teal-400 scale-105 md:scale-110' : ''
                 }`}
               >
                 {/* Badge */}
@@ -170,7 +170,7 @@ const Pricing = () => {
                   </div>
                 )}
 
-                <div className="p-5 sm:p-8">
+                <div className="p-8">
                   {/* Plan Header */}
                   <div className="mb-6">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4`}>
@@ -331,12 +331,12 @@ const Pricing = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-r from-primary to-primary-700 rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center text-white shadow-2xl"
+            className="bg-gradient-to-r from-primary to-primary-700 rounded-3xl p-12 text-center text-white shadow-2xl"
           >
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Ready to Get Started?
             </h2>
-            <p className="text-base sm:text-xl mb-6 sm:mb-8 opacity-90">
+            <p className="text-xl mb-8 opacity-90">
               Join thousands of businesses already accepting crypto payments
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -112,10 +112,10 @@ const VerifyEmail = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-teal-500/10 p-5 sm:p-8 md:p-12"
+            className="bg-surface dark:bg-gray-800 rounded-3xl shadow-2xl dark:shadow-teal-500/10 p-8 md:p-12"
           >
             <div className="text-center mb-8">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-3">
+              <h1 className="text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-3">
                 {purpose === 'login' ? 'Two-Factor Verification' : 'Verify Your Email'}
               </h1>
               <p className="text-text-secondary dark:text-gray-400">

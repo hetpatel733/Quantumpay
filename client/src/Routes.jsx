@@ -16,11 +16,9 @@ import Login from "landingpages/Login";
 import Signup from "landingpages/Signup";
 import VerifyEmail from "landingpages/VerifyEmail";
 import Contact from "landingpages/Contact";
-import MockDocument from "landingpages/MockDocument";
 import Cryptocurrencies from "landingpages/Cryptocurrencies";
 import Pricing from "landingpages/Pricing";
 import AdminPanel from "pages/admin-panel";
-import AdminRoute from "components/AdminRoute";
 
 // Payment pages
 import CoinSelect from "pages/payment/CoinSelect";
@@ -77,7 +75,7 @@ const ProtectedRoute = ({ children }) => {
 
 // Login wrapper
 const LoginWrapper = () => {
-  const { isAuthenticated, isLoading, userData } = useContext(AuthContext);
+  const { isAuthenticated, isLoading } = useContext(AuthContext);
 
   if (isLoading || isAuthenticated === null) {
     return (
@@ -88,7 +86,7 @@ const LoginWrapper = () => {
   }
 
   if (isAuthenticated === true) {
-    return <Navigate to={userData?.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Login />;
@@ -130,18 +128,13 @@ const Routes = () => {
           <RouterRoutes>
             {/* Landing Routes */}
             <Route path="/" element={<LandingLayout><Home /></LandingLayout>} />
-            <Route path="/admin" element={
-              <AdminRoute>
-                <AdminPanel />
-              </AdminRoute>
-            } />
+            <Route path="/admin" element={<LandingLayout><AdminPanel /></LandingLayout>} />
             <Route path="/login" element={<LandingLayout><LoginWrapper /></LandingLayout>} />
             <Route path="/signup" element={<LandingLayout><Signup /></LandingLayout>} />
             <Route path="/verify-email" element={<LandingLayout><VerifyEmail /></LandingLayout>} />
             <Route path="/contact" element={<LandingLayout><Contact /></LandingLayout>} />
             <Route path="/cryptocurrencies" element={<LandingLayout><Cryptocurrencies /></LandingLayout>} />
             <Route path="/pricing" element={<LandingLayout><Pricing /></LandingLayout>} />
-            <Route path="/docs/:docSlug" element={<LandingLayout><MockDocument /></LandingLayout>} />
 
             {/* Payment Routes - Public */}
             <Route path="/payment/:api/:order_id" element={<LandingLayout><PaymentRedirect /></LandingLayout>} />

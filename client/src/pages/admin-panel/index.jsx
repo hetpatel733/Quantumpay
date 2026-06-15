@@ -4,15 +4,6 @@ import { debounce } from 'components/lib/utils';
 
 const API_BASE_URL = import.meta.env.VITE_SERVER_URL || '';
 
-// Helper to get auth headers for admin API calls
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
-
 const AdminPanel = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,10 +18,7 @@ const AdminPanel = () => {
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/payments`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
+      const response = await fetch(`${API_BASE_URL}/api/admin/payments`);
       const data = await response.json();
       if (data.success) {
         setPayments(data.payments);
@@ -48,8 +36,7 @@ const AdminPanel = () => {
       
       const response = await fetch(`${API_BASE_URL}/api/admin/payments/${payId}/approve`, {
         method: 'POST',
-        credentials: 'include',
-        headers: getAuthHeaders(),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hash: hash || '' })
       });
 
@@ -71,8 +58,7 @@ const AdminPanel = () => {
       
       const response = await fetch(`${API_BASE_URL}/api/admin/payments/${payId}/reject`, {
         method: 'POST',
-        credentials: 'include',
-        headers: getAuthHeaders(),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: reason || 'Rejected by admin' })
       });
 
@@ -98,8 +84,7 @@ const AdminPanel = () => {
       console.log('🔧 Triggering manual cron job...');
       const response = await fetch(`${API_BASE_URL}/api/admin/trigger-cron-job`, {
         method: 'POST',
-        credentials: 'include',
-        headers: getAuthHeaders(),
+        headers: { 'Content-Type': 'application/json' }
       });
 
       const data = await response.json();

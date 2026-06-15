@@ -23,12 +23,9 @@ import "./styles/landingpage/footer.css";
 // import "./styles/landingpage/signup.css";
 // import "./styles/landingpage/contact.css";
 
-// 5. Payment page styles
+// 5. Payment page styles last
 import "./styles/payment/coinselect.css";
 import "./styles/payment/finalpayment.css";
-
-// 6. Mobile responsive overrides (must be last to override all above)
-import "./styles/mobile-responsive.css";
 
 const container = document.getElementById("root");
 const root = createRoot(container);

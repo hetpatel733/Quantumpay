@@ -60,27 +60,27 @@ const Cryptocurrencies = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary dark:text-white mb-4 sm:mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary dark:text-white mb-6">
               Supported Cryptocurrencies
             </h1>
-            <p className="text-base sm:text-xl md:text-2xl text-text-secondary dark:text-gray-400 mb-8 sm:mb-12 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-text-secondary dark:text-gray-400 mb-12 max-w-3xl mx-auto">
               Accept payments in over 100 cryptocurrencies across multiple blockchains. 
               Fast, secure, and with zero processing fees.
             </p>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
               {stats.map((stat, index) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-surface dark:bg-gray-800 rounded-2xl p-3 sm:p-6 shadow-card dark:shadow-teal-500/10"
+                  className="bg-surface dark:bg-gray-800 rounded-2xl p-6 shadow-card dark:shadow-teal-500/10"
                 >
-                  <i className={`bi ${stat.icon} text-2xl sm:text-4xl text-primary dark:text-teal-400 mb-2 sm:mb-3 block`}></i>
-                  <div className="text-xl sm:text-4xl font-bold text-text-primary dark:text-white mb-1 sm:mb-2">{stat.value}</div>
-                  <div className="text-xs sm:text-base text-text-secondary dark:text-gray-400">{stat.label}</div>
+                  <i className={`bi ${stat.icon} text-4xl text-primary dark:text-teal-400 mb-3 block`}></i>
+                  <div className="text-4xl font-bold text-text-primary dark:text-white mb-2">{stat.value}</div>
+                  <div className="text-text-secondary dark:text-gray-400">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
@@ -89,7 +89,7 @@ const Cryptocurrencies = () => {
 
         {/* Search and Filter Section */}
         <section className="max-w-7xl mx-auto mb-12">
-          <div className="bg-surface dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-card dark:shadow-teal-500/10 p-4 sm:p-8">
+          <div className="bg-surface dark:bg-gray-800 rounded-3xl shadow-card dark:shadow-teal-500/10 p-8">
             {/* Search Bar */}
             <div className="mb-8">
               <div className="relative max-w-2xl mx-auto">
@@ -278,7 +278,7 @@ const Cryptocurrencies = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-gradient-to-r from-primary to-primary-700 rounded-2xl sm:rounded-3xl p-6 sm:p-12 text-center text-white shadow-2xl"
+            className="bg-gradient-to-r from-primary to-primary-700 rounded-3xl p-12 text-center text-white shadow-2xl"
           >
             <i className="bi bi-rocket-takeoff text-6xl mb-6 block"></i>
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
