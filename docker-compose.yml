@@ -1,0 +1,59 @@
+services:
+  # ============================================
+  # Backend API Server
+  # ============================================
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: quantumpay-server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - IMAGEKIT_PUBLIC_KEY=${IMAGEKIT_PUBLIC_KEY:-}
+      - IMAGEKIT_PRIVATE_KEY=${IMAGEKIT_PRIVATE_KEY:-}
+      - IMAGEKIT_URL_ENDPOINT=${IMAGEKIT_URL_ENDPOINT:-}
+    env_file:
+      - .env
+    networks:
+      - quantumpay-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ============================================
+  # Frontend Client (Nginx + React Build)
+  # ============================================
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_SERVER_URL: ""
+        VITE_CLIENT_URL: ${VITE_CLIENT_URL:-http://localhost}
+        VITE_IMAGEKIT_PUBLIC_KEY: ${VITE_IMAGEKIT_PUBLIC_KEY:-}
+        VITE_IMAGEKIT_URL_ENDPOINT: ${VITE_IMAGEKIT_URL_ENDPOINT:-}
+    container_name: quantumpay-client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - quantumpay-network
+
+# ============================================
+# Shared Network
+# ============================================
+networks:
+  quantumpay-network:
+    driver: bridge
