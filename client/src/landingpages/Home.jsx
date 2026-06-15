@@ -31,18 +31,18 @@ const Home = () => {
       <Navbar />
       <main style={{ marginTop: '80px' }}>
         {/* HERO SECTION - LAYOUT 1 */}
-        <section className="relative min-h-screen flex items-center py-20 px-4 overflow-hidden dark:bg-gray-900 transition-colors duration-300">
+        <section className="relative min-h-[calc(100vh-70px)] md:min-h-screen flex items-center py-10 sm:py-20 px-4 overflow-hidden dark:bg-gray-900 transition-colors duration-300">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-background to-accent-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 opacity-50"></div>
           
           <div className="max-w-7xl mx-auto w-full relative z-10">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
               {/* Left - Image */}
               <motion.div
                 initial={{ opacity: 0, x: -100 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8 }}
-                className="relative"
+                className="relative order-2 md:order-1"
               >
                 <motion.div
                   animate={{ y: [0, -20, 0] }}
@@ -63,13 +63,13 @@ const Home = () => {
                 initial={{ opacity: 0, x: 100 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="space-y-6"
+                className="space-y-4 sm:space-y-6 order-1 md:order-2"
               >
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary dark:text-white leading-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-text-primary dark:text-white leading-tight">
                   CRYPTOCURRENCY PAYMENTS FOR BUSINESS
                 </h1>
                 
-                <p className="text-xl md:text-2xl text-primary-700 dark:text-teal-400 font-medium">
+                <p className="text-base sm:text-lg md:text-2xl text-primary-700 dark:text-teal-400 font-medium">
                   Discover the superpowers of cryptocurrencies by unlocking their full potential.
                 </p>
 
@@ -90,7 +90,7 @@ const Home = () => {
                       className="flex items-start space-x-3"
                     >
                       <i className="bi bi-check-circle-fill text-2xl text-success dark:text-teal-400 mt-1"></i>
-                      <p className="text-lg text-text-primary dark:text-gray-300">
+                      <p className="text-sm sm:text-base md:text-lg text-text-primary dark:text-gray-300">
                         <span className="font-bold dark:text-white">{feature.title}</span> - {feature.desc}
                       </p>
                     </motion.li>
@@ -114,7 +114,7 @@ const Home = () => {
         </section>
 
         {/* FEATURES SECTION - LAYOUT 2 */}
-        <section className="py-20 px-4 dark:bg-gray-900 transition-colors duration-300">
+        <section className="py-10 sm:py-20 px-4 dark:bg-gray-900 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
             <div className="bg-gradient-to-r from-[#59ddd6] to-[#1ec1c7] dark:from-teal-600 dark:to-teal-700 rounded-[30px] shadow-2xl overflow-hidden">
               <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -144,7 +144,7 @@ const Home = () => {
                   <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
 
                   <div className="relative z-10">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-8">
+                    <h2 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-8">
                       More than just a Crypto Payment Processor
                     </h2>
 
@@ -160,7 +160,7 @@ const Home = () => {
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
                           transition={{ delay: index * 0.1 }}
-                          className="flex items-center space-x-3 text-white text-lg md:text-xl"
+                          className="flex items-center space-x-3 text-white text-sm sm:text-lg md:text-xl"
                         >
                           <i className="bi bi-dash-lg text-2xl"></i>
                           <span>{feature}</span>
@@ -177,7 +177,7 @@ const Home = () => {
         </section>
 
         {/* BUSINESS & PERSONAL - LAYOUT 3 */}
-        <section ref={layout3Ref} className="py-20 px-4 dark:bg-gray-900 transition-colors duration-300">
+        <section ref={layout3Ref} className="py-10 sm:py-20 px-4 dark:bg-gray-900 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Business Card */}
@@ -186,12 +186,12 @@ const Home = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-br from-[#01a5a5] to-[#0ea5a8] dark:from-teal-700 dark:to-teal-800 text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300"
+                className="bg-gradient-to-br from-[#01a5a5] to-[#0ea5a8] dark:from-teal-700 dark:to-teal-800 text-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all"></div>
                 <div className="relative z-10">
-                  <h2 className="text-4xl lg:text-5xl font-bold mb-4">Business</h2>
-                  <h3 className="text-xl lg:text-2xl mb-8 text-white/90">
+                  <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Business</h2>
+                  <h3 className="text-base sm:text-xl lg:text-2xl mb-4 sm:mb-8 text-white/90">
                     Serving 100,000+ merchants globally
                   </h3>
                   
@@ -211,7 +211,7 @@ const Home = () => {
                         className="flex items-start space-x-3"
                       >
                         <i className="bi bi-check2-circle text-2xl mt-1"></i>
-                        <span className="text-lg">{feature}</span>
+                        <span className="text-sm sm:text-lg">{feature}</span>
                       </motion.li>
                     ))}
                   </ul>
@@ -226,15 +226,15 @@ const Home = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-br from-[#20263B] to-[#334155] text-white rounded-3xl p-8 lg:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300"
+                className="bg-gradient-to-br from-[#20263B] to-[#334155] text-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 lg:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300"
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all"></div>
                 <div className="relative z-10">
                   <div className="mb-4">
                     <i className="bi bi-wallet2 text-6xl text-primary"></i>
                   </div>
-                  <h2 className="text-4xl lg:text-5xl font-bold mb-4">Personal</h2>
-                  <h3 className="text-xl lg:text-2xl mb-8 text-white/90">
+                  <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Personal</h2>
+                  <h3 className="text-base sm:text-xl lg:text-2xl mb-4 sm:mb-8 text-white/90">
                     1,000,000+ Wallet users love these features
                   </h3>
                   
@@ -254,7 +254,7 @@ const Home = () => {
                         className="flex items-start space-x-3"
                       >
                         <i className="bi bi-check2-circle text-2xl mt-1 text-primary"></i>
-                        <span className="text-lg">{feature}</span>
+                        <span className="text-sm sm:text-lg">{feature}</span>
                       </motion.li>
                     ))}
                   </ul>
@@ -267,18 +267,18 @@ const Home = () => {
         </section>
 
         {/* FEATURES GRID - LAYOUT 4 */}
-        <section className="py-20 px-4 bg-gradient-to-b from-background to-primary-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+        <section className="py-10 sm:py-20 px-4 bg-gradient-to-b from-background to-primary-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-bold text-center text-text-primary dark:text-white mb-16"
+              className="text-2xl sm:text-4xl md:text-5xl font-bold text-center text-text-primary dark:text-white mb-8 sm:mb-16"
             >
               Manage Crypto Like a Pro
             </motion.h2>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
               {[
                 {
                   icon: 'bi-wallet2',
@@ -324,12 +324,12 @@ const Home = () => {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ y: -10, scale: 1.02 }}
-                  className="bg-surface dark:bg-gray-800 rounded-2xl p-8 shadow-card hover:shadow-elevated dark:shadow-teal-500/10 transition-all duration-300 group"
+                  className="bg-surface dark:bg-gray-800 rounded-2xl p-5 sm:p-8 shadow-card hover:shadow-elevated dark:shadow-teal-500/10 transition-all duration-300 group"
                 >
                   <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                     <i className={`bi ${feature.icon} text-3xl text-white`}></i>
                   </div>
-                  <h3 className="text-2xl font-bold text-text-primary dark:text-white mb-3">
+                  <h3 className="text-lg sm:text-2xl font-bold text-text-primary dark:text-white mb-2 sm:mb-3">
                     {feature.title}
                   </h3>
                   <p className="text-text-secondary dark:text-gray-400 leading-relaxed">
@@ -342,18 +342,18 @@ const Home = () => {
         </section>
 
         {/* PARTNERSHIPS - LAYOUT 5 */}
-        <section className="py-20 px-4 dark:bg-gray-900 transition-colors duration-300">
+        <section className="py-10 sm:py-20 px-4 dark:bg-gray-900 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
             <motion.h2
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-4xl md:text-5xl font-bold text-center text-text-primary dark:text-white mb-16"
+              className="text-2xl sm:text-4xl md:text-5xl font-bold text-center text-text-primary dark:text-white mb-8 sm:mb-16"
             >
               Strong Partnerships
             </motion.h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-8 items-center">
               {[
                 { img: '/images/partner1.webp', name: 'Partner 1' },
                 { img: '/images/partner2.webp', name: 'Partner 2' },

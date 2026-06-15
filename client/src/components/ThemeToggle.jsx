@@ -8,24 +8,21 @@ const ThemeToggle = () => {
   return (
     <motion.button
       onClick={toggleTheme}
-      className="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-200 dark:border-gray-700 overflow-hidden group"
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
+      className="
+        relative p-1.5 sm:p-2 rounded-lg
+        hover:bg-secondary-100 dark:hover:bg-gray-700
+        transition-colors duration-200
+        text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
+        group
+      "
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.96 }}
       aria-label="Toggle theme"
+      title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {/* Sun Icon */}
-      <motion.div
-        initial={false}
-        animate={{
-          scale: isDarkMode ? 0 : 1,
-          rotate: isDarkMode ? 180 : 0,
-          opacity: isDarkMode ? 0 : 1
-        }}
-        transition={{ duration: 0.3 }}
-        className="absolute"
-      >
+      {!isDarkMode ? (
         <svg
-          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-yellow-500"
+          className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 transition-transform group-hover:rotate-45"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -35,40 +32,15 @@ const ThemeToggle = () => {
             clipRule="evenodd"
           />
         </svg>
-      </motion.div>
-
-      {/* Moon Icon */}
-      <motion.div
-        initial={false}
-        animate={{
-          scale: isDarkMode ? 1 : 0,
-          rotate: isDarkMode ? 0 : -180,
-          opacity: isDarkMode ? 1 : 0
-        }}
-        transition={{ duration: 0.3 }}
-        className="absolute"
-      >
+      ) : (
         <svg
-          className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-blue-400"
+          className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 transition-transform group-hover:-rotate-12"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
           <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
         </svg>
-      </motion.div>
-
-      {/* Sparkle effect on hover */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-yellow-200 to-blue-300 opacity-0 group-hover:opacity-20 transition-opacity"
-        animate={{
-          rotate: 360
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      />
+      )}
     </motion.button>
   )
 }
