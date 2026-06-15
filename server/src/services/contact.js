@@ -1,4 +1,4 @@
-const { contactsave } = require("../models/Contact");
+const { contactsave } = require("../models/contact");
 
 // Handle contact form submission
 async function handleContact(req, res) {

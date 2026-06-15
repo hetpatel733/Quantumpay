@@ -68,12 +68,9 @@ const Login = () => {
           handleLoginSuccess(response.user, response.token)
         }
         
-        // Redirect admin users to admin panel, others to dashboard
-        if (response.user?.role === 'admin') {
-          navigate('/admin')
-        } else {
-          navigate('/dashboard')
-        }
+        //console.log('✅ Redirecting to dashboard');
+        // Navigate to dashboard
+        navigate('/dashboard')
       } else if (response.twoFactorRequired) {
         localStorage.setItem('pendingVerificationEmail', formData.email)
         localStorage.setItem('pendingOtpPurpose', 'login')
@@ -175,9 +172,9 @@ const Login = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="w-full"
             >
-              <div className="bg-surface dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-teal-500/10 p-5 sm:p-8 md:p-12">
+              <div className="bg-surface dark:bg-gray-800 rounded-3xl shadow-2xl dark:shadow-teal-500/10 p-8 md:p-12">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-2">
+                  <h2 className="text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-2">
                     Sign In
                   </h2>
                   <p className="text-text-secondary dark:text-gray-400">
@@ -192,7 +189,7 @@ const Login = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-gradient-to-r from-blue-50 to-primary-50 dark:from-blue-900/20 dark:to-teal-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-4"
                   >
-                    <div className="flex items-start justify-between gap-2 sm:gap-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <i className="bi bi-info-circle-fill text-blue-600 dark:text-blue-400 text-lg"></i>
@@ -212,7 +209,7 @@ const Login = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={fillDemoCredentials}
-                        className="px-3 sm:px-4 py-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg font-semibold text-xs sm:text-sm transition-colors flex items-center gap-1 sm:gap-2 whitespace-nowrap"
+                        className="px-4 py-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 whitespace-nowrap"
                       >
                         <i className="bi bi-lightning-charge-fill"></i>
                         <span>Auto Fill</span>

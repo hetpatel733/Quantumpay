@@ -7,7 +7,7 @@ QuantumPay is a comprehensive cryptocurrency payment gateway designed for busine
 ## Key Features
 
 -   **Multi-Currency Support**: Accept payments in a wide range of cryptocurrencies including BTC, ETH, SOL, MATIC, and stablecoins like USDT and USDC across multiple networks.
--   **Merchant Dashboard**: An analytical dashboard providing insights into payment trends, recent activity, and cryptocurrency distribution.
+-   **Merchant Dashboard**: An analytical dashboard providing insights into payment trends, volume, recent activity, and cryptocurrency distribution.
 -   **Portfolio Management**: Create and manage a portfolio of products or services with fixed USD prices.
 -   **Payment Links**: Generate unique, shareable payment links for any item in your portfolio.
 -   **API Management**: Securely create, manage, and monitor API keys for integrating QuantumPay with your applications.

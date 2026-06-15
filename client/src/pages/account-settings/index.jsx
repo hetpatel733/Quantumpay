@@ -59,13 +59,13 @@ const AccountSettings = ({ userData, refreshUserData }) => {
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 overflow-x-hidden max-w-full">
-      <div className="px-3 sm:px-6 py-6 sm:py-8">
+      <div className="px-6 py-8">
         
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-2">
             <Icon name="Settings" size={28} color="var(--color-primary)" />
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary dark:text-white">Account Settings</h1>
+            <h1 className="text-3xl font-bold text-text-primary dark:text-white">Account Settings</h1>
           </div>
           <p className="text-text-secondary dark:text-gray-400">
             Manage your profile, security, payment configuration, and API settings
