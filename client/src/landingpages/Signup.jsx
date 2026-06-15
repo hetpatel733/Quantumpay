@@ -191,9 +191,9 @@ const Signup = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="w-full"
             >
-              <div className="bg-surface dark:bg-gray-800 rounded-3xl shadow-2xl dark:shadow-teal-500/10 p-8 md:p-12">
+              <div className="bg-surface dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-teal-500/10 p-5 sm:p-8 md:p-12">
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-2">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary dark:text-white mb-2">
                     Create Account
                   </h2>
                   <p className="text-text-secondary dark:text-gray-400">
@@ -206,7 +206,7 @@ const Signup = () => {
                   <label className="block text-text-primary dark:text-white font-semibold mb-3">
                     Account Type
                   </label>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     {[
                       { value: 'personal', icon: 'bi-person', label: 'Personal' },
                       { value: 'business', icon: 'bi-building', label: 'Business' }
@@ -223,8 +223,8 @@ const Signup = () => {
                             : 'border-secondary-200 dark:border-gray-600 hover:border-primary-200 dark:hover:border-teal-500'
                         }`}
                       >
-                        <i className={`bi ${type.icon} text-3xl ${formData.accountType === type.value ? 'text-primary dark:text-teal-400' : 'text-text-secondary dark:text-gray-400'} mb-2 block`}></i>
-                        <span className={`font-semibold ${formData.accountType === type.value ? 'text-primary dark:text-teal-400' : 'text-text-secondary dark:text-gray-400'}`}>
+                        <i className={`bi ${type.icon} text-2xl sm:text-3xl ${formData.accountType === type.value ? 'text-primary dark:text-teal-400' : 'text-text-secondary dark:text-gray-400'} mb-1 sm:mb-2 block`}></i>
+                        <span className={`font-semibold text-sm sm:text-base ${formData.accountType === type.value ? 'text-primary dark:text-teal-400' : 'text-text-secondary dark:text-gray-400'}`}>
                           {type.label}
                         </span>
                       </motion.button>

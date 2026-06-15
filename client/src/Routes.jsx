@@ -16,6 +16,7 @@ import Login from "landingpages/Login";
 import Signup from "landingpages/Signup";
 import VerifyEmail from "landingpages/VerifyEmail";
 import Contact from "landingpages/Contact";
+import MockDocument from "landingpages/MockDocument";
 import Cryptocurrencies from "landingpages/Cryptocurrencies";
 import Pricing from "landingpages/Pricing";
 import AdminPanel from "pages/admin-panel";
@@ -75,9 +76,9 @@ const ProtectedRoute = ({ children }) => {
 
 // Login wrapper
 const LoginWrapper = () => {
-  const { isAuthenticated, isLoading } = useContext(AuthContext);
+  const { isLoading, userData } = useContext(AuthContext);
 
-  if (isLoading || isAuthenticated === null) {
+  if (isLoading === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gray-900">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-teal-500"></div>
@@ -85,9 +86,6 @@ const LoginWrapper = () => {
     );
   }
 
-  if (isAuthenticated === true) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
   return <Login />;
 };
@@ -128,13 +126,16 @@ const Routes = () => {
           <RouterRoutes>
             {/* Landing Routes */}
             <Route path="/" element={<LandingLayout><Home /></LandingLayout>} />
-            <Route path="/admin" element={<LandingLayout><AdminPanel /></LandingLayout>} />
+            <Route path="/admin" element={
+                <AdminPanel />
+            } />
             <Route path="/login" element={<LandingLayout><LoginWrapper /></LandingLayout>} />
             <Route path="/signup" element={<LandingLayout><Signup /></LandingLayout>} />
             <Route path="/verify-email" element={<LandingLayout><VerifyEmail /></LandingLayout>} />
             <Route path="/contact" element={<LandingLayout><Contact /></LandingLayout>} />
             <Route path="/cryptocurrencies" element={<LandingLayout><Cryptocurrencies /></LandingLayout>} />
             <Route path="/pricing" element={<LandingLayout><Pricing /></LandingLayout>} />
+            <Route path="/docs/:docSlug" element={<LandingLayout><MockDocument /></LandingLayout>} />
 
             {/* Payment Routes - Public */}
             <Route path="/payment/:api/:order_id" element={<LandingLayout><PaymentRedirect /></LandingLayout>} />

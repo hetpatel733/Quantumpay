@@ -138,9 +138,11 @@ const Sidebar = () => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-border dark:border-gray-700">
           <div className={`flex items-center space-x-3 ${isCollapsed ? 'lg:justify-center' : ''}`}>
-            <div className="w-8 h-8 bg-primary dark:bg-teal-500 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Icon name="Atom" size={25} color="white" />
-            </div>
+            <img
+              src="/images/logoimg.webp"
+              alt="QuantumPay Logo"
+              className="w-8 h-8 rounded-lg flex-shrink-0 object-contain"
+            />
             {(!isCollapsed || isMobileOpen) && (
               <div className={`${isCollapsed ? 'lg:hidden' : ''}`}>
                 <h1 className="text-lg font-semibold text-text-primary dark:text-white">QuantumPay</h1>

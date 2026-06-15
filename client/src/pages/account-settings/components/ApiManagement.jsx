@@ -210,7 +210,7 @@ const ApiManagement = ({ userData }) => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-teal-400"></div>
         </div>
       </div>
     );
@@ -223,7 +223,7 @@ const ApiManagement = ({ userData }) => {
         <div className="text-center py-12">
           <Icon name="AlertCircle" size={48} color="var(--color-error)" className="mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-text-primary dark:text-white mb-2">Error Loading API Keys</h3>
-          <p className="text-text-secondary mb-4">{error}</p>
+          <p className="text-text-secondary dark:text-gray-400 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="px-4 py-2 bg-primary dark:bg-teal-500 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-teal-600 transition-smooth"
@@ -307,7 +307,7 @@ const ApiManagement = ({ userData }) => {
               <Icon name="Key" size={24} color="var(--color-text-secondary)" />
             </div>
             <h3 className="text-lg font-medium text-text-primary dark:text-white mb-2">No API Keys Found</h3>
-            <p className="text-text-secondary max-w-md mx-auto mb-6">
+            <p className="text-text-secondary dark:text-gray-400 max-w-md mx-auto mb-6">
               You haven't created any API keys yet. API keys allow your applications to securely communicate with our payment system.
             </p>
             <button
@@ -360,7 +360,7 @@ const ApiManagement = ({ userData }) => {
                       className="
                         p-2 rounded-lg transition-smooth
                         hover:bg-secondary-100 dark:hover:bg-gray-700 dark:bg-gray-700 
-                        text-text-secondary hover:text-text-primary
+                        text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
                       "
                       title={apiKey.isActive ? 'Disable API Key' : 'Enable API Key'}
                     >
@@ -382,19 +382,19 @@ const ApiManagement = ({ userData }) => {
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">
+                    <label className="block text-xs font-medium text-text-secondary dark:text-gray-400 mb-1">
                       Public Key
                     </label>
                     <div className="flex items-center space-x-2">
-                      <code className="flex-1 font-mono text-sm text-text-primary bg-background px-3 py-2 rounded border">
+                      <code className="flex-1 font-mono text-sm text-text-primary dark:text-white bg-background dark:bg-gray-900 px-3 py-2 rounded border border-border dark:border-gray-700 break-all">
                         {apiKey.key}
                       </code>
                       <button
                         onClick={() => copyToClipboard(apiKey.key)}
                         className="
                           p-2 border border-border dark:border-gray-700 rounded
-                          hover:bg-secondary-100 dark:hover:bg-gray-700 dark:bg-gray-700 transition-smooth
-                          text-text-secondary hover:text-text-primary
+                          bg-background dark:bg-gray-700 hover:bg-secondary-100 dark:hover:bg-gray-600 transition-smooth
+                            text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
                         "
                       >
                         <Icon name="Copy" size={16} color="currentColor" />
@@ -403,11 +403,11 @@ const ApiManagement = ({ userData }) => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">
+                    <label className="block text-xs font-medium text-text-secondary dark:text-gray-400 mb-1">
                       Secret Key
                     </label>
                     <div className="flex items-center space-x-2">
-                      <code className="flex-1 font-mono text-sm text-text-primary bg-background px-3 py-2 rounded border">
+                      <code className="flex-1 font-mono text-sm text-text-primary dark:text-white bg-background dark:bg-gray-900 px-3 py-2 rounded border border-border dark:border-gray-700 break-all">
                         {apiKey.secret && apiKey.secret.length > 20 
                           ? `${apiKey.secret.substring(0, 20)}...`
                           : apiKey.secret || 'No secret available'
@@ -418,8 +418,8 @@ const ApiManagement = ({ userData }) => {
                         disabled={!apiKey.secret}
                         className="
                           p-2 border border-border dark:border-gray-700 rounded
-                          hover:bg-secondary-100 dark:hover:bg-gray-700 dark:bg-gray-700 transition-smooth
-                          text-text-secondary hover:text-text-primary
+                          bg-background dark:bg-gray-700 hover:bg-secondary-100 dark:hover:bg-gray-600 transition-smooth
+                          text-text-secondary dark:text-gray-400 hover:text-text-primary dark:hover:text-white
                           disabled:opacity-50 disabled:cursor-not-allowed
                         "
                       >
@@ -447,7 +447,7 @@ const ApiManagement = ({ userData }) => {
             href="#"
             className="
               flex items-center space-x-3 p-4 border border-border dark:border-gray-700 rounded-lg
-              hover:bg-secondary-50 transition-smooth
+              bg-background dark:bg-gray-900 hover:bg-secondary-50 dark:hover:bg-gray-700 transition-smooth
             "
           >
             <Icon name="Book" size={20} color="var(--color-primary)" />
@@ -461,7 +461,7 @@ const ApiManagement = ({ userData }) => {
             href="#"
             className="
               flex items-center space-x-3 p-4 border border-border dark:border-gray-700 rounded-lg
-              hover:bg-secondary-50 transition-smooth
+              bg-background dark:bg-gray-900 hover:bg-secondary-50 dark:hover:bg-gray-700 transition-smooth
             "
           >
             <Icon name="Code" size={20} color="var(--color-primary)" />
@@ -475,7 +475,7 @@ const ApiManagement = ({ userData }) => {
             href="#"
             className="
               flex items-center space-x-3 p-4 border border-border dark:border-gray-700 rounded-lg
-              hover:bg-secondary-50 transition-smooth
+              bg-background dark:bg-gray-900 hover:bg-secondary-50 dark:hover:bg-gray-700 transition-smooth
             "
           >
             <Icon name="Zap" size={20} color="var(--color-primary)" />
@@ -489,7 +489,7 @@ const ApiManagement = ({ userData }) => {
             href="#"
             className="
               flex items-center space-x-3 p-4 border border-border dark:border-gray-700 rounded-lg
-              hover:bg-secondary-50 transition-smooth
+              bg-background dark:bg-gray-900 hover:bg-secondary-50 dark:hover:bg-gray-700 transition-smooth
             "
           >
             <Icon name="HelpCircle" size={20} color="var(--color-primary)" />
